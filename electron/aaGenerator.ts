@@ -39,28 +39,34 @@ function snakeToPascalCase(str: string): string {
 
 /**
  * Convert snake_case to Title Case (with spaces)
+ * Keeps "of" lowercase in the middle
  * Examples:
  * - cherrybrook -> Cherrybrook
- * - heart_of_monkvos -> Heart Of Monkvos
+ * - heart_of_monkvos -> Heart of Monkvos
+ * - ebon_of_wither -> Ebon of Wither
  */
 function snakeToTitleCase(str: string): string {
   return str
     .split('_')
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .map((word, index) => {
+      // Keep "of" lowercase (except at start)
+      if (index > 0 && word.toLowerCase() === 'of') {
+        return 'of'
+      }
+      return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+    })
     .join(' ')
 }
 
 /**
- * Convert command ID (camelCase) to snake_case for Name field
+ * Convert region ID to snake_case Name field
  * Examples:
- * - discoverWarriotos -> discover_warriotos
- * - discoverHeartOfWarriotos -> discover_heart_of_warriotos
+ * - warriotos -> discover_warriotos
+ * - heart_of_warriotos -> discover_heart_of_warriotos
+ * - ebon_of_wither -> discover_ebon_of_wither
  */
-function commandIdToSnakeCase(commandId: string): string {
-  // Insert underscore before capital letters (including after "discover")
-  const withUnderscores = commandId.replace(/([a-z])([A-Z])/g, '$1_$2').toLowerCase()
-  
-  return withUnderscores
+function regionIdToSnakeCaseName(regionId: string): string {
+  return 'discover_' + regionId.toLowerCase()
 }
 
 /**
@@ -83,7 +89,7 @@ function getRegionName(regionId: string, kind: string): string {
  * Pattern: discover + PascalCase(regionId)
  * 
  * Special rules:
- * - Hearts: Keep full name (heart_of_warriotos -> discoverHeartOfWarriotos)
+ * - Hearts: Capitalize all words including "of" (heart_of_warriotos -> discoverHeartOfWarriotos)
  * - Nether regions with "of": "of" stays lowercase in the middle
  *   (ebon_of_wither -> discoverEbonofWither)
  */
@@ -91,13 +97,16 @@ function generateCommandId(regionId: string): string {
   // Split by underscores
   const parts = regionId.split('_')
   
-  // Convert each part, but keep "of" lowercase (except at start)
+  // Check if this is a heart region (starts with "heart_of")
+  const isHeart = regionId.startsWith('heart_of_')
+  
+  // Convert each part
   const convertedParts = parts.map((part, index) => {
-    if (index > 0 && part.toLowerCase() === 'of') {
-      // Keep "of" lowercase in the middle
+    // For nether regions (not hearts), keep "of" lowercase in the middle
+    if (!isHeart && index > 0 && part.toLowerCase() === 'of') {
       return 'of'
     }
-    // Capitalize first letter, lowercase rest
+    // Capitalize first letter, lowercase rest (this will capitalize "Of" in hearts)
     return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase()
   })
   
@@ -134,7 +143,7 @@ export function generateAACommands(regions: RegionRecord[]): AACommandsSection {
   for (const region of sortedRegions) {
     const commandId = region.discover.commandIdOverride || generateCommandId(region.id)
     const regionName = getRegionName(region.id, region.kind)
-    const nameSnakeCase = commandIdToSnakeCase(commandId)
+    const nameSnakeCase = regionIdToSnakeCaseName(region.id)
     
     // Generate Goal, Message, and DisplayName based on region kind and world
     let goal: string
@@ -144,7 +153,7 @@ export function generateAACommands(regions: RegionRecord[]): AACommandsSection {
     if (region.kind === 'heart') {
       goal = `Discover the Heart of ${regionName}`
       message = `You discovered the Heart of ${regionName}`
-      displayName = 'Heart Discovery'
+      displayName = region.world === 'nether' ? 'Nether Heart Discovery' : 'Heart Discovery'
     } else if (region.kind === 'village') {
       goal = `Discover ${regionName} Village`
       message = `You discovered the village of ${regionName}`
