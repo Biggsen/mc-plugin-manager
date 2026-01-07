@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import type { ServerProfile } from '../types'
 import { ImportScreen } from './ImportScreen'
 import { OnboardingScreen } from './OnboardingScreen'
+import { BuildScreen } from './BuildScreen'
 
 interface ServerDetailScreenProps {
   server: ServerProfile
@@ -10,7 +11,7 @@ interface ServerDetailScreenProps {
 
 export function ServerDetailScreen({ server: initialServer, onBack }: ServerDetailScreenProps) {
   const [server, setServer] = useState<ServerProfile>(initialServer)
-  const [activeTab, setActiveTab] = useState<'import' | 'onboarding'>('import')
+  const [activeTab, setActiveTab] = useState<'import' | 'onboarding' | 'build'>('import')
 
   useEffect(() => {
     // Refresh server data when it changes
@@ -123,6 +124,20 @@ export function ServerDetailScreen({ server: initialServer, onBack }: ServerDeta
         >
           Onboarding
         </button>
+        <button
+          onClick={() => setActiveTab('build')}
+          style={{
+            padding: '0.75rem 1.5rem',
+            fontSize: '1rem',
+            border: 'none',
+            borderBottom: activeTab === 'build' ? '2px solid #007acc' : '2px solid transparent',
+            backgroundColor: 'transparent',
+            cursor: 'pointer',
+            fontWeight: activeTab === 'build' ? 'bold' : 'normal',
+          }}
+        >
+          Build
+        </button>
       </div>
 
       {/* Tab Content */}
@@ -132,6 +147,7 @@ export function ServerDetailScreen({ server: initialServer, onBack }: ServerDeta
       {activeTab === 'onboarding' && (
         <OnboardingScreen server={server} onServerUpdate={handleServerUpdate} />
       )}
+      {activeTab === 'build' && <BuildScreen server={server} />}
     </div>
   )
 }

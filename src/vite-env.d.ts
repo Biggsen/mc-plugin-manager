@@ -19,6 +19,8 @@ interface ElectronAPI {
     serverId: string,
     inputs: { cePath: string; aaPath: string; outDir: string }
   ) => Promise<BuildResult>
+  showConfigFileDialog: (title: string, defaultPath?: string) => Promise<string | null>
+  showOutputDialog: () => Promise<string | null>
   readBuildReport: (serverId: string, buildId: string) => Promise<BuildReport | null>
 }
 

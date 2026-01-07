@@ -6,8 +6,9 @@ const {
   getServerDirectory,
 } = require('./storage')
 const { randomUUID } = require('crypto')
-const { existsSync } = require('fs')
+const { existsSync, writeFileSync } = require('fs')
 const { importRegions } = require('./regionParser')
+const { generateAACommands, mergeAAConfig } = require('./aaGenerator')
 
 type ServerProfile = any
 type ServerSummary = any
@@ -167,7 +168,7 @@ ipcMain.handle(
   }
 )
 
-// Build configs (placeholder for M3/M4)
+// Build configs
 ipcMain.handle(
   'build-configs',
   async (
@@ -175,11 +176,96 @@ ipcMain.handle(
     serverId: string,
     inputs: { cePath: string; aaPath: string; outDir: string }
   ): Promise<BuildResult> => {
-    // TODO: Implement in M3/M4
-    return {
-      success: false,
-      error: 'Build functionality not yet implemented (M3/M4)',
+    try {
+      const profile = loadServerProfile(serverId)
+      if (!profile) {
+        return {
+          success: false,
+          error: `Server profile not found: ${serverId}`,
+        }
+      }
+      
+      // Validate input files exist
+      if (!existsSync(inputs.aaPath)) {
+        return {
+          success: false,
+          error: `AA config file not found: ${inputs.aaPath}`,
+        }
+      }
+      
+      // Generate AA Commands
+      const newCommands = generateAACommands(profile.regions)
+      
+      // Merge into AA config
+      const mergedAAContent = mergeAAConfig(inputs.aaPath, newCommands)
+      
+      // Write output (create output directory if needed)
+      const path = require('path')
+      const fs = require('fs')
+      if (!existsSync(inputs.outDir)) {
+        fs.mkdirSync(inputs.outDir, { recursive: true })
+      }
+      
+      const aaOutputPath = path.join(inputs.outDir, 'advancedachievements-config.yml')
+      writeFileSync(aaOutputPath, mergedAAContent, 'utf-8')
+      
+      // Generate build ID
+      const buildId = `build-${Date.now()}`
+      
+      // Update profile with build info
+      profile.build.lastBuildId = buildId
+      profile.build.outputDirectory = inputs.outDir
+      saveServerProfile(profile)
+      
+      return {
+        success: true,
+        buildId,
+      }
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.message || 'Unknown error during build',
+      }
     }
+  }
+)
+
+// Show file dialog for config file selection
+ipcMain.handle(
+  'show-config-file-dialog',
+  async (_event: any, title: string, defaultPath?: string): Promise<string | null> => {
+    const result = await dialog.showOpenDialog({
+      title,
+      defaultPath,
+      filters: [
+        { name: 'YAML Files', extensions: ['yml', 'yaml'] },
+        { name: 'All Files', extensions: ['*'] },
+      ],
+      properties: ['openFile'],
+    })
+    
+    if (result.canceled || result.filePaths.length === 0) {
+      return null
+    }
+    
+    return result.filePaths[0]
+  }
+)
+
+// Show directory dialog for output
+ipcMain.handle(
+  'show-output-dialog',
+  async (_event: any): Promise<string | null> => {
+    const result = await dialog.showOpenDialog({
+      title: 'Select Output Directory',
+      properties: ['openDirectory'],
+    })
+    
+    if (result.canceled || result.filePaths.length === 0) {
+      return null
+    }
+    
+    return result.filePaths[0]
   }
 )
 

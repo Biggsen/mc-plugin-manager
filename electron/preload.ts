@@ -26,6 +26,8 @@ export interface ElectronAPI {
     serverId: string,
     inputs: { cePath: string; aaPath: string; outDir: string }
   ) => Promise<BuildResult>
+  showConfigFileDialog: (title: string, defaultPath?: string) => Promise<string | null>
+  showOutputDialog: () => Promise<string | null>
   
   // Build reports
   readBuildReport: (serverId: string, buildId: string) => Promise<BuildReport>
@@ -119,6 +121,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.invoke('update-onboarding', serverId, onboarding),
   buildConfigs: (serverId: string, inputs: { cePath: string; aaPath: string; outDir: string }) =>
     ipcRenderer.invoke('build-configs', serverId, inputs),
+  showConfigFileDialog: (title: string, defaultPath?: string) =>
+    ipcRenderer.invoke('show-config-file-dialog', title, defaultPath),
+  showOutputDialog: () => ipcRenderer.invoke('show-output-dialog'),
   readBuildReport: (serverId: string, buildId: string) =>
     ipcRenderer.invoke('read-build-report', serverId, buildId),
 } as ElectronAPI)
