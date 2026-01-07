@@ -40,10 +40,10 @@ export function BuildScreen({ server }: BuildScreenProps) {
   }
 
   async function handleBuild() {
-    if (!aaPath) {
+    if (!aaPath && !cePath) {
       setBuildResult({
         success: false,
-        error: 'Please select AdvancedAchievements config file',
+        error: 'Please select at least one config file (AA or CE)',
       })
       return
     }
@@ -112,7 +112,7 @@ export function BuildScreen({ server }: BuildScreenProps) {
         {/* AA Config */}
         <div>
           <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
-            AdvancedAchievements config.yml <span style={{ color: '#d9534f' }}>*</span>
+            AdvancedAchievements config.yml
           </label>
           <div style={{ display: 'flex', gap: '0.5rem' }}>
             <input
@@ -150,47 +150,44 @@ export function BuildScreen({ server }: BuildScreenProps) {
           </div>
         </div>
 
-        {/* CE Config (optional for M3) */}
+        {/* CE Config */}
         <div>
           <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
-            ConditionalEvents config.yml <span style={{ color: '#999' }}>(M4)</span>
+            ConditionalEvents config.yml
           </label>
           <div style={{ display: 'flex', gap: '0.5rem' }}>
             <input
               type="text"
               value={cePath}
               onChange={(e) => setCePath(e.target.value)}
-              placeholder="Select ConditionalEvents config file... (Coming in M4)"
+              placeholder="Select ConditionalEvents config file..."
               readOnly
-              disabled
               style={{
                 flex: 1,
                 padding: '0.5rem',
                 fontSize: '1rem',
                 border: '1px solid #ddd',
                 borderRadius: '4px',
-                backgroundColor: '#f0f0f0',
-                color: '#999',
+                backgroundColor: '#f9f9f9',
               }}
             />
             <button
               onClick={handleSelectCEFile}
-              disabled
               style={{
                 padding: '0.5rem 1rem',
                 fontSize: '1rem',
-                backgroundColor: '#ccc',
-                color: '#999',
+                backgroundColor: '#6c757d',
+                color: 'white',
                 border: 'none',
                 borderRadius: '4px',
-                cursor: 'not-allowed',
+                cursor: 'pointer',
               }}
             >
               Browse...
             </button>
           </div>
           <div style={{ fontSize: '0.875rem', color: '#666', marginTop: '0.25rem' }}>
-            ConditionalEvents generation coming in M4
+            Select the existing ConditionalEvents config.yml file
           </div>
         </div>
 
@@ -240,15 +237,15 @@ export function BuildScreen({ server }: BuildScreenProps) {
       <div>
         <button
           onClick={handleBuild}
-          disabled={isBuilding || !aaPath || !outDir}
+          disabled={isBuilding || (!aaPath && !cePath) || !outDir}
           style={{
             padding: '0.75rem 2rem',
             fontSize: '1rem',
-            backgroundColor: isBuilding || !aaPath || !outDir ? '#ccc' : '#007acc',
+            backgroundColor: isBuilding || (!aaPath && !cePath) || !outDir ? '#ccc' : '#007acc',
             color: 'white',
             border: 'none',
             borderRadius: '4px',
-            cursor: isBuilding || !aaPath || !outDir ? 'not-allowed' : 'pointer',
+            cursor: isBuilding || (!aaPath && !cePath) || !outDir ? 'not-allowed' : 'pointer',
             opacity: isBuilding ? 0.6 : 1,
           }}
         >

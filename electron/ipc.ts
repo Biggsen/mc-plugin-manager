@@ -9,6 +9,7 @@ const { randomUUID } = require('crypto')
 const { existsSync, writeFileSync } = require('fs')
 const { importRegions } = require('./regionParser')
 const { generateAACommands, mergeAAConfig } = require('./aaGenerator')
+const { generateOwnedCEEvents, mergeCEConfig } = require('./ceGenerator')
 
 type ServerProfile = any
 type ServerSummary = any
@@ -185,19 +186,13 @@ ipcMain.handle(
         }
       }
       
-      // Validate input files exist
-      if (!existsSync(inputs.aaPath)) {
+      // Validate at least one input file
+      if (!inputs.aaPath && !inputs.cePath) {
         return {
           success: false,
-          error: `AA config file not found: ${inputs.aaPath}`,
+          error: 'At least one config file (AA or CE) must be provided',
         }
       }
-      
-      // Generate AA Commands
-      const newCommands = generateAACommands(profile.regions)
-      
-      // Merge into AA config
-      const mergedAAContent = mergeAAConfig(inputs.aaPath, newCommands)
       
       // Write output (create output directory if needed)
       const path = require('path')
@@ -205,9 +200,40 @@ ipcMain.handle(
       if (!existsSync(inputs.outDir)) {
         fs.mkdirSync(inputs.outDir, { recursive: true })
       }
-      
-      const aaOutputPath = path.join(inputs.outDir, 'advancedachievements-config.yml')
-      writeFileSync(aaOutputPath, mergedAAContent, 'utf-8')
+
+      // Generate AA if path provided
+      if (inputs.aaPath && inputs.aaPath.trim().length > 0) {
+        if (!existsSync(inputs.aaPath)) {
+          return {
+            success: false,
+            error: `AA config file not found: ${inputs.aaPath}`,
+          }
+        }
+        
+        // Generate AA Commands
+        const newCommands = generateAACommands(profile.regions)
+        
+        // Merge into AA config
+        const mergedAAContent = mergeAAConfig(inputs.aaPath, newCommands)
+        
+        const aaOutputPath = path.join(inputs.outDir, 'advancedachievements-config.yml')
+        writeFileSync(aaOutputPath, mergedAAContent, 'utf-8')
+      }
+
+      // Generate CE if path provided
+      if (inputs.cePath && inputs.cePath.trim().length > 0) {
+        if (!existsSync(inputs.cePath)) {
+          return {
+            success: false,
+            error: `CE config file not found: ${inputs.cePath}`,
+          }
+        }
+
+        const ownedEvents = generateOwnedCEEvents(profile.regions, profile.onboarding)
+        const mergedCEContent = mergeCEConfig(inputs.cePath, ownedEvents)
+        const ceOutputPath = path.join(inputs.outDir, 'conditionalevents-config.yml')
+        writeFileSync(ceOutputPath, mergedCEContent, 'utf-8')
+      }
       
       // Generate build ID
       const buildId = `build-${Date.now()}`
