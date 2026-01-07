@@ -1,0 +1,2112 @@
+#======================================================================================================================#
+#       _       _                               _      _        _     _                                     _          #
+#      / \   __| |_   ____ _ _ __   ___ ___  __| |    / \   ___| |__ (_) _____   _____ _ __ ___   ___ _ __ | |_ ___    #
+#     / _ \ / _` \ \ / / _` | '_ \ / __/ _ \/ _` |   / _ \ / __| '_ \| |/ _ \ \ / / _ \ '_ ` _ \ / _ \ '_ \| __/ __|   #
+#    / ___ \ (_| |\ V / (_| | | | | (_|  __/ (_| |  / ___ \ (__| | | | |  __/\ V /  __/ | | | | |  __/ | | | |_\__ \   #
+#   /_/   \_\__,_| \_/ \__,_|_| |_|\___\___|\__,_| /_/   \_\___|_| |_|_|\___| \_/ \___|_| |_| |_|\___|_| |_|\__|___/   #
+#                                                                                                                      #
+#======================================================================================================================#
+
+# Only spaces, no tabs. Don't forget the indents (2 spaces per indentation level).
+# To check syntax errors in your file, use: https://yaml-online-parser.appspot.com
+# To get involved with the project, visit its GitHub: https://github.com/PyvesB/advanced-achievements
+# To get some valuable additional documentation, visit the Wiki: https://github.com/PyvesB/advanced-achievements/wiki
+# The default configuration files can be found at the following address:
+# https://github.com/PyvesB/advanced-achievements/blob/master/advanced-achievements-plugin/src/main/resources/config.yml
+
+#======================================================================================================================#
+#                                                   GENERAL SETTINGS                                                   #
+#                                                                                                                      #
+#                                Various settings to fine-tune the plugin's behaviour.                                 #
+#======================================================================================================================#
+
+# Time in seconds between each /aach book. Ignored for players with achievement.* permission.
+TimeBook: 900
+
+# Sort pages of the book in chronological order (false for reverse chronological order).
+BookChronologicalOrder: true
+
+# Separator between name, description and date on an /aach book page.
+BookSeparator: ""
+
+# Activate firework effects when a player receives an achievement.
+Firework: true
+
+# Choose ball_large, ball, burst, creeper, star or random.
+FireworkStyle: ball_large
+
+# Activate simpler effects and a calm sound when a player receives an achievement. Ignored if Firework setting is true.
+SimplifiedReception: false
+
+# Number of players displayed in /aach top, week and month commands.
+TopList: 5
+
+# Activate particle effects when performing /aach book, /aach stats when all achievements have been received and
+# /aach top, week or month when ranked in the top list.
+AdditionalEffects: true
+
+# Activate sounds when performing /aach book, /aach stats when all achievements have been received and  /aach top, week
+# or month when ranked in the top list.
+Sound: true
+
+# For /aach book. All sound values can be found here: https://github.com/PyvesB/advanced-achievements/wiki/Sound-names
+SoundBook: entity_player_levelup
+
+# For /aach stats when all achievements have been received.
+SoundStats: entity_firework_rocket_blast
+
+# For /aach top, week, month when ranked in the top list.
+SoundRanking: entity_firework_rocket_blast
+
+# Icon of the plugin (default: shamrock, \u2618).
+Icon: \u2618
+
+# Main color of the plugin (default: 5, dark purple).
+Color: 5
+
+# Notify other connected players when an achievement is received. This defines the default behaviour, players can 
+# override what they see by using /aach toggle.
+NotifyOtherPlayers: false
+
+# Notify other connected players using action bars, otherwise chat messages are used.
+ActionBarNotify: true
+
+# Display achievement DisplayName and Message as screen titles.
+TitleScreen: true
+
+# Display a boss bar showing progress a few seconds after an achievement is received.
+BossBarProgress: true
+
+# Send informative chat messages to the player receiving an achievement.
+ReceiverChatMessages: true
+
+# When a player receives an achievement, the DisplayName, Message and rewards of the achievement are displayed in the 
+# chat as separate messages. If true, a single hoverable text will be displayed to the receiver instead.
+HoverableReceiverChatText: false
+
+# Format of the header used for most chat messages (default: "§7[%ICON%§7]"). Can be empty, "".
+ChatHeader: "§7[%ICON%§7]"
+
+# Stop all stats from increasing when player in creative mode, including PlayedTime. Connection achievements will only
+# be handled once a player switches to a non-creative mode.
+RestrictCreative: false
+
+# Stop all stats from increasing when player in spectator mode, including PlayedTime. Connection achievements will only
+# be handled once a player switches to a non-spectator mode.
+RestrictSpectator: true
+
+# Stop all stats from increasing when player in adventure mode, including PlayedTime. Connection achievements will only
+# be handled once a player switches to a non-adventure mode.
+RestrictAdventure: false
+
+# Stop all stats from increasing when player in a specific world, including PlayedTime (delete the [] before listing
+# values). Connection achievements will only be handled once a player enters a non-excluded world.
+ExcludedWorlds: []
+#  - yourWorld1
+#  - yourWorld2
+
+# Ignore vertical dimension (Y axis) when calculating distance statistics.
+IgnoreVerticalDistance: false
+
+# Hide these categories from the GUI and prevent statistics from increasing. Once added to this list, you do not need to
+# delete the corresponding achievement configuration section. To enable all categories, remove all listed items and
+# instead specify DisabledCategories: []
+DisabledCategories:
+  - AdvancementsCompleted
+
+# Do not take into account items broken with Silk Touch for the Breaks achievements.
+DisableSilkTouchBreaks: false
+
+# Do not take into account ores broken with Silk Touch for the Breaks achievements. DisableSilkTouchBreaks takes
+# precedence over this. Not applicable to iron or gold ores.
+DisableSilkTouchOreBreaks: false
+
+# Used for the Breaks achievement category. You may need to expand this list when new Minecraft versions are released.
+OreBlocks:
+  - coal_ore
+  - diamond_ore
+  - emerald_ore
+  - lapis_ore
+  - nether_gold_ore
+  - nether_quartz_ore
+  - redstone_ore
+
+# Language file to use. Available: lang.yml, lang-BP.yml, lang-CN.yml, lang-CZ.yml, lang-DA.yml, lang-DE.yml,
+# lang-ES.yml, lang-FI.yml, lang-FR.yml, lang-HU.yml, lang-IT.yml, lang-PL.yml, lang-RO.yml, lang-RU.yml, lang-SE.yml,
+# lang-SK.yml, lang-TR.yml, lang-TW.yml, lang-VN.yml
+LanguageFileName: lang.yml
+
+# Time in seconds between each statistic count. Only the listed categories are currently supported.
+StatisticCooldown:
+  LavaBuckets: 10
+  WaterBuckets: 10
+  Milk: 10
+  Beds: 30
+  Brewing: 5
+  MusicDiscs: 30
+  BooksEdited: 10
+
+# Display action bar message when player performs an action while in a cooldown period.
+CooldownActionBar: true
+
+# Locale used to format dates in /aach book and /aach list. You must select an ISO 639 language code. The list of
+# possible language codes can be found at https://www.loc.gov/standards/iso639-2/php/code_list.php
+DateLocale: en
+
+# Display reception time of achievements in /aach book and /aach list in addition to the date.
+DateDisplayTime: true
+
+# Awarded when a player has received all the achievements. Use the same reward pattern as with achievements.
+# See https://github.com/PyvesB/advanced-achievements/wiki/Rewards
+AllAchievementsReceivedRewards:
+  IncreaseMaxOxygen: 30
+  Experience: 100
+
+# PlayedTime will no longer increase when the player is AFK. Requires Essentials to work.
+IgnoreAFKPlayedTime: false
+
+# Register advancements with a description corresponding to the Goal parameter of each achievement. If changed, run
+# /aach generate to regenerate advancements with the new value taken into account.
+RegisterAdvancementDescriptions: true
+
+# Hide advancements from the advancement GUI. Advancement notifications will still appear when receiving achievements.
+HideAdvancements: false
+
+# Title shown on the root advancement.
+RootAdvancementTitle: Advanced Achievements
+
+# Background shown on the advancement tab. Must be a resource location to any image in a resource pack.
+AdvancementsBackground: "minecraft:textures/item/book.png"
+
+# Used for the Fireworks achievement category. In vanilla Minecraft, fireworks cannot be launched on the following
+# blocks. Unless listed here, players may be able to abuse the Fireworks category by repeatedly right clicking on the
+# block and not actually using any fireworks. You may need to expand this list when new Minecraft versions are released.
+ForbiddenFireworkBlocks:
+  - glow_item_frame
+  - painting
+  - item_frame
+  - minecart
+  - hopper_minecart
+  - tnt_minecart
+  - command_block_minecart
+  - furnace_minecart
+  - chest_minecart
+
+# Used for the Fireworks achievement category. In vanilla Minecraft, fireworks can only be launched on the following
+# blocks when sneaking. Unless listed here, players may be able to abuse the Fireworks category by repeatedly right 
+# clicking on the block and not actually using any fireworks. You may need to expand this list when new Minecraft 
+# versions are released.
+ForbiddenFireworkBlocksWhenNotSneaking:
+  - polished_blackstone_button
+  - furnace
+  - dispenser
+  - chest
+  - note_block
+  - lever
+  - stone_button
+  - ender_chest
+  - beacon
+  - anvil
+  - trapped_chest
+  - hopper
+  - dropper
+  - brewing_stand
+  - crafting_table
+  - acacia_button
+  - birch_button
+  - dark_oak_button
+  - jungle_button
+  - oak_button
+  - spruce_button
+  - acacia_door
+  - birch_door
+  - dark_oak_door
+  - jungle_door
+  - oak_door
+  - spruce_door
+  - acacia_fence_gate
+  - birch_fence_gate
+  - dark_oak_fence_gate
+  - jungle_fence_gate
+  - oak_fence_gate
+  - spruce_fence_gate
+  - enchanting_table
+  - acacia_trapdoor
+  - birch_trapdoor
+  - dark_oak_trapdoor
+  - jungle_trapdoor
+  - oak_trapdoor
+  - spruce_trapdoor
+  - acacia_boat
+  - birch_boat
+  - dark_oak_boat
+  - jungle_boat
+  - oak_boat
+  - spruce_boat
+  - black_bed
+  - blue_bed
+  - brown_bed
+  - cyan_bed
+  - gray_bed
+  - green_bed
+  - light_blue_bed
+  - light_gray_bed
+  - lime_bed
+  - magenta_bed
+  - orange_bed
+  - pink_bed
+  - purple_bed
+  - red_bed
+  - white_bed
+  - yellow_bed
+  - cake
+  - comparator
+  - repeater
+  - command_block
+  - armor_stand
+  - chain_command_block
+  - repeating_command_block
+  - black_shulker_box
+  - blue_shulker_box
+  - brown_shulker_box
+  - cyan_shulker_box
+  - gray_shulker_box
+  - green_shulker_box
+  - light_blue_shulker_box
+  - lime_shulker_box
+  - magenta_shulker_box
+  - orange_shulker_box
+  - pink_shulker_box
+  - purple_shulker_box
+  - red_shulker_box
+  - white_shulker_box
+  - yellow_shulker_box
+  - shulker_box
+  - barrel
+  - bell
+  - blast_furnace
+  - cartography_table
+  - grindstone
+  - loom
+  - smoker
+  - stonecutter
+  - acacia_sign
+  - acacia_wall_sign
+  - birch_sign
+  - birch_wall_sign
+  - dark_oak_sign
+  - dark_oak_wall_sign
+  - jungle_sign
+  - jungle_wall_sign
+  - oak_sign
+  - oak_wall_sign
+  - spruce_sign
+  - spruce_wall_sign
+
+# Used for the HoePlowings achievement category. You may need to expand this list when new Minecraft versions are
+# released.
+HoePlowableBlocks:
+  - dirt
+  - grass_block
+
+# Used for the Fish achievement category. You may need to expand this list when new Minecraft versions are released.
+FishableFish:
+  - cod
+  - salmon
+  - pufferfish
+  - tropical_fish
+
+#======================================================================================================================#
+#                                                     GUI SETTINGS                                                     #
+#                                                                                                                      #
+#        Configure the behaviour of /aach list. The items being displayed can be further customised in gui.yml.        #
+#======================================================================================================================#
+
+# Format of the achievement category name in /aach list (default: "%ICON% %NAME% %ICON%").
+ListAchievementFormat: "%ICON% %NAME% %ICON%"
+
+# Obfuscate achievements that have not yet been received in /aach list.
+ObfuscateNotReceived: false
+
+# For Multiple action achievement categories with a series of related achievements, show achievements that have been
+# obtained and show the next obtainable achievement, but obfuscate the additional achievements. For example, under 
+# Places, stone, the first achievement could have a target of 100 stone, the second 500 stone, and the third 1000 stone.
+# When ObfuscateProgressiveAchievements is true, initially only the 100 stone achievement will be readable in the GUI.
+# Once 100 stone have been placed, the 500 stone achievement will become legible.
+ObfuscateProgressiveAchievements: false
+
+# Similar to ObfuscateProgressiveAchievements, but displays not received achievements as locked in /aach list.
+HideProgressiveAchievements: false
+
+# Hide categories for which a player has not yet received achievements by displaying them as locked in /aach list.
+HideNotReceivedCategories: false
+
+# Completely hide categories for which the player does not have the matching permission (e.g. achievement.count.beds).
+HideNoPermissionCategories: false
+
+# Hide the reward display in /aach list.
+HideRewardDisplayInList: false
+
+# Display precise statistic information in the /aach list progress bars.
+EnrichedListProgressBars: true
+
+# Annotate each achievement displayed in a /aach list category with a number.
+NumberedItemsInList: false
+
+# Color used for not yet received achievements in /aach list.
+ListColorNotReceived: 8
+
+# Italicise not yet received achievements in /aach list. Obfuscated achievements are not affected.
+ListItaliciseNotReceived: true
+
+# By default, the back button in the GUI returns to the listing of all categories. Use this option if you want to run a
+# command instead. PLAYER placeholder is supported. 
+OverrideBackButtonBehaviour: ""
+
+# If true, the icon of the back button in the GUI will be the same as the category currently being viewed.
+BackButtonIsCategoryItem: true
+
+#======================================================================================================================#
+#                                                  DATABASE SETTINGS                                                   #
+#                                                                                                                      #
+#                       The database is where all player statistics and achievements are stored.                       #
+#======================================================================================================================#
+
+# Make a daily backup of your local database (if sqlite or h2) when the server restarts.
+DatabaseBackup: true
+
+# Database type, sqlite, h2, postgresql or mysql. Do a full server restart for this to take effect.
+DatabaseType: h2
+
+# Prefix added to the tables in the database. If you switch from the default tables names (no prefix), the plugin does
+# an automatic renaming. Otherwise you must rename tables manually. Do a full server restart for this to take effect.
+TablePrefix: ""
+
+# When using groups of subcategories for Multiple action achievements (e.g. snow|snow_block|ice), you must ensure that
+# the value of this parameter is greater than the total number of characters in the group. Unless you use groups of very
+# large sizes, you don't need to change this value.
+TableMaxSizeOfGroupedSubcategories: 128
+
+# Specify additional options when opening a connection to a MySQL/PostgreSQL database. Start each option with &, for
+# example "&useUnicode=yes&characterEncoding=UTF-8". Make sure the key-value pairs themselves are URL encoded.
+AdditionalConnectionOptions: ""
+
+# Settings to connect to your MySQL/PostgreSQL database (ignored if sqlite).
+# A PostgreSQL database address will be similar to jdbc:postgresql://localhost:5432/minecraft
+DatabaseAddress: "jdbc:mysql://localhost:3306/minecraft"
+DatabaseUser: root
+DatabasePassword: root
+
+#======================================================================================================================#
+#                                                 PERFORMANCE SETTINGS                                                 #
+#                                                                                                                      #
+#                                    In most cases, you won't need to change these.                                    #
+#======================================================================================================================#
+
+# Frequency of play time checks for players (seconds). Smaller values give more precision but more CPU usage.
+PlaytimeTaskInterval: 60
+
+# Frequency of distance traveled checks by players (seconds). Smaller values give more precision but more CPU usage.
+DistanceTaskInterval: 5
+
+# Enable if you use BungeeCord or if your database is shared by multiple servers. Do a full server restart.
+BungeeMode: false
+
+#======================================================================================================================#
+#                                             MULTIPLE ACTION ACHIEVEMENTS                                             #
+#                                                                                                                      #
+#                Achievements in the following categories require both a sub-category and a threshold.                 #
+#======================================================================================================================#
+
+# Count blocks placed. You can use any of the following:
+# - block names (available names: https://github.com/PyvesB/advanced-achievements/wiki/Material-names).
+# - custom display name of items (e.g. the name of a player's head).
+Places:
+  chest:
+    5:
+      # Optional, used in /aach list when achievement not yet received, and in advancements.
+      Goal: Place 5 chests.
+      # Description, displayed when receiving achievement, and in /aach book and /aach list.
+      Message: §6You have placed 5 chests!
+      # Database name, must also be used in /aach delete and /aach check.
+      Name: place_5_chest
+      # Displayed when receiving achievement, and in /aach book and /aach list.
+      DisplayName: Storage Expert
+      # Used to select the display item for this achievement in gui.yml.
+      Type: normal
+    50:
+      Goal: Place 50 chests.
+      Message: §6You have placed 50 chests!
+      Name: place_50_chest
+      DisplayName: Tetris Master
+      Type: normal
+  stone:
+    100:
+      Goal: Place 100 Stones.
+      Message: One hundred placed stones!
+      Name: place_100_stone
+      DisplayName: Stone Addict
+      Type: normal
+    1000:
+      Goal: Place 1000 stones.
+      Message: One thousand placed stones!
+      Name: place_1000_stone
+      DisplayName: Stone God
+      Type: normal
+      Reward:
+        Command:
+          Execute: "say §7ALERT: §4PLAYER§7 has become the §4STONE GOD§7!"
+          Display: Become the Stone God!
+  # Item custom display name, for example Mario's head from the Custom Heads plugin.
+  §eMario:
+    1:
+      Goal: Place Mario's head.
+      Message: Mario's head is on the ground!
+      Name: place_1_mario
+      DisplayName: It's-a me, Mario!
+      Type: rare
+
+# Count blocks broken. You can use any of the following:
+# - block names (available names: https://github.com/PyvesB/advanced-achievements/wiki/Material-names).
+Breaks:
+  ice:
+    10:
+      Goal: Break 10 ice blocks.
+      Message: You have broken 10 ice blocks!
+      Name: break_10_ice
+      DisplayName: Cold Drink Supplier
+      Type: normal
+  # Use the following construct to track multiple types. Note that if ever you add/remove a type grouped to 
+  # others with |, progress for this sub-category group will start back at 0.
+  snow|snow_block|ice:
+    32:
+      Goal: Break 32 ice and/or snow.
+      Message: You have broken 32 ice and snow, Woo!
+      Name: break_32_ice_any
+      DisplayName: Praying for Summer
+      Type: normal
+  stone:
+    1:
+      Goal: Break a block.
+      Message: §1The first time you went mining!
+      Name: break_1_stone
+      DisplayName: Cobble Gobble!
+      Type: normal
+      Reward:
+        Command:
+          Execute:
+            - give PLAYER torch 8
+          Display: You got some torches
+
+# Count entities killed. You can use any of the following:
+# - entity types (available names: https://github.com/PyvesB/advanced-achievements/wiki/Entity-names).
+# - poweredcreeper.
+# - custom mob name (name tag/plugins such as Mythic Mobs).
+# - player to track player kills as a whole.
+# - specificplayer- followed by player UUID to track how many times a specific player has been killed.
+Kills:
+  zombie:
+    1:
+      Goal: Kill a zombie.
+      Message: The first time you killed a zombie!
+      Name: kills_1_zombie
+      DisplayName: The Walking Dead
+      Type: normal
+      Reward:
+        Command:
+          Execute:
+            - give PLAYER carrot 6
+          Display: He had a few carrots on him
+
+# Count targets shot (but not necessarily killed) with a projectile. You can use any of the following:
+# - block names: https://github.com/PyvesB/advanced-achievements/wiki/Material-names
+# - entity names: https://github.com/PyvesB/advanced-achievements/wiki/Entity-names
+TargetsShot:
+  villager:
+    10:
+      Goal: Throw things at villagers.
+      Message: You lapidated villagers 10 times.
+      Name: targetsshot_10_villager
+      DisplayName: The Stoner
+      Type: normal
+  glass:
+    100:
+      Goal: Try to break granny's windows.
+      Message: You shot 100 projectiles at glass blocks!
+      Name: targetsshot_100_glass
+      DisplayName: Window Breaker
+      Type: normal
+
+# Count items crafted (available names: https://github.com/PyvesB/advanced-achievements/wiki/Material-names).
+Crafts:
+  diamond_sword:
+    1:
+      Goal: Craft a sword.
+      Message: The first time you crafted a blade!
+      Name: craft_1_blade
+      DisplayName: Blacksmith Apprentice
+      Type: normal
+      Reward:
+        Experience: 100
+    100:
+      Goal: Craft 100 swords.
+      Message: Next craft, Excalibur?
+      Name: craft_100_blade
+      DisplayName: Blacksmith Legend
+      Type: rare
+      Reward:
+        Experience: 500
+
+# Count specific commands used. Specify command prefixes in lower case without initial slash. For example, command
+# '/petm setcolor red' from the PetMaster plugin matches with subcategory 'petm setcolor'. Aliases of a given command
+# will also be taken into account.
+PlayerCommands:
+  aach stats:
+    10:
+      Goal: Check your stats 10x.
+      Message: Run the stats command 10 times!
+      Name: playercommand_aachstats_10
+      DisplayName: Statistician
+      Type: normal
+      Rewards:
+        Command:
+          Execute: say §7PLAYER is now a statistician
+          Display: Broadcast
+
+# Count animals bred (available names: https://github.com/PyvesB/advanced-achievements/wiki/Entity-names).
+Breeding:
+  sheep:
+    1:
+      Goal: Breed a sheep.
+      Message: You bred your first sheep!
+      Name: breeding_1_sheep
+      DisplayName: Breeder
+      Type: normal
+
+# Count the maximum level reached in a job (full job name in lower case).
+JobsReborn:
+  hunter:
+    1:
+      Goal: Level up as a hunter!
+      Message: You have reached hunter level 2!
+      Name: jobsreborn_1_hunter
+      DisplayName: Hunter
+      Type: normal
+
+# Count effects held (effect name in lower case).
+# Available effects: https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/potion/PotionEffectType.html
+EffectsHeld:
+  jump:
+    1:
+      Goal: Hold the jump boost effect!
+      Message: You jumped as high as a kangaroo!
+      Name: effectsheld_1_jump
+      DisplayName: Kangaroo
+      Type: normal
+
+#======================================================================================================================#
+#                                              NORMAL ACTION ACHIEVEMENTS                                              #
+#                                                                                                                      #
+#                      Achievements in the following categories require only require a threshold.                      #
+#======================================================================================================================#
+
+# Count player connections during the day; statistic increases at most once per day.
+Connections:
+  1:
+    Message: You connected to our server for the first time!
+    Name: connect_1
+    DisplayName: Good Choice
+    Type: normal
+
+# Count player deaths.
+Deaths:
+  1:
+    Goal: You have to Die.
+    Message: The first time you died!
+    Name: deaths_1
+    DisplayName: Rest in Peace
+    Type: normal
+
+# Count arrows shot.
+Arrows:
+  50:
+    Goal: Shoot 50 arrows.
+    Message: 50 arrows shot!
+    Name: arrows_50
+    DisplayName: Arrows Around the Place
+    Type: normal
+
+# Count snowballs thrown.
+Snowballs:
+  1000:
+    Goal: Throw 1000 snowballs.
+    Message: 1000 snowballs thrown. That's the spirit!
+    Name: snowballs_1000
+    DisplayName: Winter Addict
+    Type: normal
+    Reward:
+        # 30 corresponds to one bubble in the oxygen bar.
+        IncreaseMaxOxygen: 30
+
+# Count eggs thrown
+Eggs:
+  1000:
+    Goal: Throw 1000 eggs.
+    Message: 1000 eggs thrown!
+    Name: eggs_1000
+    DisplayName: Omelet Addict
+    Type: normal
+
+# Count fish caught.
+Fish:
+  1:
+    Goal: Fish a fish.
+    Message: The first time you caught a fish!
+    Name: fish_1
+    DisplayName: First Catch!
+    Type: normal
+    Reward:
+        Command:
+          Execute:
+            - give PLAYER cooked_cod 1
+            - give PLAYER baked_potato 1
+          Display: Time for fish and chips
+
+# Count treasures caught with a fishing rod.
+Treasures:
+  1:
+    Goal: Get a treasure from the sea.
+    Message: Your first treasure from the sea!
+    Name: treasure_1
+    DisplayName: Treasure Hunter
+    Type: normal
+    Reward:
+      Item: experience_bottle 1
+
+# Count tools, armors or weapons broken.
+ItemBreaks:
+  1:
+    Goal: Let an item break.
+    Message: You broke your favorite tool!
+    Name: itembreaks_1
+    DisplayName: §4Clumsy Guy
+    Type: normal
+
+# Count items eaten (excludes potions and milk).
+EatenItems:
+  1:
+    Goal: Eat something.
+    Message: Just had a snack!
+    Name: eatenitems_1
+    DisplayName: First Snack
+    Type: normal
+
+# Count sheep sheared.
+Shear:
+  100:
+    Goal: Shear 100 sheep.
+    Message: 100 sheep sheared!
+    Name: shear_100
+    DisplayName: §1Wool Addict
+    Type: normal
+
+# Count cows milked.
+Milk:
+  1:
+    Goal: Milk a cow.
+    Message: §eJust milked a cow!.... §cMOOW
+    Name: milk_1
+    DisplayName: First Milk
+    Type: normal
+    Reward:
+      Experience: 100
+
+# Count buckets filled with lava.
+LavaBuckets:
+  10:
+    Goal: Fill 10 buckets with lava.
+    Message: 10 buckets filled with lava!
+    Name: lavabuckets_10
+    DisplayName: Pyroman
+    Type: normal
+
+# Count buckets filled with water.
+WaterBuckets:
+  15:
+    Goal: Fill 10 buckets with water.
+    Message: 15 buckets filled with water!
+    Name: waterbuckets_15
+    DisplayName: Fireman
+    Type: normal
+
+# Count trades with a villager (increases by one per trade regardless of the number of items traded).
+Trades:
+  1:
+    Goal: Trade with a villager.
+    Message: Doing business with your first villager!
+    Name: trades_1
+    DisplayName: First Trade
+    Type: normal
+
+# Count anvil usages.
+AnvilsUsed:
+  1:
+    Goal: Repair an item.
+    Message: You just repaired your first item!
+    Name: anvilsused_1
+    DisplayName: First Repair
+    Type: normal
+    Reward:
+      Item: iron_ingot 2
+
+# Count enchantments performed.
+Enchantments:
+  5:
+    Goal: Enchant 5 things.
+    Message: 5 objects enchanted!
+    Name: enchantments_5
+    DisplayName: §5Wizard
+    Type: normal
+
+# Count the number of times a player enters a bed.
+Beds:
+  5:
+    Goal: Sleep 5 times.
+    Message: You entered a bed 5 times!
+    Name: bed_5
+    DisplayName: Sleepy Guy
+    Type: normal
+
+# Count the maximum level reached.
+MaxLevel:
+  10:
+    Goal: Reach level 10.
+    Message: Level 10 reached!
+    Name: maxlevel_10
+    DisplayName: §4Rookie
+    Type: normal
+
+# Count potions consumed.
+ConsumedPotions:
+  100:
+    Goal: Drink 100 potions.
+    Message: Drinking weird beverages all the time...
+    Name: consumedpotions_100
+    DisplayName: Alcoholic
+    Type: normal
+    Reward:
+      Item: glass_bottle 4
+
+# Count the amount of time played on the server (in hours, use integers).
+PlayedTime:
+  1:
+    Goal: Play an hour.
+    Message: You played for one hour on the server!
+    Name: playedtime_1
+    DisplayName: First Hour
+    Type: normal
+
+# Count distance traveled by foot.
+DistanceFoot:
+  1000:
+    Goal: Travel 1000 Blocks with your feet.
+    Message: You traveled 1000 blocks by foot!
+    Name: distancefoot_1000
+    DisplayName: Big Walker
+    Type: normal
+    Reward:
+        Command:
+          Execute:
+            - give PLAYER leather_boots 1
+          Display: You might need these boots
+
+# Count distance traveled on a pig.
+DistancePig:
+  100:
+    Goal: Travel 100 Blocks with a pig.
+    Message: You traveled 100 blocks on a pig!
+    Name: distancepig_100
+    DisplayName: Carrot on a Stick Master
+    Type: rare
+
+# Count distance traveled on a horse.
+DistanceHorse:
+  500:
+    Goal: Travel 500 Blocks with a horse.
+    Message: You traveled 500 blocks on a horse!
+    Name: distancehorse_500
+    DisplayName: The Avener
+    Type: normal
+
+# Count distance traveled in a minecart.
+DistanceMinecart:
+  100:
+    Goal: Travel 100 Blocks with a minecart.
+    Message: You traveled 100 blocks in a minecart!
+    Name: distanceminecart_100
+    DisplayName: Carting Fan
+    Type: normal
+
+# Count distance traveled in a boat.
+DistanceBoat:
+  200:
+    Goal: Travel 200 Blocks with a boat.
+    Message: You traveled 200 blocks in a boat!
+    Name: distanceboat_200
+    DisplayName: Great Sailor
+    Type: normal
+
+# Count distance traveled with elytra.
+DistanceGliding:
+  100:
+    Goal: Fly 100 blocks with an elytra.
+    Message: You traveled 100 blocks with elytra!
+    Name: distancegliding_100
+    DisplayName: Angel
+    Type: rare
+
+# Count distance traveled on a llama.
+DistanceLlama:
+  150:
+    Goal: Travel 150 blocks with a llama.
+    Message: You traveled 150 blocks on a llama!
+    Name: distancellama_150
+    DisplayName: Llama Rider
+    Type: rare
+
+# Count distance traveled whilst sneaking.
+DistanceSneaking:
+  500:
+    Goal: Travel 500 blocks whilst sneaking.
+    Message: You traveled 500 blocks whilst sneaking!
+    Name: distancesneaking_500
+    DisplayName: Ninja
+    Type: normal
+
+# Count blocks of soil plowed with a hoe.
+HoePlowings:
+  10:
+    Goal: Plow 10 times.
+    Message: You plowed the ground 10 times!
+    Name: hoeplowings_10
+    DisplayName: Farmer
+    Type: normal
+
+# Count the number of bone meals used to fertilise plants.
+Fertilising:
+  15:
+    Goal: Use bonemeal 15 times.
+    Message: You used bone meal on plants 15 times!
+    Name: fertilising_15
+    DisplayName: Gardener
+    Type: normal
+
+# Count animals tamed.
+Taming:
+  1:
+    Goal: Tame an animal.
+    Message: You tamed your first animal!
+    Name: taming_1
+    DisplayName: Tamer
+    Type: normal
+    Reward:
+        Command:
+          Execute:
+            - give PLAYER lead 1
+          Display: This lead might come in handy
+
+# Count potions brewed.
+Brewing:
+  1:
+    Goal: Brew a potion.
+    Message: You brewed your first potion!
+    Name: brewing_1
+    DisplayName: Alchemist
+    Type: normal
+
+# Count fireworks launched.
+Fireworks:
+  10:
+    Goal: Launch fireworks 10 times.
+    Message: You launched 10 fireworks!
+    Name: fireworks_10
+    DisplayName: Pyrotechnist
+    Type: normal
+    Reward:
+      Experience: 200
+
+# Count music discs played (i.e. inserted in a jukebox).
+MusicDiscs:
+  1:
+    Goal: Use a jukebox.
+    Message: One jukebox used!
+    Name: musicdiscs_1
+    DisplayName: DJ
+    Type: normal
+
+# Count teleportations with an enderpearl.
+EnderPearls:
+  10:
+    Goal: Teleport with ender pearls 10 times.
+    Message: 10 teleportations with ender pearls!
+    Name: enderpearls_10
+    DisplayName: Teleport Man
+    Type: normal
+
+# Count pets given to another player (requires Pet Master plugin).
+PetMasterGive:
+  3:
+    Goal: Give 3 pets to friends.
+    Message: 3 pets given to friends!
+    Name: petmastergive_3
+    DisplayName: Donator
+    Type: rare
+
+# Count pets received from another player (requires Pet Master plugin).
+PetMasterReceive:
+  10:
+    Goal: Receive 10 pets.
+    Message: 10 pets received from friends!
+    Name: petmasterreceive_10
+    DisplayName: Receiver
+    Type: rare
+
+# Count items smelt in a furnace.
+Smelting:
+  250:
+    Goal: Smelt 250 items.
+    Message: 250 items smelt in a furnace!
+    Name: smeltitems_250
+    DisplayName: The Smelter
+    Type: normal
+    Reward:
+      Item: coal 16
+
+# Count raids won.
+RaidsWon:
+  1:
+    Goal: Win a raid.
+    Message: A raid won!
+    Name: raidswon_1
+    DisplayName: Accident or intentional?
+    Type: normal
+    Reward:
+      Item: emerald 8
+  10:
+    Goal: Win ten raids.
+    Message: Ten raids!
+    Name: raidswon_10
+    DisplayName: Village Protector
+    Type: rare
+    Reward:
+      Item: totem_of_undying 1
+
+# Count the number of times riptide is used with a trident.
+Riptides:
+  1:
+    Goal: Use a magical trident.
+    Message: You've mastered the powers of the sea!
+    Name: riptides_1
+    DisplayName: Poseidon
+    Type: normal
+
+# Count books edited.
+BooksEdited:
+  10:
+    Goal: Edit 10 books.
+    Message: You've used an entire pot of ink!
+    Name: booksedited_10
+    DisplayName: Scribe
+    Type: normal
+
+# Count items dropped on the ground.
+ItemDrops: {}
+
+# Count items picked up from the ground.
+ItemPickups: {}
+
+# Count the number of advancements completed. Covers all Vanilla advancements, not only those created by /aach generate.
+AdvancementsCompleted: {}
+
+#======================================================================================================================#
+#                                                 COMMAND ACHIEVEMENTS                                                 #
+#                                                                                                                      #
+#    Achievements in the following categories can only be obtained by running commands or integrating with the API.    #
+#======================================================================================================================#
+
+# Allow Commands achievement to be awarded several times.
+MultiCommand: true
+
+# Achievements in this category can be awarded with commands such as use '/aach give yourAch1 PLAYER'. The /aach give
+# command does not work with other achievements.
+Commands:
+  discoverWarriotos:
+    Goal: Discover Warriotos Region
+    Message: You discovered the region of Warriotos
+    Name: discover_warriotos
+    DisplayName: Region Discovery
+    Type: normal
+  discoverHeartOfWarriotos:
+    Goal: Discover the Heart of Warriotos
+    Message: You discovered the Heart of Warriotos
+    Name: discover_heart_of_warriotos
+    DisplayName: Heart Discovery
+    Type: normal
+  discoverCherrybrook:
+    Goal: Discover Cherrybrook Village
+    Message: You discovered the village of Cherrybrook
+    Name: discover_cherrybrook
+    DisplayName: Village Discovery
+    Type: normal
+  discoverMonkvos:
+    Goal: Discover Monkvos Region
+    Message: You discovered the region of Monkvos
+    Name: discover_monkvos
+    DisplayName: Region Discovery
+    Type: normal
+  discoverHeartOfMonkvos:
+    Goal: Discover the Heart of Monkvos
+    Message: You discovered the Heart of Monkvos
+    Name: discover_heart_of_monkvos
+    DisplayName: Heart Discovery
+    Type: normal
+  discoverCeacorn:
+    Goal: Discover Ceacorn Village
+    Message: You discovered the village of Ceacorn
+    Name: discover_ceacorn
+    DisplayName: Village Discovery
+    Type: normal
+  discoverRidgewick:
+    Goal: Discover Ridgewick Village
+    Message: You discovered the village of Ridgewick
+    Name: discover_ridgewick
+    DisplayName: Village Discovery
+    Type: normal
+  discoverAuchendinny:
+    Goal: Discover Auchendinny Village
+    Message: You discovered the village of Auchendinny
+    Name: discover_auchendinny
+    DisplayName: Village Discovery
+    Type: normal
+  discoverThornhill:
+    Goal: Discover Thornhill Village
+    Message: You discovered the village of Thornhill
+    Name: discover_thornhill
+    DisplayName: Village Discovery
+    Type: normal
+  discoverHolyania:
+    Goal: Discover Holyania Region
+    Message: You discovered the region of Holyania
+    Name: discover_holyania
+    DisplayName: Region Discovery
+    Type: normal
+  discoverHeartOfHolyania:
+    Goal: Discover the Heart of Holyania
+    Message: You discovered the Heart of Holyania
+    Name: discover_heart_of_holyania
+    DisplayName: Heart Discovery
+    Type: normal
+  discoverDemtory:
+    Goal: Discover Demtory Region
+    Message: You discovered the region of Demtory
+    Name: discover_demtory
+    DisplayName: Region Discovery
+    Type: normal
+  discoverHeartOfDemtory:
+    Goal: Discover the Heart of Demtory
+    Message: You discovered the Heart of Demtory
+    Name: discover_heart_of_demtory
+    DisplayName: Heart Discovery
+    Type: normal
+  discoverCliffheath:
+    Goal: Discover Cliffheath Village
+    Message: You discovered the village of Cliffheath
+    Name: discover_cliffheath
+    DisplayName: Village Discovery
+    Type: normal
+  discoverDirtyford:
+    Goal: Discover Dirtyford Village
+    Message: You discovered the village of Dirtyford
+    Name: discover_dirtyford
+    DisplayName: Village Discovery
+    Type: normal
+  discoverOttcherry:
+    Goal: Discover Ottcherry Village
+    Message: You discovered the village of Ottcherry
+    Name: discover_ottcherry
+    DisplayName: Village Discovery
+    Type: normal
+  discoverBadin:
+    Goal: Discover Badin Village
+    Message: You discovered the village of Badin
+    Name: discover_badin
+    DisplayName: Village Discovery
+    Type: normal
+  discoverMuirozo:
+    Goal: Discover Muirozo Region
+    Message: You discovered the region of Muirozo
+    Name: discover_muirozo
+    DisplayName: Region Discovery
+    Type: normal
+  discoverHeartOfMuirozo:
+    Goal: Discover the Heart of Muirozo
+    Message: You discovered the Heart of Muirozo
+    Name: discover_heart_of_muirozo
+    DisplayName: Heart Discovery
+    Type: normal
+  discoverTrefoilgate:
+    Goal: Discover Trefoilgate Village
+    Message: You discovered the village of Trefoilgate
+    Name: discover_trefoilgate
+    DisplayName: Village Discovery
+    Type: normal
+  discoverPlantainbrook:
+    Goal: Discover Plantainbrook Village
+    Message: You discovered the village of Plantainbrook
+    Name: discover_plantainbrook
+    DisplayName: Village Discovery
+    Type: normal
+  discoverNorthwich:
+    Goal: Discover Northwich Village
+    Message: You discovered the village of Northwich
+    Name: discover_northwich
+    DisplayName: Village Discovery
+    Type: normal
+  discoverLowernickel:
+    Goal: Discover Lowernickel Village
+    Message: You discovered the village of Lowernickel
+    Name: discover_lowernickel
+    DisplayName: Village Discovery
+    Type: normal
+  discoverZoreria:
+    Goal: Discover Zoreria Region
+    Message: You discovered the region of Zoreria
+    Name: discover_zoreria
+    DisplayName: Region Discovery
+    Type: normal
+  discoverHeartOfZoreria:
+    Goal: Discover the Heart of Zoreria
+    Message: You discovered the Heart of Zoreria
+    Name: discover_heart_of_zoreria
+    DisplayName: Heart Discovery
+    Type: normal
+  discoverIvwel:
+    Goal: Discover Ivwel Village
+    Message: You discovered the village of Ivwel
+    Name: discover_ivwel
+    DisplayName: Village Discovery
+    Type: normal
+  discoverShaancrub:
+    Goal: Discover Shaancrub Region
+    Message: You discovered the region of Shaancrub
+    Name: discover_shaancrub
+    DisplayName: Region Discovery
+    Type: normal
+  discoverHeartOfShaancrub:
+    Goal: Discover the Heart of Shaancrub
+    Message: You discovered the Heart of Shaancrub
+    Name: discover_heart_of_shaancrub
+    DisplayName: Heart Discovery
+    Type: normal
+  discoverStarplains:
+    Goal: Discover Starplains Region
+    Message: You discovered the region of Starplains
+    Name: discover_starplains
+    DisplayName: Region Discovery
+    Type: normal
+  discoverHeartOfStarplains:
+    Goal: Discover the Heart of Starplains
+    Message: You discovered the Heart of Starplains
+    Name: discover_heart_of_starplains
+    DisplayName: Heart Discovery
+    Type: normal
+  discoverOatswater:
+    Goal: Discover Oatswater Village
+    Message: You discovered the village of Oatswater
+    Name: discover_oatswater
+    DisplayName: Village Discovery
+    Type: normal
+  discoverBlekos:
+    Goal: Discover Blekos Region
+    Message: You discovered the region of Blekos
+    Name: discover_blekos
+    DisplayName: Region Discovery
+    Type: normal
+  discoverHeartOfBlekos:
+    Goal: Discover the Heart of Blekos
+    Message: You discovered the Heart of Blekos
+    Name: discover_heart_of_blekos
+    DisplayName: Heart Discovery
+    Type: normal
+  discoverInnmountains:
+    Goal: Discover Innmountains Region
+    Message: You discovered the region of Innmountains
+    Name: discover_innmountains
+    DisplayName: Region Discovery
+    Type: normal
+  discoverHeartOfInnmountains:
+    Goal: Discover the Heart of Innmountains
+    Message: You discovered the Heart of Innmountains
+    Name: discover_heart_of_innmountains
+    DisplayName: Heart Discovery
+    Type: normal
+  discoverMarketcross:
+    Goal: Discover Marketcross Village
+    Message: You discovered the village of Marketcross
+    Name: discover_marketcross
+    DisplayName: Village Discovery
+    Type: normal
+  discoverVillageglow:
+    Goal: Discover Villageglow Village
+    Message: You discovered the village of Villageglow
+    Name: discover_villageglow
+    DisplayName: Village Discovery
+    Type: normal
+  discoverJaspercort:
+    Goal: Discover Jaspercort Village
+    Message: You discovered the village of Jaspercort
+    Name: discover_jaspercort
+    DisplayName: Village Discovery
+    Type: normal
+  discoverMarglade:
+    Goal: Discover Marglade Region
+    Message: You discovered the region of Marglade
+    Name: discover_marglade
+    DisplayName: Region Discovery
+    Type: normal
+  discoverHeartOfMarglade:
+    Goal: Discover the Heart of Marglade
+    Message: You discovered the Heart of Marglade
+    Name: discover_heart_of_marglade
+    DisplayName: Heart Discovery
+    Type: normal
+  discoverRyebrook:
+    Goal: Discover Ryebrook Village
+    Message: You discovered the village of Ryebrook
+    Name: discover_ryebrook
+    DisplayName: Village Discovery
+    Type: normal
+  discoverSilverdale:
+    Goal: Discover Silverdale Village
+    Message: You discovered the village of Silverdale
+    Name: discover_silverdale
+    DisplayName: Village Discovery
+    Type: normal
+  discoverDinnywal:
+    Goal: Discover Dinnywal Village
+    Message: You discovered the village of Dinnywal
+    Name: discover_dinnywal
+    DisplayName: Village Discovery
+    Type: normal
+  discoverLionport:
+    Goal: Discover Lionport Region
+    Message: You discovered the region of Lionport
+    Name: discover_lionport
+    DisplayName: Region Discovery
+    Type: normal
+  discoverHeartOfLionport:
+    Goal: Discover the Heart of Lionport
+    Message: You discovered the Heart of Lionport
+    Name: discover_heart_of_lionport
+    DisplayName: Heart Discovery
+    Type: normal
+  discoverKoarama:
+    Goal: Discover Koarama Region
+    Message: You discovered the region of Koarama
+    Name: discover_koarama
+    DisplayName: Region Discovery
+    Type: normal
+  discoverHeartOfKoarama:
+    Goal: Discover the Heart of Koarama
+    Message: You discovered the Heart of Koarama
+    Name: discover_heart_of_koarama
+    DisplayName: Heart Discovery
+    Type: normal
+  discoverGranos:
+    Goal: Discover Granos Region
+    Message: You discovered the region of Granos
+    Name: discover_granos
+    DisplayName: Region Discovery
+    Type: normal
+  discoverHeartOfGranos:
+    Goal: Discover the Heart of Granos
+    Message: You discovered the Heart of Granos
+    Name: discover_heart_of_granos
+    DisplayName: Heart Discovery
+    Type: normal
+  discoverStonebridge:
+    Goal: Discover Stonebridge Village
+    Message: You discovered the village of Stonebridge
+    Name: discover_stonebridge
+    DisplayName: Village Discovery
+    Type: normal
+  discoverDinnystrem:
+    Goal: Discover Dinnystrem Village
+    Message: You discovered the village of Dinnystrem
+    Name: discover_dinnystrem
+    DisplayName: Village Discovery
+    Type: normal
+  discoverKamahold:
+    Goal: Discover Kamahold Region
+    Message: You discovered the region of Kamahold
+    Name: discover_kamahold
+    DisplayName: Region Discovery
+    Type: normal
+  discoverHeartOfKamahold:
+    Goal: Discover the Heart of Kamahold
+    Message: You discovered the Heart of Kamahold
+    Name: discover_heart_of_kamahold
+    DisplayName: Heart Discovery
+    Type: normal
+  discoverUthvenspring:
+    Goal: Discover Uthvenspring Village
+    Message: You discovered the village of Uthvenspring
+    Name: discover_uthvenspring
+    DisplayName: Village Discovery
+    Type: normal
+  discoverHethin:
+    Goal: Discover Hethin Village
+    Message: You discovered the village of Hethin
+    Name: discover_hethin
+    DisplayName: Village Discovery
+    Type: normal
+  discoverGratonor:
+    Goal: Discover Gratonor Region
+    Message: You discovered the region of Gratonor
+    Name: discover_gratonor
+    DisplayName: Region Discovery
+    Type: normal
+  discoverHeartOfGratonor:
+    Goal: Discover the Heart of Gratonor
+    Message: You discovered the Heart of Gratonor
+    Name: discover_heart_of_gratonor
+    DisplayName: Heart Discovery
+    Type: normal
+  discoverAlnhurst:
+    Goal: Discover Alnhurst Village
+    Message: You discovered the village of Alnhurst
+    Name: discover_alnhurst
+    DisplayName: Village Discovery
+    Type: normal
+  discoverLongpeak:
+    Goal: Discover Longpeak Village
+    Message: You discovered the village of Longpeak
+    Name: discover_longpeak
+    DisplayName: Village Discovery
+    Type: normal
+  discoverEternamedow:
+    Goal: Discover Eternamedow Region
+    Message: You discovered the region of Eternamedow
+    Name: discover_eternamedow
+    DisplayName: Region Discovery
+    Type: normal
+  discoverHeartOfEternamedow:
+    Goal: Discover the Heart of Eternamedow
+    Message: You discovered the Heart of Eternamedow
+    Name: discover_heart_of_eternamedow
+    DisplayName: Heart Discovery
+    Type: normal
+  discoverStopond:
+    Goal: Discover Stopond Village
+    Message: You discovered the village of Stopond
+    Name: discover_stopond
+    DisplayName: Village Discovery
+    Type: normal
+  discoverAurpeak:
+    Goal: Discover Aurpeak Region
+    Message: You discovered the region of Aurpeak
+    Name: discover_aurpeak
+    DisplayName: Region Discovery
+    Type: normal
+  discoverHeartOfAurpeak:
+    Goal: Discover the Heart of Aurpeak
+    Message: You discovered the Heart of Aurpeak
+    Name: discover_heart_of_aurpeak
+    DisplayName: Heart Discovery
+    Type: normal
+  discoverRotherhithe:
+    Goal: Discover Rotherhithe Village
+    Message: You discovered the village of Rotherhithe
+    Name: discover_rotherhithe
+    DisplayName: Village Discovery
+    Type: normal
+  discoverAuronia:
+    Goal: Discover Auronia Region
+    Message: You discovered the region of Auronia
+    Name: discover_auronia
+    DisplayName: Region Discovery
+    Type: normal
+  discoverHeartOfAuronia:
+    Goal: Discover the Heart of Auronia
+    Message: You discovered the Heart of Auronia
+    Name: discover_heart_of_auronia
+    DisplayName: Heart Discovery
+    Type: normal
+  discoverLowerhed:
+    Goal: Discover Lowerhed Village
+    Message: You discovered the village of Lowerhed
+    Name: discover_lowerhed
+    DisplayName: Village Discovery
+    Type: normal
+  discoverThistlebrook:
+    Goal: Discover Thistlebrook Village
+    Message: You discovered the village of Thistlebrook
+    Name: discover_thistlebrook
+    DisplayName: Village Discovery
+    Type: normal
+  discoverCornford:
+    Goal: Discover Cornford Village
+    Message: You discovered the village of Cornford
+    Name: discover_cornford
+    DisplayName: Village Discovery
+    Type: normal
+  discoverOpalgrang:
+    Goal: Discover Opalgrang Village
+    Message: You discovered the village of Opalgrang
+    Name: discover_opalgrang
+    DisplayName: Village Discovery
+    Type: normal
+  discoverZincley:
+    Goal: Discover Zincley Village
+    Message: You discovered the village of Zincley
+    Name: discover_zincley
+    DisplayName: Village Discovery
+    Type: normal
+  discoverLomyszo:
+    Goal: Discover Lomyszo Region
+    Message: You discovered the region of Lomyszo
+    Name: discover_lomyszo
+    DisplayName: Region Discovery
+    Type: normal
+  discoverHeartOfLomyszo:
+    Goal: Discover the Heart of Lomyszo
+    Message: You discovered the Heart of Lomyszo
+    Name: discover_heart_of_lomyszo
+    DisplayName: Heart Discovery
+    Type: normal
+  discoverBayfold:
+    Goal: Discover Bayfold Village
+    Message: You discovered the village of Bayfold
+    Name: discover_bayfold
+    DisplayName: Village Discovery
+    Type: normal
+  discoverGolish:
+    Goal: Discover Golish Region
+    Message: You discovered the region of Golish
+    Name: discover_golish
+    DisplayName: Region Discovery
+    Type: normal
+  discoverHeartOfGolish:
+    Goal: Discover the Heart of Golish
+    Message: You discovered the Heart of Golish
+    Name: discover_heart_of_golish
+    DisplayName: Heart Discovery
+    Type: normal
+  discoverNorhollow:
+    Goal: Discover Norhollow Region
+    Message: You discovered the region of Norhollow
+    Name: discover_norhollow
+    DisplayName: Region Discovery
+    Type: normal
+  discoverHeartOfNorhollow:
+    Goal: Discover the Heart of Norhollow
+    Message: You discovered the Heart of Norhollow
+    Name: discover_heart_of_norhollow
+    DisplayName: Heart Discovery
+    Type: normal
+  discoverTavernhed:
+    Goal: Discover Tavernhed Village
+    Message: You discovered the village of Tavernhed
+    Name: discover_tavernhed
+    DisplayName: Village Discovery
+    Type: normal
+  discoverKnightvara:
+    Goal: Discover Knightvara Region
+    Message: You discovered the region of Knightvara
+    Name: discover_knightvara
+    DisplayName: Region Discovery
+    Type: normal
+  discoverHeartOfKnightvara:
+    Goal: Discover the Heart of Knightvara
+    Message: You discovered the Heart of Knightvara
+    Name: discover_heart_of_knightvara
+    DisplayName: Heart Discovery
+    Type: normal
+  discoverValleyfold:
+    Goal: Discover Valleyfold Village
+    Message: You discovered the village of Valleyfold
+    Name: discover_valleyfold
+    DisplayName: Village Discovery
+    Type: normal
+  discoverDgrove:
+    Goal: Discover Dgrove Village
+    Message: You discovered the village of Dgrove
+    Name: discover_dgrove
+    DisplayName: Village Discovery
+    Type: normal
+  discoverRivrplace:
+    Goal: Discover Rivrplace Village
+    Message: You discovered the village of Rivrplace
+    Name: discover_rivrplace
+    DisplayName: Village Discovery
+    Type: normal
+  discoverVercraiggrange:
+    Goal: Discover Vercraiggrange Village
+    Message: You discovered the village of Vercraiggrange
+    Name: discover_vercraiggrange
+    DisplayName: Village Discovery
+    Type: normal
+  discoverSlatemarsh:
+    Goal: Discover Slatemarsh Village
+    Message: You discovered the village of Slatemarsh
+    Name: discover_slatemarsh
+    DisplayName: Village Discovery
+    Type: normal
+  discoverDaisyfield:
+    Goal: Discover Daisyfield Village
+    Message: You discovered the village of Daisyfield
+    Name: discover_daisyfield
+    DisplayName: Village Discovery
+    Type: normal
+  discoverModonorhol:
+    Goal: Discover Modonorhol Region
+    Message: You discovered the region of Modonorhol
+    Name: discover_modonorhol
+    DisplayName: Region Discovery
+    Type: normal
+  discoverHeartOfModonorhol:
+    Goal: Discover the Heart of Modonorhol
+    Message: You discovered the Heart of Modonorhol
+    Name: discover_heart_of_modonorhol
+    DisplayName: Heart Discovery
+    Type: normal
+  discoverOpalpath:
+    Goal: Discover Opalpath Village
+    Message: You discovered the village of Opalpath
+    Name: discover_opalpath
+    DisplayName: Village Discovery
+    Type: normal
+  discoverAlnpear:
+    Goal: Discover Alnpear Village
+    Message: You discovered the village of Alnpear
+    Name: discover_alnpear
+    DisplayName: Village Discovery
+    Type: normal
+  discoverAlnwick:
+    Goal: Discover Alnwick Village
+    Message: You discovered the village of Alnwick
+    Name: discover_alnwick
+    DisplayName: Village Discovery
+    Type: normal
+  discoverEndfarm:
+    Goal: Discover Endfarm Village
+    Message: You discovered the village of Endfarm
+    Name: discover_endfarm
+    DisplayName: Village Discovery
+    Type: normal
+  discoverDiadoria:
+    Goal: Discover Diadoria Region
+    Message: You discovered the region of Diadoria
+    Name: discover_diadoria
+    DisplayName: Region Discovery
+    Type: normal
+  discoverHeartOfDiadoria:
+    Goal: Discover the Heart of Diadoria
+    Message: You discovered the Heart of Diadoria
+    Name: discover_heart_of_diadoria
+    DisplayName: Heart Discovery
+    Type: normal
+  discoverShorham:
+    Goal: Discover Shorham Village
+    Message: You discovered the village of Shorham
+    Name: discover_shorham
+    DisplayName: Village Discovery
+    Type: normal
+  discoverGrarealm:
+    Goal: Discover Grarealm Region
+    Message: You discovered the region of Grarealm
+    Name: discover_grarealm
+    DisplayName: Region Discovery
+    Type: normal
+  discoverHeartOfGrarealm:
+    Goal: Discover the Heart of Grarealm
+    Message: You discovered the Heart of Grarealm
+    Name: discover_heart_of_grarealm
+    DisplayName: Heart Discovery
+    Type: normal
+  discoverWyverncove:
+    Goal: Discover Wyverncove Region
+    Message: You discovered the region of Wyverncove
+    Name: discover_wyverncove
+    DisplayName: Region Discovery
+    Type: normal
+  discoverHeartOfWyverncove:
+    Goal: Discover the Heart of Wyverncove
+    Message: You discovered the Heart of Wyverncove
+    Name: discover_heart_of_wyverncove
+    DisplayName: Heart Discovery
+    Type: normal
+  discoverAberuthven:
+    Goal: Discover Aberuthven Village
+    Message: You discovered the village of Aberuthven
+    Name: discover_aberuthven
+    DisplayName: Village Discovery
+    Type: normal
+  discoverWhidora:
+    Goal: Discover Whidora Region
+    Message: You discovered the region of Whidora
+    Name: discover_whidora
+    DisplayName: Region Discovery
+    Type: normal
+  discoverHeartOfWhidora:
+    Goal: Discover the Heart of Whidora
+    Message: You discovered the Heart of Whidora
+    Name: discover_heart_of_whidora
+    DisplayName: Heart Discovery
+    Type: normal
+  discoverLittlehampton:
+    Goal: Discover Littlehampton Village
+    Message: You discovered the village of Littlehampton
+    Name: discover_littlehampton
+    DisplayName: Village Discovery
+    Type: normal
+  discoverBurvos:
+    Goal: Discover Burvos Region
+    Message: You discovered the region of Burvos
+    Name: discover_burvos
+    DisplayName: Region Discovery
+    Type: normal
+  discoverHeartOfBurvos:
+    Goal: Discover the Heart of Burvos
+    Message: You discovered the Heart of Burvos
+    Name: discover_heart_of_burvos
+    DisplayName: Heart Discovery
+    Type: normal
+  discoverSweetwater:
+    Goal: Discover Sweetwater Village
+    Message: You discovered the village of Sweetwater
+    Name: discover_sweetwater
+    DisplayName: Village Discovery
+    Type: normal
+  discoverNearby:
+    Goal: Discover Nearby Village
+    Message: You discovered the village of Nearby
+    Name: discover_nearby
+    DisplayName: Village Discovery
+    Type: normal
+  discoverWillowmere:
+    Goal: Discover Willowmere Village
+    Message: You discovered the village of Willowmere
+    Name: discover_willowmere
+    DisplayName: Village Discovery
+    Type: normal
+  discoverTavervillage:
+    Goal: Discover Tavervillage Village
+    Message: You discovered the village of Tavervillage
+    Name: discover_tavervillage
+    DisplayName: Village Discovery
+    Type: normal
+  discoverVexhills:
+    Goal: Discover Vexhills Region
+    Message: You discovered the region of Vexhills
+    Name: discover_vexhills
+    DisplayName: Region Discovery
+    Type: normal
+  discoverHeartOfVexhills:
+    Goal: Discover the Heart of Vexhills
+    Message: You discovered the Heart of Vexhills
+    Name: discover_heart_of_vexhills
+    DisplayName: Heart Discovery
+    Type: normal
+  discoverFernplantain:
+    Goal: Discover Fernplantain Village
+    Message: You discovered the village of Fernplantain
+    Name: discover_fernplantain
+    DisplayName: Village Discovery
+    Type: normal
+  discoverWelriver:
+    Goal: Discover Welriver Village
+    Message: You discovered the village of Welriver
+    Name: discover_welriver
+    DisplayName: Village Discovery
+    Type: normal
+  discoverCleanwater:
+    Goal: Discover Cleanwater Village
+    Message: You discovered the village of Cleanwater
+    Name: discover_cleanwater
+    DisplayName: Village Discovery
+    Type: normal
+  discoverRavenstrem:
+    Goal: Discover Ravenstrem Village
+    Message: You discovered the village of Ravenstrem
+    Name: discover_ravenstrem
+    DisplayName: Village Discovery
+    Type: normal
+  discoverAmberfield:
+    Goal: Discover Amberfield Village
+    Message: You discovered the village of Amberfield
+    Name: discover_amberfield
+    DisplayName: Village Discovery
+    Type: normal
+  discoverSilverslope:
+    Goal: Discover Silverslope Village
+    Message: You discovered the village of Silverslope
+    Name: discover_silverslope
+    DisplayName: Village Discovery
+    Type: normal
+  # NETHER
+  discoverEbonofWither:
+    Goal: Discover Ebon of Wither Region
+    Message: You discovered the nether region of Ebon of Wither
+    Name: discover_ebon_of_wither
+    DisplayName: Nether Region Discovery
+    Type: normal
+  discoverHeartOfEbonofWither:
+    Goal: Discover the Heart of Ebon of Wither
+    Message: You discovered the nether ebon_of_wither
+    Name: discover_heart_of_ebon_of_wither
+    DisplayName: Nether Heart Discovery
+    Type: normal
+  discoverDecayedScar:
+    Goal: Discover Decayed Scar Region
+    Message: You discovered the nether region of Decayed Scar
+    Name: discover_decayed_scar
+    DisplayName: Nether Region Discovery
+    Type: normal
+  discoverHeartOfDecayedScar:
+    Goal: Discover the Heart of Decayed Scar
+    Message: You discovered the nether decayed_scar
+    Name: discover_heart_of_decayed_scar
+    DisplayName: Nether Heart Discovery
+    Type: normal
+  discoverCrimSuffering:
+    Goal: Discover Crim Suffering Region
+    Message: You discovered the nether region of Crim Suffering
+    Name: discover_crim_suffering
+    DisplayName: Nether Region Discovery
+    Type: normal
+  discoverHeartOfCrimSuffering:
+    Goal: Discover the Heart of Crim Suffering
+    Message: You discovered the nether crim_suffering
+    Name: discover_heart_of_crim_suffering
+    DisplayName: Nether Heart Discovery
+    Type: normal
+  discoverRiftAgony:
+    Goal: Discover Rift Agony Region
+    Message: You discovered the nether region of Rift Agony
+    Name: discover_rift_agony
+    DisplayName: Nether Region Discovery
+    Type: normal
+  discoverHeartOfRiftAgony:
+    Goal: Discover the Heart of Rift Agony
+    Message: You discovered the nether rift_agony
+    Name: discover_heart_of_rift_agony
+    DisplayName: Nether Heart Discovery
+    Type: normal
+  discoverSkullSoul:
+    Goal: Discover Skull Soul Region
+    Message: You discovered the nether region of Skull Soul
+    Name: discover_skull_soul
+    DisplayName: Nether Region Discovery
+    Type: normal
+  discoverHeartOfSkullSoul:
+    Goal: Discover the Heart of Skull Soul
+    Message: You discovered the nether skull_soul
+    Name: discover_heart_of_skull_soul
+    DisplayName: Nether Heart Discovery
+    Type: normal
+  discoverAshCaverns:
+    Goal: Discover Ash Caverns Region
+    Message: You discovered the nether region of Ash Caverns
+    Name: discover_ash_caverns
+    DisplayName: Nether Region Discovery
+    Type: normal
+  discoverHeartOfAshCaverns:
+    Goal: Discover the Heart of Ash Caverns
+    Message: You discovered the nether ash_caverns
+    Name: discover_heart_of_ash_caverns
+    DisplayName: Nether Heart Discovery
+    Type: normal
+  discoverUmbralofRuin:
+    Goal: Discover Umbral of Ruin Region
+    Message: You discovered the nether region of Umbral of Ruin
+    Name: discover_umbral_of_ruin
+    DisplayName: Nether Region Discovery
+    Type: normal
+  discoverHeartOfUmbralofRuin:
+    Goal: Discover the Heart of Umbral of Ruin
+    Message: You discovered the nether umbral_of_ruin
+    Name: discover_heart_of_umbral_of_ruin
+    DisplayName: Nether Heart Discovery
+    Type: normal
+  discoverZorCrucible:
+    Goal: Discover Zor Crucible Region
+    Message: You discovered the nether region of Zor Crucible
+    Name: discover_zor_crucible
+    DisplayName: Nether Region Discovery
+    Type: normal
+  discoverHeartOfZorCrucible:
+    Goal: Discover the Heart of Zor Crucible
+    Message: You discovered the nether zor_crucible
+    Name: discover_heart_of_zor_crucible
+    DisplayName: Nether Heart Discovery
+    Type: normal
+  discoverShadowofDesolate:
+    Goal: Discover Shadow of Desolate Region
+    Message: You discovered the nether region of Shadow of Desolate
+    Name: discover_shadow_of_desolate
+    DisplayName: Nether Region Discovery
+    Type: normal
+  discoverHeartOfShadowofDesolate:
+    Goal: Discover the Heart of Shadow of Desolate
+    Message: You discovered the nether shadow_of_desolate
+    Name: discover_heart_of_shadow_of_desolate
+    DisplayName: Nether Heart Discovery
+    Type: normal
+  discoverNyxPlane:
+    Goal: Discover Nyx Plane Region
+    Message: You discovered the nether region of Nyx Plane
+    Name: discover_nyx_plane
+    DisplayName: Nether Region Discovery
+    Type: normal
+  discoverHeartOfNyxPlane:
+    Goal: Discover the Heart of Nyx Plane
+    Message: You discovered the nether nyx_plane
+    Name: discover_heart_of_nyx_plane
+    DisplayName: Nether Heart Discovery
+    Type: normal
+  discoverEmberofDarkness:
+    Goal: Discover Ember of Darkness Region
+    Message: You discovered the nether region of Ember of Darkness
+    Name: discover_ember_of_darkness
+    DisplayName: Nether Region Discovery
+    Type: normal
+  discoverHeartOfEmberofDarkness:
+    Goal: Discover the Heart of Ember of Darkness
+    Message: You discovered the nether ember_of_darkness
+    Name: discover_heart_of_ember_of_darkness
+    DisplayName: Nether Heart Discovery
+    Type: normal
+  discoverCruelMaw:
+    Goal: Discover Cruel Maw Region
+    Message: You discovered the nether region of Cruel Maw
+    Name: discover_cruel_maw
+    DisplayName: Nether Region Discovery
+    Type: normal
+  discoverHeartOfCruelMaw:
+    Goal: Discover the Heart of Cruel Maw
+    Message: You discovered the nether cruel_maw
+    Name: discover_heart_of_cruel_maw
+    DisplayName: Nether Heart Discovery
+    Type: normal
+
+
+# Statistics for this category can be increased using commands such as '/aach add 1 Custom.votes PLAYER'.
+Custom:
+  votes:
+    10:
+      Message: Voted 10 times for the server!
+      Name: customs_votes_10
+      DisplayName: Server fan
+      Type: normal
+      Reward:
+        Money: 5
+  villages_discovered:
+    1:
+      Message: You discovered a village!
+      Name: villages_discovered_1
+      DisplayName: Village Wanderer
+      Type: normal
+      Reward:
+        Experience: 50
+        Item: diamond 1
+    10:
+      Message: You discovered 10 villages!
+      Name: villages_discovered_10
+      DisplayName: Village Scout
+      Type: normal
+      Reward:
+        Experience: 100
+        Item:
+          - diamond 8
+          - emerald 16
+        Command:
+          Execute:
+            - ce call get_book_protection_5 player:PLAYER
+    20:
+      Message: You discovered 20 villages!
+      Name: villages_discovered_20
+      DisplayName: Village Pathfinder
+      Type: normal
+      Reward:
+        Experience: 100
+        Item:
+          - diamond 8
+          - emerald 16
+        Command:
+          Execute:
+            - ce call get_book_respiration_3 player:PLAYER
+    30:
+      Message: You discovered half of all the villages!
+      Name: villages_discovered_30
+      DisplayName: Village Trailblazer
+      Type: normal
+      Reward:
+        Experience: 200
+        Item:
+          - diamond 16
+          - emerald 32
+          - yellow_shulker_box 1
+        Command:
+          Execute:
+            - ce call get_book_fortune_3 player:PLAYER
+    40:
+      Message: You discovered 40 villages!
+      Name: villages_discovered_40
+      DisplayName: Village Wayfarer
+      Type: rare
+      Reward:
+        Experience: 100
+        Item:
+          - diamond 12
+          - emerald 24
+        Command:
+          Execute:
+            - ce call get_book_fire_protection_4 player:PLAYER
+    50:
+      Message: You discovered 50 villages!
+      Name: villages_discovered_50
+      DisplayName: Village Seeker
+      Type: rare
+      Reward:
+        Experience: 100
+        Item:
+          - diamond 12
+          - emerald 24
+        Command:
+          Execute:
+            - ce call get_book_depth_strider_3 player:PLAYER
+    59:
+      Message: You discovered all the villages!
+      Name: villages_discovered_59
+      DisplayName: Village Legend
+      Type: rare
+      Reward:
+        Experience: 300
+        Item:
+          - diamond 32
+          - emerald 64
+          - yellow_shulker_box 2
+          - ancient_debris 2
+        Command:
+          Execute:
+            - ce call get_book_mending player:PLAYER
+            - ce call get_book_efficiency_5 player:PLAYER
+  regions_discovered:
+    2:
+      Message: You discovered another region!
+      Name: regions_discovered_2
+      DisplayName: Region Wanderer
+      Type: normal
+      Reward:
+        Experience: 100
+        Item: diamond 1
+    15:
+      Message: You discovered half of all the regions!
+      Name: regions_discovered_15
+      DisplayName: Region Trailblazer
+      Type: rare
+      Reward:
+        Experience: 200
+        Item:
+          - netherite_ingot 2
+          - light_gray_shulker_box 1
+        Command:
+          Execute:
+            - ce call get_book_mending player:PLAYER
+    30:
+      Message: You discovered all the regions!
+      Name: regions_discovered_30
+      DisplayName: Region Legend
+      Type: rare
+      Reward:
+        Experience: 300
+        Item:
+          - elytra 1
+          - light_gray_shulker_box 2
+          - netherite_ingot 1
+        Command:
+          Execute:
+            - ce call get_book_mending player:PLAYER
+            - ce call get_book_unbreaking_3 player:PLAYER
+  hearts_discovered:
+    1:
+      Message: You discovered a Heart of a region!
+      Name: hearts_discovered_1
+      DisplayName: Heart Wanderer
+      Type: normal
+      Reward:
+        Experience: 100
+        Item:
+          - diamond 4
+          - netherite_scrap 1
+          - compass 1
+    15:
+      Message: You discovered half of all the Hearts of regions!
+      Name: hearts_discovered_15
+      DisplayName: Heart Trailblazer
+      Type: rare
+      Reward:
+        Experience: 200
+        Item:
+          - diamond 16
+          - netherite_sword 1
+          - red_shulker_box 1
+          - compass 1
+    30:
+      Message: You discovered all the Hearts of regions!
+      Name: hearts_discovered_30
+      DisplayName: Heart Legend
+      Type: rare
+      Reward:
+        Experience: 500
+        Item:
+          - diamond 64
+          - netherite_chestplate 1
+          - red_shulker_box 2
+        Command:
+          Execute:
+            - ce call get_book_mending player:PLAYER
+  total_discovered:
+    1:
+      Message: ''
+      Name: total_discovered_1
+      DisplayName: ''
+      Type: normal
+  nether_regions_discovered:
+    1:
+      Message: You discovered a Nether region!
+      Name: nether_regions_discovered_1
+      DisplayName: Nether Wanderer
+      Type: normal
+      Reward:
+        Experience: 100
+        Item: netherite_scrap 1
+  nether_hearts_discovered:
+    1:
+      Message: You discovered a Heart of a Nether region!
+      Name: nether_hearts_discovered_1
+      DisplayName: Nether Heart Wanderer
+      Type: normal
+      Reward:
+        Experience: 100
+        Item:
+          - diamond 4
+          - netherite_scrap 1
+          - compass 1
+
+#======================================================================================================================#
+#                                                  FUTURE PAREMETERS                                                   #
+#                                                                                                                      #
+#                          New parameters added in future plugin releases will appear below.                           #
+#======================================================================================================================#

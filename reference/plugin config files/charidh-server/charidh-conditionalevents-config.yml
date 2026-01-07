@@ -1,0 +1,1771 @@
+Config:
+  update_notification: true
+  data_save_time: 5
+  debug_actions: true
+  experimental:
+    variable_replacement: false
+  register_commands:
+    - "hello"
+  to_condition_groups:
+    group1:
+      - "%player_has_permission_conditionalevents.somepermission% == yes"
+Messages:
+  prefix: '&4[&bConditionalEvents&4] '
+  commandReload: '&aConfig Reloaded.'
+  commandNoPermissions: '&cYou don''t have permissions to use this command.'
+  commandResetError: '&cUse &7/ce reset <player> <event>/all'
+  eventDoesNotExists: '&cThat event doesn''t exists on the config.'
+  eventDataReset: '&aData reset for player &e%player% &aon event &e%event%&a!'
+  eventDataResetAll: '&aAll data reset for player &e%player%&a!'
+  eventDataResetForAllPlayers: '&aData reset for &eall players &aon event &e%event%&a!'
+  eventDataResetAllForAllPlayers: '&aAll player data reset.'
+  eventEnableError: '&cUse &7/ce enable <event>'
+  eventDisableError: '&cUse &7/ce disable <event>'
+  eventEnabled: '&aEvent &7%event% &aenabled.'
+  eventDisabled: '&aEvent &7%event% &adisabled.'
+  commandDebugError: '&cUse &7/ce debug <event>'
+  debugEnabled: '&aDebug now enabled for event &7%event%&a!'
+  debugDisabled: '&aDebug disabled for event &7%event%&a!'
+  debugEnabledPlayer: '&aDebug now enabled for event &7%event% &aand player &7%player%&a!'
+  debugDisabledPlayer: '&aDebug disabled for event &7%event% &aand player &7%player%&a!'
+  onlyPlayerCommand: "&cThis command can be only used by a player."
+  playerDoesNotExists: '&cThat player doesn''t have any data.'
+  seconds: s
+  minutes: m
+  hours: h
+  days: d
+  placeholderAPICooldownReady: "Ready!"
+  placeholderAPICooldownNameError: "No event with that name!"
+  commandCallError: '&cUse &7/ce call <event> (optional)%variable1%=<value1>;%variableN%=<valueN> (optional)player:<player>'
+  commandCallInvalidEvent: '&cYou can only execute a CALL event.'
+  commandCallCorrect: '&aEvent &7%event% &asuccessfully executed.'
+  commandCallCorrectPlayer: '&aEvent &7%event% &asuccessfully executed for player &7%player%&a.'
+  commandCallFailed: '&cEvent &7%event% &ccould not be executed. Maybe a format error?'
+  playerNotOnline: '&cThat player is not online.'
+  commandItemError: "&cUse &7/ce item <save/remove> <name>"
+  savedItemDoesNotExists: "&cThat saved item doesn't exists."
+  savedItemRemoved: "&aItem &7%name% &aremoved."
+  mustHaveItemInHand: "&cYou must have an item on your hand."
+  savedItemAlreadyExists: "&cA saved item with that name already exists."
+  savedItemAdded: "&aItem &7%name% &asaved."
+  commandInterruptError: '&cUse &7/ce interrupt <event> (optional)<player>'
+  commandInterruptCorrect: '&aActions of event &7%event% &ainterrupted.'
+  commandInterruptCorrectPlayer: '&aActions of event &7%event% &ainterrupted for player &7%player%&a.'
+Events:
+  first_join:
+    type: player_join
+    one_time: true
+    actions:
+      default:
+        - 'message: First Join!'
+        - 'console_command: tp %player% 326.5 100 -291.5'
+        - 'console_command: aach give discoverWarriotos %player%'
+        - 'console_command: aach add 1 Custom.regions_discovered %player%'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
+        - 'console_command: cc give virtual RegionCrate 1 %player%'
+        - 'message: &dTip: Use &b/cc &dto open your crates and get rewards!'
+        - 'message: &dFor help on how to play use &b/guides'
+      one-time:
+  region_heart_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% startsWith heart'
+    one_time: true
+    actions:
+      default:
+        - 'message: &7Region hearts have an unbreakable lodestone'
+        - 'message: &dUse a compass on the lodestone to lock it to the region. Then you can always find this region again!'
+  heart_of_warriotos_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == heart_of_warriotos'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverHeartOfWarriotos %player%'
+        - 'console_command: aach add 1 Custom.hearts_discovered %player%'
+        - 'console_command: cc give virtual HeartCrate 1 %player%'
+  cherrybrook_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == cherrybrook'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverCherrybrook %player%'
+        - 'console_command: aach add 1 Custom.villages_discovered %player%'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
+        - 'console_command: cc give virtual VillageCrate 1 %player%'
+  monkvos_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == monkvos'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverMonkvos %player%'
+        - 'console_command: aach add 1 Custom.regions_discovered %player%'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
+        - 'console_command: cc give virtual RegionCrate 1 %player%'
+  heart_of_monkvos_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == heart_of_monkvos'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverHeartOfMonkvos %player%'
+        - 'console_command: aach add 1 Custom.hearts_discovered %player%'
+        - 'console_command: cc give virtual HeartCrate 1 %player%'
+  ceacorn_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == ceacorn'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverCeacorn %player%'
+        - 'console_command: aach add 1 Custom.villages_discovered %player%'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
+        - 'console_command: cc give virtual VillageCrate 1 %player%'
+  ridgewick_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == ridgewick'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverRidgewick %player%'
+        - 'console_command: aach add 1 Custom.villages_discovered %player%'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
+        - 'console_command: cc give virtual VillageCrate 1 %player%'
+  auchendinny_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == auchendinny'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverAuchendinny %player%'
+        - 'console_command: aach add 1 Custom.villages_discovered %player%'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
+        - 'console_command: cc give virtual VillageCrate 1 %player%'
+  thornhill_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == thornhill'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverThornhill %player%'
+        - 'console_command: aach add 1 Custom.villages_discovered %player%'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
+        - 'console_command: cc give virtual VillageCrate 1 %player%'
+  holyania_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == holyania'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverHolyania %player%'
+        - 'console_command: aach add 1 Custom.regions_discovered %player%'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
+        - 'console_command: cc give virtual RegionCrate 1 %player%'
+  heart_of_holyania_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == heart_of_holyania'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverHeartOfHolyania %player%'
+        - 'console_command: aach add 1 Custom.hearts_discovered %player%'
+        - 'console_command: cc give virtual HeartCrate 1 %player%'
+  demtory_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == demtory'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverDemtory %player%'
+        - 'console_command: aach add 1 Custom.regions_discovered %player%'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
+        - 'console_command: cc give virtual RegionCrate 1 %player%'
+  heart_of_demtory_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == heart_of_demtory'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverHeartOfDemtory %player%'
+        - 'console_command: aach add 1 Custom.hearts_discovered %player%'
+        - 'console_command: cc give virtual HeartCrate 1 %player%'
+  cliffheath_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == cliffheath'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverCliffheath %player%'
+        - 'console_command: aach add 1 Custom.villages_discovered %player%'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
+        - 'console_command: cc give virtual VillageCrate 1 %player%'
+  dirtyford_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == dirtyford'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverDirtyford %player%'
+        - 'console_command: aach add 1 Custom.villages_discovered %player%'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
+        - 'console_command: cc give virtual VillageCrate 1 %player%'
+  ottcherry_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == ottcherry'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverOttcherry %player%'
+        - 'console_command: aach add 1 Custom.villages_discovered %player%'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
+        - 'console_command: cc give virtual VillageCrate 1 %player%'
+  badin_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == badin'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverBadin %player%'
+        - 'console_command: aach add 1 Custom.villages_discovered %player%'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
+        - 'console_command: cc give virtual VillageCrate 1 %player%'
+  muirozo_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == muirozo'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverMuirozo %player%'
+        - 'console_command: aach add 1 Custom.regions_discovered %player%'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
+        - 'console_command: cc give virtual RegionCrate 1 %player%'
+  heart_of_muirozo_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == heart_of_muirozo'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverHeartOfMuirozo %player%'
+        - 'console_command: aach add 1 Custom.hearts_discovered %player%'
+        - 'console_command: cc give virtual HeartCrate 1 %player%'
+  trefoilgate_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == trefoilgate'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverTrefoilgate %player%'
+        - 'console_command: aach add 1 Custom.villages_discovered %player%'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
+        - 'console_command: cc give virtual VillageCrate 1 %player%'
+  plantainbrook_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == plantainbrook'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverPlantainbrook %player%'
+        - 'console_command: aach add 1 Custom.villages_discovered %player%'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
+        - 'console_command: cc give virtual VillageCrate 1 %player%'
+  northwich_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == northwich'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverNorthwich %player%'
+        - 'console_command: aach add 1 Custom.villages_discovered %player%'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
+        - 'console_command: cc give virtual VillageCrate 1 %player%'
+  lowernickel_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == lowernickel'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverLowernickel %player%'
+        - 'console_command: aach add 1 Custom.villages_discovered %player%'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
+        - 'console_command: cc give virtual VillageCrate 1 %player%'
+  zoreria_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == zoreria'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverZoreria %player%'
+        - 'console_command: aach add 1 Custom.regions_discovered %player%'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
+        - 'console_command: cc give virtual RegionCrate 1 %player%'
+  heart_of_zoreria_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == heart_of_zoreria'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverHeartOfZoreria %player%'
+        - 'console_command: aach add 1 Custom.hearts_discovered %player%'
+        - 'console_command: cc give virtual HeartCrate 1 %player%'
+  ivwel_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == ivwel'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverIvwel %player%'
+        - 'console_command: aach add 1 Custom.villages_discovered %player%'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
+        - 'console_command: cc give virtual VillageCrate 1 %player%'
+  shaancrub_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == shaancrub'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverShaancrub %player%'
+        - 'console_command: aach add 1 Custom.regions_discovered %player%'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
+        - 'console_command: cc give virtual RegionCrate 1 %player%'
+  heart_of_shaancrub_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == heart_of_shaancrub'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverHeartOfShaancrub %player%'
+        - 'console_command: aach add 1 Custom.hearts_discovered %player%'
+        - 'console_command: cc give virtual HeartCrate 1 %player%'
+  starplains_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == starplains'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverStarplains %player%'
+        - 'console_command: aach add 1 Custom.regions_discovered %player%'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
+        - 'console_command: cc give virtual RegionCrate 1 %player%'
+  heart_of_starplains_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == heart_of_starplains'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverHeartOfStarplains %player%'
+        - 'console_command: aach add 1 Custom.hearts_discovered %player%'
+        - 'console_command: cc give virtual HeartCrate 1 %player%'
+  oatswater_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == oatswater'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverOatswater %player%'
+        - 'console_command: aach add 1 Custom.villages_discovered %player%'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
+        - 'console_command: cc give virtual VillageCrate 1 %player%'
+  blekos_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == blekos'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverBlekos %player%'
+        - 'console_command: aach add 1 Custom.regions_discovered %player%'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
+        - 'console_command: cc give virtual RegionCrate 1 %player%'
+  heart_of_blekos_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == heart_of_blekos'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverHeartOfBlekos %player%'
+        - 'console_command: aach add 1 Custom.hearts_discovered %player%'
+        - 'console_command: cc give virtual HeartCrate 1 %player%'
+  innmountains_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == innmountains'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverInnmountains %player%'
+        - 'console_command: aach add 1 Custom.regions_discovered %player%'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
+        - 'console_command: cc give virtual RegionCrate 1 %player%'
+  heart_of_innmountains_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == heart_of_innmountains'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverHeartOfInnmountains %player%'
+        - 'console_command: aach add 1 Custom.hearts_discovered %player%'
+        - 'console_command: cc give virtual HeartCrate 1 %player%'
+  marketcross_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == marketcross'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverMarketcross %player%'
+        - 'console_command: aach add 1 Custom.villages_discovered %player%'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
+        - 'console_command: cc give virtual VillageCrate 1 %player%'
+  villageglow_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == villageglow'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverVillageglow %player%'
+        - 'console_command: aach add 1 Custom.villages_discovered %player%'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
+        - 'console_command: cc give virtual VillageCrate 1 %player%'
+  jaspercort_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == jaspercort'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverJaspercort %player%'
+        - 'console_command: aach add 1 Custom.villages_discovered %player%'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
+        - 'console_command: cc give virtual VillageCrate 1 %player%'
+  marglade_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == marglade'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverMarglade %player%'
+        - 'console_command: aach add 1 Custom.regions_discovered %player%'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
+        - 'console_command: cc give virtual RegionCrate 1 %player%'
+  heart_of_marglade_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == heart_of_marglade'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverHeartOfMarglade %player%'
+        - 'console_command: aach add 1 Custom.hearts_discovered %player%'
+        - 'console_command: cc give virtual HeartCrate 1 %player%'
+  ryebrook_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == ryebrook'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverRyebrook %player%'
+        - 'console_command: aach add 1 Custom.villages_discovered %player%'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
+        - 'console_command: cc give virtual VillageCrate 1 %player%'
+  silverdale_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == silverdale'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverSilverdale %player%'
+        - 'console_command: aach add 1 Custom.villages_discovered %player%'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
+        - 'console_command: cc give virtual VillageCrate 1 %player%'
+  dinnywal_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == dinnywal'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverDinnywal %player%'
+        - 'console_command: aach add 1 Custom.villages_discovered %player%'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
+        - 'console_command: cc give virtual VillageCrate 1 %player%'
+  lionport_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == lionport'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverLionport %player%'
+        - 'console_command: aach add 1 Custom.regions_discovered %player%'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
+        - 'console_command: cc give virtual RegionCrate 1 %player%'
+  heart_of_lionport_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == heart_of_lionport'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverHeartOfLionport %player%'
+        - 'console_command: aach add 1 Custom.hearts_discovered %player%'
+        - 'console_command: cc give virtual HeartCrate 1 %player%'
+  koarama_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == koarama'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverKoarama %player%'
+        - 'console_command: aach add 1 Custom.regions_discovered %player%'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
+        - 'console_command: cc give virtual RegionCrate 1 %player%'
+  heart_of_koarama_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == heart_of_koarama'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverHeartOfKoarama %player%'
+        - 'console_command: aach add 1 Custom.hearts_discovered %player%'
+        - 'console_command: cc give virtual HeartCrate 1 %player%'
+  granos_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == granos'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverGranos %player%'
+        - 'console_command: aach add 1 Custom.regions_discovered %player%'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
+        - 'console_command: cc give virtual RegionCrate 1 %player%'
+  heart_of_granos_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == heart_of_granos'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverHeartOfGranos %player%'
+        - 'console_command: aach add 1 Custom.hearts_discovered %player%'
+        - 'console_command: cc give virtual HeartCrate 1 %player%'
+  stonebridge_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == stonebridge'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverStonebridge %player%'
+        - 'console_command: aach add 1 Custom.villages_discovered %player%'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
+        - 'console_command: cc give virtual VillageCrate 1 %player%'
+  dinnystrem_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == dinnystrem'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverDinnystrem %player%'
+        - 'console_command: aach add 1 Custom.villages_discovered %player%'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
+        - 'console_command: cc give virtual VillageCrate 1 %player%'
+  kamahold_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == kamahold'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverKamahold %player%'
+        - 'console_command: aach add 1 Custom.regions_discovered %player%'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
+        - 'console_command: cc give virtual RegionCrate 1 %player%'
+  heart_of_kamahold_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == heart_of_kamahold'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverHeartOfKamahold %player%'
+        - 'console_command: aach add 1 Custom.hearts_discovered %player%'
+        - 'console_command: cc give virtual HeartCrate 1 %player%'
+  uthvenspring_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == uthvenspring'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverUthvenspring %player%'
+        - 'console_command: aach add 1 Custom.villages_discovered %player%'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
+        - 'console_command: cc give virtual VillageCrate 1 %player%'
+  hethin_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == hethin'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverHethin %player%'
+        - 'console_command: aach add 1 Custom.villages_discovered %player%'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
+        - 'console_command: cc give virtual VillageCrate 1 %player%'
+  gratonor_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == gratonor'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverGratonor %player%'
+        - 'console_command: aach add 1 Custom.regions_discovered %player%'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
+        - 'console_command: cc give virtual RegionCrate 1 %player%'
+  heart_of_gratonor_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == heart_of_gratonor'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverHeartOfGratonor %player%'
+        - 'console_command: aach add 1 Custom.hearts_discovered %player%'
+        - 'console_command: cc give virtual HeartCrate 1 %player%'
+  alnhurst_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == alnhurst'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverAlnhurst %player%'
+        - 'console_command: aach add 1 Custom.villages_discovered %player%'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
+        - 'console_command: cc give virtual VillageCrate 1 %player%'
+  longpeak_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == longpeak'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverLongpeak %player%'
+        - 'console_command: aach add 1 Custom.villages_discovered %player%'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
+        - 'console_command: cc give virtual VillageCrate 1 %player%'
+  eternamedow_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == eternamedow'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverEternamedow %player%'
+        - 'console_command: aach add 1 Custom.regions_discovered %player%'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
+        - 'console_command: cc give virtual RegionCrate 1 %player%'
+  heart_of_eternamedow_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == heart_of_eternamedow'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverHeartOfEternamedow %player%'
+        - 'console_command: aach add 1 Custom.hearts_discovered %player%'
+        - 'console_command: cc give virtual HeartCrate 1 %player%'
+  stopond_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == stopond'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverStopond %player%'
+        - 'console_command: aach add 1 Custom.villages_discovered %player%'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
+        - 'console_command: cc give virtual VillageCrate 1 %player%'
+  aurpeak_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == aurpeak'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverAurpeak %player%'
+        - 'console_command: aach add 1 Custom.regions_discovered %player%'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
+        - 'console_command: cc give virtual RegionCrate 1 %player%'
+  heart_of_aurpeak_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == heart_of_aurpeak'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverHeartOfAurpeak %player%'
+        - 'console_command: aach add 1 Custom.hearts_discovered %player%'
+        - 'console_command: cc give virtual HeartCrate 1 %player%'
+  rotherhithe_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == rotherhithe'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverRotherhithe %player%'
+        - 'console_command: aach add 1 Custom.villages_discovered %player%'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
+        - 'console_command: cc give virtual VillageCrate 1 %player%'
+  auronia_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == auronia'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverAuronia %player%'
+        - 'console_command: aach add 1 Custom.regions_discovered %player%'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
+        - 'console_command: cc give virtual RegionCrate 1 %player%'
+  heart_of_auronia_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == heart_of_auronia'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverHeartOfAuronia %player%'
+        - 'console_command: aach add 1 Custom.hearts_discovered %player%'
+        - 'console_command: cc give virtual HeartCrate 1 %player%'
+  lowerhed_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == lowerhed'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverLowerhed %player%'
+        - 'console_command: aach add 1 Custom.villages_discovered %player%'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
+        - 'console_command: cc give virtual VillageCrate 1 %player%'
+  thistlebrook_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == thistlebrook'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverThistlebrook %player%'
+        - 'console_command: aach add 1 Custom.villages_discovered %player%'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
+        - 'console_command: cc give virtual VillageCrate 1 %player%'
+  cornford_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == cornford'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverCornford %player%'
+        - 'console_command: aach add 1 Custom.villages_discovered %player%'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
+        - 'console_command: cc give virtual VillageCrate 1 %player%'
+  opalgrang_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == opalgrang'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverOpalgrang %player%'
+        - 'console_command: aach add 1 Custom.villages_discovered %player%'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
+        - 'console_command: cc give virtual VillageCrate 1 %player%'
+  zincley_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == zincley'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverZincley %player%'
+        - 'console_command: aach add 1 Custom.villages_discovered %player%'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
+        - 'console_command: cc give virtual VillageCrate 1 %player%'
+  lomyszo_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == lomyszo'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverLomyszo %player%'
+        - 'console_command: aach add 1 Custom.regions_discovered %player%'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
+        - 'console_command: cc give virtual RegionCrate 1 %player%'
+  heart_of_lomyszo_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == heart_of_lomyszo'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverHeartOfLomyszo %player%'
+        - 'console_command: aach add 1 Custom.hearts_discovered %player%'
+        - 'console_command: cc give virtual HeartCrate 1 %player%'
+  bayfold_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == bayfold'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverBayfold %player%'
+        - 'console_command: aach add 1 Custom.villages_discovered %player%'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
+        - 'console_command: cc give virtual VillageCrate 1 %player%'
+  golish_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == golish'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverGolish %player%'
+        - 'console_command: aach add 1 Custom.regions_discovered %player%'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
+        - 'console_command: cc give virtual RegionCrate 1 %player%'
+  heart_of_golish_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == heart_of_golish'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverHeartOfGolish %player%'
+        - 'console_command: aach add 1 Custom.hearts_discovered %player%'
+        - 'console_command: cc give virtual HeartCrate 1 %player%'
+  norhollow_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == norhollow'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverNorhollow %player%'
+        - 'console_command: aach add 1 Custom.regions_discovered %player%'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
+        - 'console_command: cc give virtual RegionCrate 1 %player%'
+  heart_of_norhollow_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == heart_of_norhollow'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverHeartOfNorhollow %player%'
+        - 'console_command: aach add 1 Custom.hearts_discovered %player%'
+        - 'console_command: cc give virtual HeartCrate 1 %player%'
+  tavernhed_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == tavernhed'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverTavernhed %player%'
+        - 'console_command: aach add 1 Custom.villages_discovered %player%'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
+        - 'console_command: cc give virtual VillageCrate 1 %player%'
+  knightvara_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == knightvara'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverKnightvara %player%'
+        - 'console_command: aach add 1 Custom.regions_discovered %player%'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
+        - 'console_command: cc give virtual RegionCrate 1 %player%'
+  heart_of_knightvara_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == heart_of_knightvara'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverHeartOfKnightvara %player%'
+        - 'console_command: aach add 1 Custom.hearts_discovered %player%'
+        - 'console_command: cc give virtual HeartCrate 1 %player%'
+  valleyfold_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == valleyfold'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverValleyfold %player%'
+        - 'console_command: aach add 1 Custom.villages_discovered %player%'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
+        - 'console_command: cc give virtual VillageCrate 1 %player%'
+  dgrove_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == dgrove'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverDgrove %player%'
+        - 'console_command: aach add 1 Custom.villages_discovered %player%'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
+        - 'console_command: cc give virtual VillageCrate 1 %player%'
+  rivrplace_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == rivrplace'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverRivrplace %player%'
+        - 'console_command: aach add 1 Custom.villages_discovered %player%'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
+        - 'console_command: cc give virtual VillageCrate 1 %player%'
+  vercraiggrange_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == vercraiggrange'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverVercraiggrange %player%'
+        - 'console_command: aach add 1 Custom.villages_discovered %player%'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
+        - 'console_command: cc give virtual VillageCrate 1 %player%'
+  slatemarsh_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == slatemarsh'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverSlatemarsh %player%'
+        - 'console_command: aach add 1 Custom.villages_discovered %player%'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
+        - 'console_command: cc give virtual VillageCrate 1 %player%'
+  daisyfield_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == daisyfield'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverDaisyfield %player%'
+        - 'console_command: aach add 1 Custom.villages_discovered %player%'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
+        - 'console_command: cc give virtual VillageCrate 1 %player%'
+  modonorhol_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == modonorhol'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverModonorhol %player%'
+        - 'console_command: aach add 1 Custom.regions_discovered %player%'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
+        - 'console_command: cc give virtual RegionCrate 1 %player%'
+  heart_of_modonorhol_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == heart_of_modonorhol'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverHeartOfModonorhol %player%'
+        - 'console_command: aach add 1 Custom.hearts_discovered %player%'
+        - 'console_command: cc give virtual HeartCrate 1 %player%'
+  opalpath_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == opalpath'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverOpalpath %player%'
+        - 'console_command: aach add 1 Custom.villages_discovered %player%'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
+        - 'console_command: cc give virtual VillageCrate 1 %player%'
+  alnpear_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == alnpear'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverAlnpear %player%'
+        - 'console_command: aach add 1 Custom.villages_discovered %player%'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
+        - 'console_command: cc give virtual VillageCrate 1 %player%'
+  alnwick_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == alnwick'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverAlnwick %player%'
+        - 'console_command: aach add 1 Custom.villages_discovered %player%'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
+        - 'console_command: cc give virtual VillageCrate 1 %player%'
+  endfarm_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == endfarm'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverEndfarm %player%'
+        - 'console_command: aach add 1 Custom.villages_discovered %player%'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
+        - 'console_command: cc give virtual VillageCrate 1 %player%'
+  diadoria_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == diadoria'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverDiadoria %player%'
+        - 'console_command: aach add 1 Custom.regions_discovered %player%'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
+        - 'console_command: cc give virtual RegionCrate 1 %player%'
+  heart_of_diadoria_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == heart_of_diadoria'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverHeartOfDiadoria %player%'
+        - 'console_command: aach add 1 Custom.hearts_discovered %player%'
+        - 'console_command: cc give virtual HeartCrate 1 %player%'
+  shorham_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == shorham'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverShorham %player%'
+        - 'console_command: aach add 1 Custom.villages_discovered %player%'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
+        - 'console_command: cc give virtual VillageCrate 1 %player%'
+  grarealm_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == grarealm'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverGrarealm %player%'
+        - 'console_command: aach add 1 Custom.regions_discovered %player%'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
+        - 'console_command: cc give virtual RegionCrate 1 %player%'
+  heart_of_grarealm_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == heart_of_grarealm'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverHeartOfGrarealm %player%'
+        - 'console_command: aach add 1 Custom.hearts_discovered %player%'
+        - 'console_command: cc give virtual HeartCrate 1 %player%'
+  wyverncove_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == wyverncove'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverWyverncove %player%'
+        - 'console_command: aach add 1 Custom.regions_discovered %player%'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
+        - 'console_command: cc give virtual RegionCrate 1 %player%'
+  heart_of_wyverncove_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == heart_of_wyverncove'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverHeartOfWyverncove %player%'
+        - 'console_command: aach add 1 Custom.hearts_discovered %player%'
+        - 'console_command: cc give virtual HeartCrate 1 %player%'
+  aberuthven_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == aberuthven'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverAberuthven %player%'
+        - 'console_command: aach add 1 Custom.villages_discovered %player%'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
+        - 'console_command: cc give virtual VillageCrate 1 %player%'
+  whidora_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == whidora'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverWhidora %player%'
+        - 'console_command: aach add 1 Custom.regions_discovered %player%'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
+        - 'console_command: cc give virtual RegionCrate 1 %player%'
+  heart_of_whidora_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == heart_of_whidora'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverHeartOfWhidora %player%'
+        - 'console_command: aach add 1 Custom.hearts_discovered %player%'
+        - 'console_command: cc give virtual HeartCrate 1 %player%'
+  littlehampton_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == littlehampton'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverLittlehampton %player%'
+        - 'console_command: aach add 1 Custom.villages_discovered %player%'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
+        - 'console_command: cc give virtual VillageCrate 1 %player%'
+  burvos_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == burvos'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverBurvos %player%'
+        - 'console_command: aach add 1 Custom.regions_discovered %player%'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
+        - 'console_command: cc give virtual RegionCrate 1 %player%'
+  heart_of_burvos_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == heart_of_burvos'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverHeartOfBurvos %player%'
+        - 'console_command: aach add 1 Custom.hearts_discovered %player%'
+        - 'console_command: cc give virtual HeartCrate 1 %player%'
+  sweetwater_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == sweetwater'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverSweetwater %player%'
+        - 'console_command: aach add 1 Custom.villages_discovered %player%'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
+        - 'console_command: cc give virtual VillageCrate 1 %player%'
+  nearby_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == nearby'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverNearby %player%'
+        - 'console_command: aach add 1 Custom.villages_discovered %player%'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
+        - 'console_command: cc give virtual VillageCrate 1 %player%'
+  willowmere_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == willowmere'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverWillowmere %player%'
+        - 'console_command: aach add 1 Custom.villages_discovered %player%'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
+        - 'console_command: cc give virtual VillageCrate 1 %player%'
+  tavervillage_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == tavervillage'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverTavervillage %player%'
+        - 'console_command: aach add 1 Custom.villages_discovered %player%'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
+        - 'console_command: cc give virtual VillageCrate 1 %player%'
+  vexhills_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == vexhills'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverVexhills %player%'
+        - 'console_command: aach add 1 Custom.regions_discovered %player%'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
+        - 'console_command: cc give virtual RegionCrate 1 %player%'
+  heart_of_vexhills_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == heart_of_vexhills'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverHeartOfVexhills %player%'
+        - 'console_command: aach add 1 Custom.hearts_discovered %player%'
+        - 'console_command: cc give virtual HeartCrate 1 %player%'
+  fernplantain_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == fernplantain'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverFernplantain %player%'
+        - 'console_command: aach add 1 Custom.villages_discovered %player%'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
+        - 'console_command: cc give virtual VillageCrate 1 %player%'
+  welriver_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == welriver'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverWelriver %player%'
+        - 'console_command: aach add 1 Custom.villages_discovered %player%'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
+        - 'console_command: cc give virtual VillageCrate 1 %player%'
+  cleanwater_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == cleanwater'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverCleanwater %player%'
+        - 'console_command: aach add 1 Custom.villages_discovered %player%'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
+        - 'console_command: cc give virtual VillageCrate 1 %player%'
+  ravenstrem_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == ravenstrem'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverRavenstrem %player%'
+        - 'console_command: aach add 1 Custom.villages_discovered %player%'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
+        - 'console_command: cc give virtual VillageCrate 1 %player%'
+  amberfield_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == amberfield'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverAmberfield %player%'
+        - 'console_command: aach add 1 Custom.villages_discovered %player%'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
+        - 'console_command: cc give virtual VillageCrate 1 %player%'
+  silverslope_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == silverslope'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverSilverslope %player%'
+        - 'console_command: aach add 1 Custom.villages_discovered %player%'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
+        - 'console_command: cc give virtual VillageCrate 1 %player%'
+  # Nether
+  ebon_of_wither_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == ebon_of_wither'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverEbonofWither %player%'
+        - 'console_command: aach add 1 Custom.nether_regions_discovered %player%'
+        - 'console_command: cc give virtual RegionCrate 1 %player%'
+  heart_of_ebon_of_wither_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == heart_of_ebon_of_wither'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverHeartOfEbonofWither %player%'
+        - 'console_command: aach add 1 Custom.nether_hearts_discovered %player%'
+        - 'console_command: cc give virtual HeartCrate 1 %player%'
+  decayed_scar_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == decayed_scar'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverDecayedScar %player%'
+        - 'console_command: aach add 1 Custom.nether_regions_discovered %player%'
+        - 'console_command: cc give virtual RegionCrate 1 %player%'
+  heart_of_decayed_scar_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == heart_of_decayed_scar'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverHeartOfDecayedScar %player%'
+        - 'console_command: aach add 1 Custom.nether_hearts_discovered %player%'
+        - 'console_command: cc give virtual HeartCrate 1 %player%'
+  crim_suffering_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == crim_suffering'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverCrimSuffering %player%'
+        - 'console_command: aach add 1 Custom.nether_regions_discovered %player%'
+        - 'console_command: cc give virtual RegionCrate 1 %player%'
+  heart_of_crim_suffering_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == heart_of_crim_suffering'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverHeartOfCrimSuffering %player%'
+        - 'console_command: aach add 1 Custom.nether_hearts_discovered %player%'
+        - 'console_command: cc give virtual HeartCrate 1 %player%'
+  rift_agony_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == rift_agony'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverRiftAgony %player%'
+        - 'console_command: aach add 1 Custom.nether_regions_discovered %player%'
+        - 'console_command: cc give virtual RegionCrate 1 %player%'
+  heart_of_rift_agony_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == heart_of_rift_agony'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverHeartOfRiftAgony %player%'
+        - 'console_command: aach add 1 Custom.nether_hearts_discovered %player%'
+        - 'console_command: cc give virtual HeartCrate 1 %player%'
+  skull_soul_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == skull_soul'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverSkullSoul %player%'
+        - 'console_command: aach add 1 Custom.nether_regions_discovered %player%'
+        - 'console_command: cc give virtual RegionCrate 1 %player%'
+  heart_of_skull_soul_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == heart_of_skull_soul'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverHeartOfSkullSoul %player%'
+        - 'console_command: aach add 1 Custom.nether_hearts_discovered %player%'
+        - 'console_command: cc give virtual HeartCrate 1 %player%'
+  ash_caverns_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == ash_caverns'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverAshCaverns %player%'
+        - 'console_command: aach add 1 Custom.nether_regions_discovered %player%'
+        - 'console_command: cc give virtual RegionCrate 1 %player%'
+  heart_of_ash_caverns_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == heart_of_ash_caverns'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverHeartOfAshCaverns %player%'
+        - 'console_command: aach add 1 Custom.nether_hearts_discovered %player%'
+        - 'console_command: cc give virtual HeartCrate 1 %player%'
+  umbral_of_ruin_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == umbral_of_ruin'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverUmbralofRuin %player%'
+        - 'console_command: aach add 1 Custom.nether_regions_discovered %player%'
+        - 'console_command: cc give virtual RegionCrate 1 %player%'
+  heart_of_umbral_of_ruin_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == heart_of_umbral_of_ruin'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverHeartOfUmbralofRuin %player%'
+        - 'console_command: aach add 1 Custom.nether_hearts_discovered %player%'
+        - 'console_command: cc give virtual HeartCrate 1 %player%'
+  zor_crucible_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == zor_crucible'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverZorCrucible %player%'
+        - 'console_command: aach add 1 Custom.nether_regions_discovered %player%'
+        - 'console_command: cc give virtual RegionCrate 1 %player%'
+  heart_of_zor_crucible_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == heart_of_zor_crucible'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverHeartOfZorCrucible %player%'
+        - 'console_command: aach add 1 Custom.nether_hearts_discovered %player%'
+        - 'console_command: cc give virtual HeartCrate 1 %player%'
+  shadow_of_desolate_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == shadow_of_desolate'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverShadowofDesolate %player%'
+        - 'console_command: aach add 1 Custom.nether_regions_discovered %player%'
+        - 'console_command: cc give virtual RegionCrate 1 %player%'
+  heart_of_shadow_of_desolate_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == heart_of_shadow_of_desolate'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverHeartOfShadowofDesolate %player%'
+        - 'console_command: aach add 1 Custom.nether_hearts_discovered %player%'
+        - 'console_command: cc give virtual HeartCrate 1 %player%'
+  nyx_plane_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == nyx_plane'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverNyxPlane %player%'
+        - 'console_command: aach add 1 Custom.nether_regions_discovered %player%'
+        - 'console_command: cc give virtual RegionCrate 1 %player%'
+  heart_of_nyx_plane_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == heart_of_nyx_plane'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverHeartOfNyxPlane %player%'
+        - 'console_command: aach add 1 Custom.nether_hearts_discovered %player%'
+        - 'console_command: cc give virtual HeartCrate 1 %player%'
+  ember_of_darkness_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == ember_of_darkness'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverEmberofDarkness %player%'
+        - 'console_command: aach add 1 Custom.nether_regions_discovered %player%'
+        - 'console_command: cc give virtual RegionCrate 1 %player%'
+  heart_of_ember_of_darkness_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == heart_of_ember_of_darkness'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverHeartOfEmberofDarkness %player%'
+        - 'console_command: aach add 1 Custom.nether_hearts_discovered %player%'
+        - 'console_command: cc give virtual HeartCrate 1 %player%'
+  cruel_maw_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == cruel_maw'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverCruelMaw %player%'
+        - 'console_command: aach add 1 Custom.nether_regions_discovered %player%'
+        - 'console_command: cc give virtual RegionCrate 1 %player%'
+  heart_of_cruel_maw_discover_once:
+    type: wgevents_region_enter
+    conditions:
+      - '%region% == heart_of_cruel_maw'
+    one_time: true
+    actions:
+      default:
+        - 'wait: 5'
+        - 'console_command: aach give discoverHeartOfCruelMaw %player%'
+        - 'console_command: aach add 1 Custom.nether_hearts_discovered %player%'
+        - 'console_command: cc give virtual HeartCrate 1 %player%'
+  # Enchantment Books
+  get_book_depth_strider_3:
+    type: call
+    actions:
+      default:
+        - "console_command: give %player% enchanted_book[enchantments={depth_strider:3}]"
+  get_book_efficiency_5:
+    type: call
+    actions:
+      default:
+        - "console_command: give %player% enchanted_book[enchantments={efficiency:5}]"
+  get_book_fire_protection_4:
+    type: call
+    actions:
+      default:
+        - "console_command: give %player% enchanted_book[enchantments={fire_protection:4}]"
+  get_book_fortune_3:
+    type: call
+    actions:
+      default:
+        - "console_command: give %player% enchanted_book[enchantments={fortune:3}]"
+  get_book_mending:
+    type: call
+    actions:
+      default:
+        - "console_command: give %player% enchanted_book[enchantments={mending:1}]"
+  get_book_protection_5:
+    type: call
+    actions:
+      default:
+        - "console_command: give %player% enchanted_book[enchantments={protection:5}]"
+  get_book_respiration_3:
+    type: call
+    actions:
+      default:
+        - "console_command: give %player% enchanted_book[enchantments={respiration:3}]"
+  get_book_unbreaking_3:
+    type: call
+    actions:
+      default:
+        - "console_command: give %player% enchanted_book[enchantments={unbreaking:3}]"
+
+
