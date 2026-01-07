@@ -109,16 +109,22 @@ type RegionRecord = {
 ```
 
 ### Classification & Defaults (v1)
-Applied after import:
-- `spawn` → `kind=system`, `discover.method=disabled`, `recipeId=none`
-- `warriotos` → `discover.method=first_join`, `recipeId=region`
-- `id startsWith heart_of_` → `kind=heart`, `discover.method=on_enter`, `recipeId=heart`
-- Overworld non-heart:
-  - default `kind=village` OR `kind=region` (choose one rule; recommended: `village` if your Region Forge export distinguishes them; otherwise default `region`)
-  - `discover.method=on_enter`, `recipeId=region`
-- Nether:
-  - non-heart → `recipeId=nether_region`
-  - heart → `recipeId=nether_heart`
+Applied after import in order:
+
+1. **System regions**: If `id === "spawn"` → `kind=system`, `discover.method=disabled`, `recipeId=none`
+
+2. **First-join region**: If `id === <onboarding.startRegionId>` → `discover.method=first_join`, `recipeId=region` (world-specific)
+
+3. **Hearts**: If `id.startsWith("heart_of_")` → `kind=heart`, `discover.method=on_enter`
+   - Overworld → `recipeId=heart`
+   - Nether → `recipeId=nether_heart`
+
+4. **Regular regions** (non-system, non-first-join, non-heart):
+   - **Village detection**: Check `flags.greeting` text. If contains the word "village" (case-insensitive) → `kind=village`, otherwise → `kind=region`
+   - **Note**: The `parent:` field indicates a subregion relationship but does not determine kind (subregions may be villages or other types in the future)
+   - `discover.method=on_enter`
+   - Overworld → `recipeId=region`
+   - Nether → `recipeId=nether_region`
 
 ### Reward Recipes (v1, hardcoded)
 Recipes are *not* a general “knob system” in v1; they are minimal and opinionated:
@@ -142,6 +148,14 @@ Recipes are *not* a general “knob system” in v1; they are minimal and opinio
   - crate: `HeartCrate`
 - `none`: no output
 
+**Counter names**:
+- `Custom.regions_discovered` - Overworld region discoveries
+- `Custom.villages_discovered` - Village discoveries (if villages tracked separately)
+- `Custom.hearts_discovered` - Heart discoveries
+- `Custom.nether_regions_discovered` - Nether region discoveries
+- `Custom.nether_hearts_discovered` - Nether heart discoveries
+- `Custom.total_discovered` - Total discoveries across all types
+
 > Note: The `Custom.*` counters must already exist in AA config (preserved). v1 validates presence and warns/fails per policy.
 
 ---
@@ -160,10 +174,11 @@ Recipes are *not* a general “knob system” in v1; they are minimal and opinio
 - Any other `Events.*` keys
 
 **Merge rules**
-1. Parse YAML into object.
+1. Parse YAML into object (preserve structure, 2-space indentation).
 2. Remove owned event keys from `Events`.
 3. Insert regenerated owned keys into `Events`.
-4. Preserve ordering where possible (sort owned keys deterministically).
+4. Sort owned keys alphabetically for deterministic output (e.g., `cherrybrook_discover_once` before `monkvos_discover_once`).
+5. Preserve all non-owned keys in original positions where possible.
 
 ### AdvancedAchievements (`config.yml`)
 **Owned**
@@ -173,9 +188,10 @@ Recipes are *not* a general “knob system” in v1; they are minimal and opinio
 - All other top-level and category sections (`Custom`, globals, etc.)
 
 **Merge rules**
-1. Parse YAML into object.
+1. Parse YAML into object (preserve structure, 2-space indentation).
 2. Replace `Commands` with regenerated `Commands`.
-3. Leave everything else untouched.
+3. Sort command IDs alphabetically for deterministic output.
+4. Leave everything else untouched (preserve formatting, comments where possible).
 
 ---
 
@@ -189,11 +205,19 @@ Recipes are *not* a general “knob system” in v1; they are minimal and opinio
   - `first_join` (special rule)
 
 ### AA Command ID generation
-- Default:
-  - Region: `discover` + PascalCase(regionId)
-  - Heart: `discover` + PascalCase(regionId) (or `discoverHeartOf...` if you prefer; v1 should match your current practice)
-- Override:
-  - `RegionRecord.discover.commandIdOverride`
+**Pattern**: `discover` + PascalCase(regionId)
+
+**Conversion rules**:
+- Convert `snake_case` to PascalCase: `cherrybrook` → `discoverCherrybrook`
+- Hearts: Keep full name → `heart_of_warriotos` → `discoverHeartOfWarriotos`
+- Nether regions with underscores: Remove underscores in PascalCase → `ebon_of_wither` → `discoverEbonofWither`
+- Examples:
+  - `warriotos` → `discoverWarriotos`
+  - `heart_of_monkvos` → `discoverHeartOfMonkvos`
+  - `ebon_of_wither` → `discoverEbonofWither`
+  - `heart_of_ebon_of_wither` → `discoverHeartOfEbonofWither`
+
+**Override**: `RegionRecord.discover.commandIdOverride` takes precedence
 
 ### Display Name generation
 - Default: Title Case derived from id:
@@ -246,10 +270,10 @@ region_heart_discover_once:
 ### 3) ConditionalEvents — first_join
 Generated from `ServerProfile.onboarding`:
 - `player_join`, `one_time: true`
-- Teleport to the stored location
+- Teleport to the stored location using `console_command: tp`
 - Award the starting region command achievement + region recipe rewards
 
-Example template:
+Template:
 
 ```yaml
 first_join:
@@ -257,13 +281,15 @@ first_join:
   one_time: true
   actions:
     default:
-      - "teleport: <world>;<x>;<y>;<z>;<yaw>;<pitch>"
+      - "console_command: tp %player% <x> <y> <z>"
       - "wait: 5"
       - "console_command: aach give <AA_START_COMMAND> %player%"
       - "console_command: aach add 1 Custom.regions_discovered %player%"
       - "console_command: aach add 1 Custom.total_discovered %player%"
       - "console_command: cc give virtual RegionCrate 1 %player%"
 ```
+
+**Note**: If `yaw` and `pitch` are provided in `onboarding.teleport`, they can be included in the tp command. If omitted, use 3-parameter format. World is not included in the tp command (handled by server context).
 
 ### 4) AdvancedAchievements — Commands section
 Generate for all regions where:
@@ -284,6 +310,42 @@ Commands:
 
 ---
 
+## Region Forge Export Format
+
+Region Forge exports WorldGuard regions in the following YAML structure:
+
+**Top-level structure**:
+```yaml
+regions:
+  <region_id>:
+    type: cuboid | poly2d
+    min-y: <number>   # -64 to 320 (poly2d)
+    max-y: <number>   # -64 to 320 (poly2d)
+    min: {x: <number>, y: <number>, z: <number>}  # cuboid
+    max: {x: <number>, y: <number>, z: <number>}  # cuboid
+    points:           # poly2d
+      - {x: <number>, z: <number>}
+      - ...
+    flags:
+      greeting: <string>      # e.g., "§2Entering §7Cherrybrook village"
+      farewell: <string>      # e.g., "§6Leaving §7Cherrybrook village"
+      passthrough: allow
+      # ... other flags
+    priority: <number>        # typically 0 for main regions, 10 for hearts
+    parent: <region_id>?      # optional, indicates subregion relationship
+    members: {}
+    owners: {}
+```
+
+**Key fields for classification**:
+- `id`: Region identifier (used as canonical ID)
+- `flags.greeting`: Contains "village" for villages (used to determine `kind`)
+- `parent`: Indicates subregion but doesn't determine kind
+- Heart regions: IDs starting with `heart_of_`
+- All regions use consistent multi-line `flags:` format
+
+**YAML formatting**: 2-space indentation throughout
+
 ## Import Workflow (GUI)
 
 ### Inputs
@@ -295,13 +357,17 @@ Commands:
 2. User imports overworld file.
 3. User optionally imports nether file.
 4. System:
-   - parses regions into canonical `RegionRecord[]`
-   - applies classification + defaults
+   - parses YAML structure (validate format, handle errors)
+   - extracts region IDs and flags
+   - canonicalizes ids (lowercase, preserve snake_case structure)
+   - creates `RegionRecord[]` entries
+   - applies classification rules (see Classification & Defaults)
    - stores sources metadata + internal model
 
 ### Constraints
-- Canonicalize ids (lowercase, snake_case). If Region Forge export is already clean, only lowercase.
+- Canonicalize ids (lowercase, preserve snake_case). Region Forge exports are typically already in snake_case.
 - De-duplicate by `(world,id)`; last import wins for structural data.
+- Both overworld and nether files use the same format structure.
 
 ---
 
@@ -419,7 +485,37 @@ Minimal APIs:
 
 ---
 
-## Open Decisions (v1 defaults suggested)
-- Heart AA command naming: match existing Charidh practice exactly (recommend: keep your current `discoverHeartOfX` pattern).
-- Whether region kind distinguishes `village` vs `region`: keep simple until Region Forge exports provide an explicit type.
-- Whether build warnings fail the build: default **warn** (fail only on parse/merge errors).
+## Format Details
+
+### YAML Output Formatting
+- **Indentation**: 2 spaces (consistent with plugin configs)
+- **String quoting**: Single quotes for action strings in CE (e.g., `'wait: 5'`)
+- **Key ordering**: Alphabetical for owned sections (deterministic builds)
+- **Preservation**: Maintain original formatting for non-owned sections where possible
+
+### AA Commands Structure
+Each command achievement follows this structure:
+```yaml
+Commands:
+  <commandId>:
+    1:
+      Goal: "<commandId>"
+      Message: "You discovered <DisplayName>!"
+      Name: "<commandId>"
+      DisplayName: "<DisplayName>"
+      Type: "normal"
+```
+
+### ConditionalEvents Actions Format
+- Actions are strings in a list
+- Format: `'<action_type>: <value>'` (single-quoted)
+- Types: `wait`, `console_command`, `message`, `teleport` (if supported)
+- Example: `'console_command: aach give discoverWarriotos %player%'`
+
+## Open Decisions (implementation details)
+- Import error handling: Fail fast vs partial import (TBD)
+- Build input validation: Create missing sections vs fail (TBD)
+- Build report structure: Detailed diff vs summary (TBD)
+- File path handling: Absolute vs relative resolution (TBD)
+- IPC error handling: Structured errors vs exceptions (TBD)
+- Teleport default values: Omit yaw/pitch vs default to 0 (TBD)
