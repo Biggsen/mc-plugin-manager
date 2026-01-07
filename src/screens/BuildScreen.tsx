@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import type { ServerProfile, BuildResult } from '../types'
+import { useState, useEffect } from 'react'
+import type { ServerProfile, BuildResult, BuildReport } from '../types'
 
 interface BuildScreenProps {
   server: ServerProfile
@@ -11,6 +11,8 @@ export function BuildScreen({ server }: BuildScreenProps) {
   const [outDir, setOutDir] = useState(server.build.outputDirectory || '')
   const [isBuilding, setIsBuilding] = useState(false)
   const [buildResult, setBuildResult] = useState<BuildResult | null>(null)
+  const [buildReport, setBuildReport] = useState<BuildReport | null>(null)
+  const [pastBuilds, setPastBuilds] = useState<string[]>([])
 
   async function handleSelectAAFile() {
     const path = await window.electronAPI.showConfigFileDialog(
@@ -67,6 +69,13 @@ export function BuildScreen({ server }: BuildScreenProps) {
       })
 
       setBuildResult(result)
+      
+      // Load build report if successful
+      if (result.success && result.buildId) {
+        await loadBuildReport(result.buildId)
+      } else {
+        setBuildReport(null)
+      }
     } catch (error: any) {
       setBuildResult({
         success: false,
@@ -74,6 +83,28 @@ export function BuildScreen({ server }: BuildScreenProps) {
       })
     } finally {
       setIsBuilding(false)
+    }
+  }
+
+  useEffect(() => {
+    loadPastBuilds()
+  }, [server.id])
+
+  async function loadPastBuilds() {
+    try {
+      const builds = await window.electronAPI.listBuilds(server.id)
+      setPastBuilds(builds)
+    } catch (error) {
+      console.error('Failed to load past builds:', error)
+    }
+  }
+
+  async function loadBuildReport(buildId: string) {
+    try {
+      const report = await window.electronAPI.readBuildReport(server.id, buildId)
+      setBuildReport(report)
+    } catch (error) {
+      console.error('Failed to load build report:', error)
     }
   }
 
@@ -280,10 +311,153 @@ export function BuildScreen({ server }: BuildScreenProps) {
             <div>
               <strong>✗ Build failed</strong>
               {buildResult.error && (
-                <div style={{ marginTop: '0.5rem' }}>{buildResult.error}</div>
+                <div style={{ marginTop: '0.5rem' }}>
+                  {buildResult.error}
+                  {buildResult.buildId && (
+                    <div style={{ marginTop: '0.5rem', fontSize: '0.875rem' }}>
+                      Build ID: {buildResult.buildId}
+                    </div>
+                  )}
+                </div>
               )}
             </div>
           )}
+        </div>
+      )}
+
+      {/* Build Report */}
+      {buildReport && (
+        <div
+          style={{
+            marginTop: '1.5rem',
+            padding: '1.5rem',
+            border: '1px solid #ddd',
+            borderRadius: '4px',
+            backgroundColor: '#f9f9f9',
+          }}
+        >
+          <h3 style={{ marginTop: 0 }}>Build Report</h3>
+          
+          <div style={{ marginBottom: '1rem' }}>
+            <div style={{ fontSize: '0.875rem', color: '#666' }}>
+              Build ID: <strong>{buildReport.buildId}</strong>
+            </div>
+            <div style={{ fontSize: '0.875rem', color: '#666' }}>
+              Timestamp: {new Date(buildReport.timestamp).toLocaleString()}
+            </div>
+          </div>
+
+          <div style={{ marginBottom: '1rem' }}>
+            <div style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>Region Counts:</div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '1rem', marginBottom: '1rem' }}>
+              <div>
+                <div style={{ fontSize: '0.875rem', color: '#666' }}>Overworld</div>
+                <div style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>
+                  {buildReport.regionCounts.overworld}
+                </div>
+              </div>
+              <div>
+                <div style={{ fontSize: '0.875rem', color: '#666' }}>Nether</div>
+                <div style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>
+                  {buildReport.regionCounts.nether}
+                </div>
+              </div>
+              <div>
+                <div style={{ fontSize: '0.875rem', color: '#666' }}>Hearts</div>
+                <div style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>
+                  {buildReport.regionCounts.hearts}
+                </div>
+              </div>
+              <div>
+                <div style={{ fontSize: '0.875rem', color: '#666' }}>Villages</div>
+                <div style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>
+                  {buildReport.regionCounts.villages}
+                </div>
+              </div>
+              <div>
+                <div style={{ fontSize: '0.875rem', color: '#666' }}>Regions</div>
+                <div style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>
+                  {buildReport.regionCounts.regions}
+                </div>
+              </div>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '1rem' }}>
+              <div>
+                <div style={{ fontSize: '0.875rem', color: '#666' }}>System</div>
+                <div style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>
+                  {buildReport.regionCounts.system}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div style={{ marginBottom: '1rem' }}>
+            <div style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>Generated:</div>
+            <div>
+              {buildReport.generated.aa && '✓ AdvancedAchievements'}
+              {buildReport.generated.aa && buildReport.generated.ce && ' • '}
+              {buildReport.generated.ce && '✓ ConditionalEvents'}
+            </div>
+          </div>
+
+          {buildReport.warnings && buildReport.warnings.length > 0 && (
+            <div style={{ marginBottom: '1rem' }}>
+              <div style={{ fontWeight: 'bold', marginBottom: '0.5rem', color: '#856404' }}>
+                Warnings:
+              </div>
+              <ul style={{ margin: 0, paddingLeft: '1.5rem', color: '#856404' }}>
+                {buildReport.warnings.map((warning, i) => (
+                  <li key={i}>{warning}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {buildReport.errors && buildReport.errors.length > 0 && (
+            <div>
+              <div style={{ fontWeight: 'bold', marginBottom: '0.5rem', color: '#721c24' }}>
+                Errors:
+              </div>
+              <ul style={{ margin: 0, paddingLeft: '1.5rem', color: '#721c24' }}>
+                {buildReport.errors.map((error, i) => (
+                  <li key={i}>{error}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Past Builds */}
+      {pastBuilds.length > 0 && (
+        <div
+          style={{
+            marginTop: '1.5rem',
+            padding: '1rem',
+            border: '1px solid #ddd',
+            borderRadius: '4px',
+            backgroundColor: '#f9f9f9',
+          }}
+        >
+          <h3 style={{ marginTop: 0 }}>Past Builds</h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            {pastBuilds.map((buildId) => (
+              <button
+                key={buildId}
+                onClick={() => loadBuildReport(buildId)}
+                style={{
+                  padding: '0.5rem',
+                  textAlign: 'left',
+                  backgroundColor: buildReport?.buildId === buildId ? '#e7f3ff' : 'white',
+                  border: '1px solid #ddd',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                }}
+              >
+                {buildId}
+              </button>
+            ))}
+          </div>
         </div>
       )}
     </div>

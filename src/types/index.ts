@@ -83,6 +83,13 @@ export interface BuildReport {
     overworld: number
     nether: number
     hearts: number
+    villages: number
+    regions: number
+    system: number
+  }
+  generated: {
+    aa: boolean
+    ce: boolean
   }
   warnings: string[]
   errors: string[]

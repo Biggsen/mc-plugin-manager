@@ -22,6 +22,7 @@ interface ElectronAPI {
   showConfigFileDialog: (title: string, defaultPath?: string) => Promise<string | null>
   showOutputDialog: () => Promise<string | null>
   readBuildReport: (serverId: string, buildId: string) => Promise<BuildReport | null>
+  listBuilds: (serverId: string) => Promise<string[]>
 }
 
 declare global {

@@ -4,12 +4,17 @@ const {
   saveServerProfile,
   listServerIds,
   getServerDirectory,
+  ensureBuildDirectory,
+  saveBuildReport,
+  loadBuildReport,
+  listBuildIds,
 } = require('./storage')
 const { randomUUID } = require('crypto')
-const { existsSync, writeFileSync } = require('fs')
+const { existsSync, writeFileSync, copyFileSync } = require('fs')
 const { importRegions } = require('./regionParser')
 const { generateAACommands, mergeAAConfig } = require('./aaGenerator')
 const { generateOwnedCEEvents, mergeCEConfig } = require('./ceGenerator')
+const { validateAADiff, validateCEDiff } = require('./diffValidator')
 
 type ServerProfile = any
 type ServerSummary = any
@@ -201,6 +206,25 @@ ipcMain.handle(
         fs.mkdirSync(inputs.outDir, { recursive: true })
       }
 
+      // Generate build ID
+      const buildId = `build-${Date.now()}`
+      const timestamp = new Date().toISOString()
+      
+      // Prepare build report
+      const warnings: string[] = []
+      const errors: string[] = []
+      const regionCounts = {
+        overworld: profile.regions.filter((r: any) => r.world === 'overworld').length,
+        nether: profile.regions.filter((r: any) => r.world === 'nether').length,
+        hearts: profile.regions.filter((r: any) => r.kind === 'heart').length,
+        villages: profile.regions.filter((r: any) => r.kind === 'village').length,
+        regions: profile.regions.filter((r: any) => r.kind === 'region').length,
+        system: profile.regions.filter((r: any) => r.kind === 'system').length,
+      }
+      
+      let aaGenerated = false
+      let ceGenerated = false
+      
       // Generate AA if path provided
       if (inputs.aaPath && inputs.aaPath.trim().length > 0) {
         if (!existsSync(inputs.aaPath)) {
@@ -216,8 +240,30 @@ ipcMain.handle(
         // Merge into AA config
         const mergedAAContent = mergeAAConfig(inputs.aaPath, newCommands)
         
-        const aaOutputPath = path.join(inputs.outDir, 'advancedachievements-config.yml')
+        // Validate diff (diff gate)
+        const aaValidation = validateAADiff(inputs.aaPath, mergedAAContent)
+        if (!aaValidation.valid) {
+          return {
+            success: false,
+            error: aaValidation.error || 'AA diff validation failed',
+            buildId, // Include buildId even on failure for reference
+          }
+        }
+        
+        // Generate filename with server name prefix
+        const serverNameSanitized = profile.name.toLowerCase().replace(/[^a-z0-9]/g, '-')
+        const aaFilename = `${serverNameSanitized}-advancedachievements-config.yml`
+        
+        // Write to output directory
+        const aaOutputPath = path.join(inputs.outDir, aaFilename)
         writeFileSync(aaOutputPath, mergedAAContent, 'utf-8')
+        
+        // Copy to build directory
+        const buildDir = ensureBuildDirectory(serverId, buildId)
+        const aaBuildPath = path.join(buildDir, aaFilename)
+        writeFileSync(aaBuildPath, mergedAAContent, 'utf-8')
+        
+        aaGenerated = true
       }
 
       // Generate CE if path provided
@@ -231,12 +277,48 @@ ipcMain.handle(
 
         const ownedEvents = generateOwnedCEEvents(profile.regions, profile.onboarding)
         const mergedCEContent = mergeCEConfig(inputs.cePath, ownedEvents)
-        const ceOutputPath = path.join(inputs.outDir, 'conditionalevents-config.yml')
+        
+        // Validate diff (diff gate)
+        const ceValidation = validateCEDiff(inputs.cePath, mergedCEContent)
+        if (!ceValidation.valid) {
+          return {
+            success: false,
+            error: ceValidation.error || 'CE diff validation failed',
+            buildId,
+          }
+        }
+        
+        // Generate filename with server name prefix
+        const serverNameSanitized = profile.name.toLowerCase().replace(/[^a-z0-9]/g, '-')
+        const ceFilename = `${serverNameSanitized}-conditionalevents-config.yml`
+        
+        // Write to output directory
+        const ceOutputPath = path.join(inputs.outDir, ceFilename)
         writeFileSync(ceOutputPath, mergedCEContent, 'utf-8')
+        
+        // Copy to build directory
+        const buildDir = ensureBuildDirectory(serverId, buildId)
+        const ceBuildPath = path.join(buildDir, ceFilename)
+        writeFileSync(ceBuildPath, mergedCEContent, 'utf-8')
+        
+        ceGenerated = true
       }
       
-      // Generate build ID
-      const buildId = `build-${Date.now()}`
+      // Create build report
+      const report = {
+        buildId,
+        timestamp,
+        regionCounts,
+        generated: {
+          aa: aaGenerated,
+          ce: ceGenerated,
+        },
+        warnings,
+        errors,
+      }
+      
+      // Save build report
+      saveBuildReport(serverId, buildId, report)
       
       // Update profile with build info
       profile.build.lastBuildId = buildId
@@ -295,12 +377,19 @@ ipcMain.handle(
   }
 )
 
-// Read build report (placeholder)
+// Read build report
 ipcMain.handle(
   'read-build-report',
   async (_event: any, serverId: string, buildId: string): Promise<BuildReport | null> => {
-    // TODO: Implement in M5
-    return null
+    return loadBuildReport(serverId, buildId)
+  }
+)
+
+// List build IDs for a server
+ipcMain.handle(
+  'list-builds',
+  async (_event: any, serverId: string): Promise<string[]> => {
+    return listBuildIds(serverId)
   }
 )
 

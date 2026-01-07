@@ -78,6 +78,61 @@ export function listServerIds(): string[] {
     })
 }
 
+export function getBuildsDirectory(serverId: string): string {
+  return join(getServerDirectory(serverId), 'builds')
+}
+
+export function getBuildDirectory(serverId: string, buildId: string): string {
+  return join(getBuildsDirectory(serverId), buildId)
+}
+
+export function getBuildReportPath(serverId: string, buildId: string): string {
+  return join(getBuildDirectory(serverId, buildId), 'report.json')
+}
+
+export function ensureBuildDirectory(serverId: string, buildId: string): string {
+  const buildDir = getBuildDirectory(serverId, buildId)
+  if (!existsSync(buildDir)) {
+    mkdirSync(buildDir, { recursive: true })
+  }
+  return buildDir
+}
+
+export function saveBuildReport(serverId: string, buildId: string, report: any): void {
+  const buildDir = ensureBuildDirectory(serverId, buildId)
+  const reportPath = getBuildReportPath(serverId, buildId)
+  writeFileSync(reportPath, JSON.stringify(report, null, 2), 'utf-8')
+}
+
+export function loadBuildReport(serverId: string, buildId: string): any | null {
+  const reportPath = getBuildReportPath(serverId, buildId)
+  if (!existsSync(reportPath)) {
+    return null
+  }
+
+  try {
+    const content = readFileSync(reportPath, 'utf-8')
+    return JSON.parse(content)
+  } catch (error) {
+    console.error(`Failed to load build report ${buildId}:`, error)
+    return null
+  }
+}
+
+export function listBuildIds(serverId: string): string[] {
+  const buildsDir = getBuildsDirectory(serverId)
+  if (!existsSync(buildsDir)) {
+    return []
+  }
+
+  const entries = readdirSync(buildsDir, { withFileTypes: true })
+  return entries
+    .filter((entry: any) => entry.isDirectory())
+    .map((entry: any) => entry.name)
+    .sort()
+    .reverse() // Most recent first
+}
+
 module.exports = {
   getDataDirectory,
   getServersDirectory,
@@ -87,4 +142,11 @@ module.exports = {
   loadServerProfile,
   saveServerProfile,
   listServerIds,
+  getBuildsDirectory,
+  getBuildDirectory,
+  getBuildReportPath,
+  ensureBuildDirectory,
+  saveBuildReport,
+  loadBuildReport,
+  listBuildIds,
 }

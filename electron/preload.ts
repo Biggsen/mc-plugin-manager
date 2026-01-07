@@ -30,7 +30,8 @@ export interface ElectronAPI {
   showOutputDialog: () => Promise<string | null>
   
   // Build reports
-  readBuildReport: (serverId: string, buildId: string) => Promise<BuildReport>
+  readBuildReport: (serverId: string, buildId: string) => Promise<BuildReport | null>
+  listBuilds: (serverId: string) => Promise<string[]>
 }
 
 // Type definitions (will be imported from shared types later)
@@ -126,6 +127,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   showOutputDialog: () => ipcRenderer.invoke('show-output-dialog'),
   readBuildReport: (serverId: string, buildId: string) =>
     ipcRenderer.invoke('read-build-report', serverId, buildId),
+  listBuilds: (serverId: string) => ipcRenderer.invoke('list-builds', serverId),
 } as ElectronAPI)
 
 // Extend Window interface for TypeScript
