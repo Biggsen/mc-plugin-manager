@@ -13,6 +13,7 @@ export interface ElectronAPI {
     world: 'overworld' | 'nether',
     filePath: string
   ) => Promise<ImportResult>
+  showImportDialog: () => Promise<string | null>
   
   // Onboarding
   updateOnboarding: (
@@ -113,6 +114,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getServer: (serverId: string) => ipcRenderer.invoke('get-server', serverId),
   importRegions: (serverId: string, world: 'overworld' | 'nether', filePath: string) =>
     ipcRenderer.invoke('import-regions', serverId, world, filePath),
+  showImportDialog: () => ipcRenderer.invoke('show-import-dialog'),
   updateOnboarding: (serverId: string, onboarding: OnboardingConfig) =>
     ipcRenderer.invoke('update-onboarding', serverId, onboarding),
   buildConfigs: (serverId: string, inputs: { cePath: string; aaPath: string; outDir: string }) =>

@@ -10,6 +10,7 @@ interface ElectronAPI {
     world: 'overworld' | 'nether',
     filePath: string
   ) => Promise<ImportResult>
+  showImportDialog: () => Promise<string | null>
   updateOnboarding: (
     serverId: string,
     onboarding: OnboardingConfig

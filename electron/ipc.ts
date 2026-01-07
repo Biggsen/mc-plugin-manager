@@ -7,6 +7,7 @@ const {
 } = require('./storage')
 const { randomUUID } = require('crypto')
 const { existsSync } = require('fs')
+const { importRegions } = require('./regionParser')
 
 type ServerProfile = any
 type ServerSummary = any
@@ -70,7 +71,7 @@ ipcMain.handle(
   }
 )
 
-// Import regions (placeholder for M2)
+// Import regions
 ipcMain.handle(
   'import-regions',
   async (
@@ -79,11 +80,71 @@ ipcMain.handle(
     world: 'overworld' | 'nether',
     filePath: string
   ): Promise<ImportResult> => {
-    // TODO: Implement in M2
-    return {
-      success: false,
-      error: 'Import functionality not yet implemented (M2)',
+    try {
+      const profile = loadServerProfile(serverId)
+      if (!profile) {
+        return {
+          success: false,
+          error: `Server profile not found: ${serverId}`,
+        }
+      }
+      
+      if (!existsSync(filePath)) {
+        return {
+          success: false,
+          error: `File not found: ${filePath}`,
+        }
+      }
+      
+      // Import regions
+      const result = importRegions(
+        filePath,
+        world,
+        profile.regions,
+        profile.onboarding
+      )
+      
+      // Update profile
+      profile.regions = result.regions
+      if (world === 'overworld') {
+        profile.sources.overworld = result.source
+      } else {
+        profile.sources.nether = result.source
+      }
+      
+      saveServerProfile(profile)
+      
+      return {
+        success: true,
+        regionCount: result.regions.filter((r: any) => r.world === world).length,
+      }
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.message || 'Unknown error during import',
+      }
     }
+  }
+)
+
+// Show file dialog for region import
+ipcMain.handle(
+  'show-import-dialog',
+  async (_event: any): Promise<string | null> => {
+    const result = await dialog.showOpenDialog({
+      title: 'Select Region Forge Export File',
+      filters: [
+        { name: 'YAML Files', extensions: ['yml', 'yaml'] },
+        { name: 'All Files', extensions: ['*'] },
+      ],
+      properties: ['openFile'],
+    })
+    
+    if (result.canceled || result.filePaths.length === 0) {
+      return null
+    }
+    
+    return result.filePaths[0]
   }
 )
 

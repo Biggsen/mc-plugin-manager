@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { ServerProfilesScreen } from './screens/ServerProfilesScreen'
+import { ServerDetailScreen } from './screens/ServerDetailScreen'
 import type { ServerProfile } from './types'
 
 function App() {
@@ -8,11 +9,10 @@ function App() {
   return (
     <div className="app">
       {currentServer ? (
-        <div>
-          <button onClick={() => setCurrentServer(null)}>← Back to Servers</button>
-          <h1>Server: {currentServer.name}</h1>
-          <p>Server management UI coming soon...</p>
-        </div>
+        <ServerDetailScreen
+          server={currentServer}
+          onBack={() => setCurrentServer(null)}
+        />
       ) : (
         <ServerProfilesScreen onSelectServer={setCurrentServer} />
       )}
