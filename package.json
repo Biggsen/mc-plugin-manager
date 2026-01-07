@@ -9,9 +9,14 @@
     "build:electron": "tsc -p tsconfig.electron.json",
     "preview": "vite preview",
     "electron:dev": "npm run build:electron && electron .",
-    "electron:build": "npm run build:electron && vite build && electron-builder"
+    "electron:build": "npm run build:electron && vite build && electron-packager . --platform=win32 --arch=x64 --out=release --overwrite"
   },
-  "keywords": ["minecraft", "plugin", "config", "electron"],
+  "keywords": [
+    "minecraft",
+    "plugin",
+    "config",
+    "electron"
+  ],
   "author": "",
   "license": "MIT",
   "devDependencies": {
@@ -21,14 +26,39 @@
     "@vitejs/plugin-react": "^4.2.1",
     "electron": "^28.0.0",
     "electron-builder": "^24.9.1",
+    "electron-packager": "^17.1.2",
     "typescript": "^5.3.3",
     "vite": "^5.0.8"
   },
   "dependencies": {
+    "fs-extra": "^11.2.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "yaml": "^2.3.4",
-    "zod": "^3.22.4",
-    "fs-extra": "^11.2.0"
+    "zod": "^3.22.4"
+  },
+  "build": {
+    "appId": "com.mc-plugin-manager",
+    "productName": "MC Plugin Manager",
+    "win": {
+      "target": [
+        "dir"
+      ],
+      "sign": null,
+      "signDlls": false
+    },
+    "files": [
+      "dist/**/*",
+      "dist-electron/**/*",
+      "node_modules/**/*",
+      "package.json"
+    ],
+    "directories": {
+      "output": "release"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
   }
 }

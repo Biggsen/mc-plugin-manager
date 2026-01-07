@@ -26,6 +26,7 @@ dist-electron
 # Electron
 out
 build
+release
 
 # Data directory (contains user data)
 mc-plugin-manager-data/
