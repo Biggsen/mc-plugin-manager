@@ -6,9 +6,12 @@ const storage = require('./storage')
 let mainWindow: any = null
 
 function createWindow() {
+  const iconPath = join(__dirname, '../build/icon.png')
+  
   mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
+    icon: iconPath,
     webPreferences: {
       preload: join(__dirname, 'preload.js'),
       contextIsolation: true,

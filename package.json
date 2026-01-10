@@ -9,7 +9,7 @@
     "build:electron": "tsc -p tsconfig.electron.json",
     "preview": "vite preview",
     "electron:dev": "npm run build:electron && electron .",
-    "electron:build": "npm run build:electron && vite build && electron-packager . --platform=win32 --arch=x64 --out=release --overwrite"
+    "electron:build": "npm run build:electron && vite build && electron-packager . --platform=win32 --arch=x64 --icon=build/icon.ico --out=release --overwrite"
   },
   "keywords": [
     "minecraft",
@@ -44,9 +44,11 @@
       "target": [
         "dir"
       ],
+      "icon": "build/icon.ico",
       "sign": null,
       "signDlls": false
     },
+    "icon": "build/icon.png",
     "files": [
       "dist/**/*",
       "dist-electron/**/*",
