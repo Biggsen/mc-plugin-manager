@@ -33,6 +33,11 @@ export interface ImportedSource {
   originalFilename: string
   importedAtIso: string
   fileHash: string
+  spawnCenter?: {
+    world: string
+    x: number
+    z: number
+  }
 }
 
 export interface RegionRecord {

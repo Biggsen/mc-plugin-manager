@@ -19,6 +19,21 @@ export function OnboardingScreen({ server, onServerUpdate }: OnboardingScreenPro
   useEffect(() => {
     setStartRegionId(server.onboarding.startRegionId)
     setTeleport(server.onboarding.teleport)
+    
+    // Auto-prefill from spawn center if teleport is empty/default
+    const hasEmptyTeleport = !server.onboarding.teleport.world || 
+      (server.onboarding.teleport.x === 0 && server.onboarding.teleport.z === 0)
+    if (hasEmptyTeleport) {
+      const spawnCenter = server.sources.overworld?.spawnCenter
+      if (spawnCenter) {
+        setTeleport({
+          world: spawnCenter.world,
+          x: spawnCenter.x,
+          z: spawnCenter.z,
+          y: server.onboarding.teleport.y || 64, // Keep existing Y or default to 64
+        })
+      }
+    }
   }, [server])
 
   function handlePasteLocation() {

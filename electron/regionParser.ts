@@ -35,6 +35,11 @@ interface ImportedSource {
   originalFilename: string
   importedAtIso: string
   fileHash: string
+  spawnCenter?: {
+    world: string
+    x: number
+    z: number
+  }
 }
 
 interface OnboardingConfig {
@@ -169,6 +174,26 @@ export function importRegions(
   const importedAt = new Date().toISOString()
   const filename = require('path').basename(filePath)
   
+  // Calculate spawn center if spawn region exists
+  let spawnCenter: { world: string; x: number; z: number } | undefined
+  const spawnRegion = regionData.regions['spawn']
+  if (spawnRegion && spawnRegion.type === 'cuboid' && spawnRegion.min && spawnRegion.max) {
+    const min = spawnRegion.min
+    const max = spawnRegion.max
+    const x = Math.floor((min.x + max.x) / 2)
+    const z = Math.floor((min.z + max.z) / 2)
+    
+    // Extract world name from path or default to "world"
+    // Path format: .../worlds/{worldName}/regions.yml
+    const pathParts = filePath.split(/[/\\]/)
+    const worldsIndex = pathParts.findIndex((part: string) => part === 'worlds')
+    const worldName = worldsIndex >= 0 && worldsIndex < pathParts.length - 1 
+      ? pathParts[worldsIndex + 1] 
+      : 'world'
+    
+    spawnCenter = { world: worldName, x, z }
+  }
+  
   // Remove existing regions from this world
   const otherWorldRegions = existingRegions.filter((r) => r.world !== world)
   
@@ -201,6 +226,7 @@ export function importRegions(
       originalFilename: filename,
       importedAtIso: importedAt,
       fileHash,
+      spawnCenter,
     },
   }
 }
