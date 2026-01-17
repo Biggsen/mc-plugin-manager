@@ -299,14 +299,14 @@ export function mergeTABConfig(
   // Ensure static conditions are present (add from reference if missing)
   const staticConditions = {
     'region-name': {
-      conditions: ["%worldguard_region_name_2%!='"],
+      conditions: ["%worldguard_region_name_2%!="],
       type: 'AND',
       yes: '%capitalize_pascal-case-forced_{worldguard_region_name_2}%',
       no: '%capitalize_pascal-case-forced_{worldguard_region_name_1}%',
     },
     'village-name': {
       conditions: [
-        "%worldguard_region_name_2%!='",
+        "%worldguard_region_name_2%!=",
         '%worldguard_region_name_1%!=%worldguard_region_name_2%',
         "%worldguard_region_name_1%!=spawn",
       ],
