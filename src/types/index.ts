@@ -92,9 +92,18 @@ export interface BuildReport {
     regions: number
     system: number
   }
+  computedCounts?: {
+    overworldRegions: number
+    overworldHearts: number
+    netherRegions: number
+    netherHearts: number
+    villages: number
+    total: number
+  }
   generated: {
     aa: boolean
     ce: boolean
+    tab: boolean
   }
   warnings: string[]
   errors: string[]
