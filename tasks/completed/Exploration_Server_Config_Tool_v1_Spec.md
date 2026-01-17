@@ -1,5 +1,7 @@
 # Exploration Server Config Tool (MC Plugin Manager) — v1 Spec
 
+**Status: ✅ v1.0 Complete** (All milestones implemented and tested)
+
 ## Purpose
 A local desktop GUI application that compiles **exploration-server experience data** (primarily regions + onboarding) into **fully-ready plugin configuration files**.
 
@@ -17,7 +19,7 @@ The tool is optimized for fast, safe regeneration of large configs with determin
 5. **Local-first**: no cloud services required.
 
 ## Non-Goals (v1)
-- Full generic “any-plugin” configuration editor.
+- Full generic "any-plugin" configuration editor.
 - A full WorldGuard region editor (Region Forge remains source of region definitions).
 - Managing every AdvancedAchievements category beyond `Commands.*`.
 - Rewriting or reformatting entire plugin configs outside owned sections.
@@ -85,6 +87,11 @@ type ImportedSource = {
   originalFilename: string;
   importedAtIso: string;
   fileHash: string;
+  spawnCenter?: {
+    world: string;
+    x: number;
+    z: number;
+  };
 };
 
 type RegionKind = "system" | "region" | "village" | "heart";
@@ -127,7 +134,7 @@ Applied after import in order:
    - Nether → `recipeId=nether_region`
 
 ### Reward Recipes (v1, hardcoded)
-Recipes are *not* a general “knob system” in v1; they are minimal and opinionated:
+Recipes are *not* a general "knob system" in v1; they are minimal and opinionated:
 
 - `region`:
   - CE actions:
@@ -136,16 +143,34 @@ Recipes are *not* a general “knob system” in v1; they are minimal and opinio
     - console_command: `aach add 1 Custom.regions_discovered %player%`
     - console_command: `aach add 1 Custom.total_discovered %player%`
     - console_command: `cc give virtual RegionCrate 1 %player%`
+- `village`:
+  - CE actions:
+    - wait: 5
+    - console_command: `aach give <AA_COMMAND_ID> %player%`
+    - console_command: `aach add 1 Custom.villages_discovered %player%`
+    - console_command: `aach add 1 Custom.total_discovered %player%`
+    - console_command: `cc give virtual VillageCrate 1 %player%`
 - `heart`:
-  - as above, but:
-    - `Custom.hearts_discovered`
-    - crate: `HeartCrate`
+  - CE actions:
+    - wait: 5
+    - console_command: `aach give <AA_COMMAND_ID> %player%`
+    - console_command: `aach add 1 Custom.hearts_discovered %player%`
+    - console_command: `aach add 1 Custom.total_discovered %player%`
+    - console_command: `cc give virtual HeartCrate 1 %player%`
 - `nether_region`:
-  - increment: `Custom.nether_regions_discovered`, `Custom.total_discovered`
-  - crate: `RegionCrate` (or configurable later)
+  - CE actions:
+    - wait: 5
+    - console_command: `aach give <AA_COMMAND_ID> %player%`
+    - console_command: `aach add 1 Custom.nether_regions_discovered %player%`
+    - console_command: `aach add 1 Custom.total_discovered %player%`
+    - console_command: `cc give virtual RegionCrate 1 %player%`
 - `nether_heart`:
-  - increment: `Custom.nether_hearts_discovered`, `Custom.total_discovered`
-  - crate: `HeartCrate`
+  - CE actions:
+    - wait: 5
+    - console_command: `aach give <AA_COMMAND_ID> %player%`
+    - console_command: `aach add 1 Custom.nether_hearts_discovered %player%`
+    - console_command: `aach add 1 Custom.total_discovered %player%`
+    - console_command: `cc give virtual HeartCrate 1 %player%`
 - `none`: no output
 
 **Counter names**:
@@ -261,11 +286,11 @@ region_heart_discover_once:
     - "%region% startsWith heart"
   actions:
     default:
-      - "message: &aYou discovered a &eheart&a!"
-      - "message: &7Hearts unlock rewards as you discover more."
+      - "message: &7Region hearts have an unbreakable lodestone"
+      - "message: &dUse a compass on the lodestone to lock it to the region. Then you can always find this region again!"
 ```
 
-(Exact strings can be adjusted later; v1 uses fixed defaults.)
+**Note**: The messaging matches the server's existing style for lodestone tips.
 
 ### 3) ConditionalEvents — first_join
 Generated from `ServerProfile.onboarding`:
@@ -281,32 +306,41 @@ first_join:
   one_time: true
   actions:
     default:
-      - "console_command: tp %player% <x> <y> <z>"
-      - "wait: 5"
+      - "message: First Join!"
+      - "console_command: tp %player% <x> <y> <z> [<yaw> <pitch>]"
       - "console_command: aach give <AA_START_COMMAND> %player%"
       - "console_command: aach add 1 Custom.regions_discovered %player%"
       - "console_command: aach add 1 Custom.total_discovered %player%"
       - "console_command: cc give virtual RegionCrate 1 %player%"
+      - "message: &dTip: Use &b/cc &dto open your crates and get rewards!"
+      - "message: &dFor help on how to play use &b/guides"
 ```
 
-**Note**: If `yaw` and `pitch` are provided in `onboarding.teleport`, they can be included in the tp command. If omitted, use 3-parameter format. World is not included in the tp command (handled by server context).
+**Note**: 
+- If `yaw` and `pitch` are provided in `onboarding.teleport`, they are included in the tp command. If omitted, use 3-parameter format.
+- World is not included in the tp command (handled by server context).
+- Messaging matches the server's existing first-join style.
 
 ### 4) AdvancedAchievements — Commands section
 Generate for all regions where:
 - `discover.method != "disabled"`
 
-Template:
+**Note**: The actual plugin format uses a flat structure (no level "1" nesting). The generated structure is:
 
 ```yaml
 Commands:
   <AA_COMMAND_ID>:
-    1:
-      Goal: "<AA_COMMAND_ID>"
-      Message: "You discovered <DISPLAY_NAME>!"
-      Name: "<AA_COMMAND_ID>"
-      DisplayName: "<DISPLAY_NAME>"
-      Type: "normal"
+    Goal: "<GOAL_TEXT>"
+    Message: "<MESSAGE_TEXT>"
+    Name: "<SNAKE_CASE_NAME>"
+    DisplayName: "<DISPLAY_NAME>"
+    Type: "normal"
 ```
+
+Where:
+- `Goal` and `Message` vary by region kind (heart, village, regular region, nether region)
+- `Name` is snake_case: `discover_<region_id>`
+- `DisplayName` is the override if provided, or a default based on region kind
 
 ---
 
@@ -362,6 +396,7 @@ regions:
    - canonicalizes ids (lowercase, preserve snake_case structure)
    - creates `RegionRecord[]` entries
    - applies classification rules (see Classification & Defaults)
+   - extracts spawn center from spawn region (if present) for teleport defaults
    - stores sources metadata + internal model
 
 ### Constraints
@@ -393,7 +428,7 @@ Hard requirement for v1:
 - If output differs outside owned sections, the build fails and shows why.
 
 Implementation strategy:
-- Compare parsed objects with owned nodes removed from both sides (or compute a structural “expected preserved equals actual preserved” assertion).
+- Compare parsed objects with owned nodes removed from both sides (or compute a structural "expected preserved equals actual preserved" assertion).
 
 ---
 
@@ -404,7 +439,7 @@ Implementation strategy:
    - import overworld/nether
    - show counts: total, hearts, system, first_join target present?
 3. **Onboarding**
-   - set teleport location (fields + “paste location string” convenience)
+   - set teleport location (fields + "paste location string" convenience)
    - select start region id from dropdown
 4. **Build**
    - pick input configs
@@ -441,9 +476,13 @@ Minimal APIs:
 - `createServer(name: string): ServerProfile`
 - `getServer(serverId: string): ServerProfile`
 - `importRegions(serverId: string, world: "overworld"|"nether", filePath: string): ImportResult`
+- `showImportDialog(): string | null` - Shows file dialog for region import
 - `updateOnboarding(serverId: string, onboarding: ServerProfile["onboarding"]): ServerProfile`
 - `buildConfigs(serverId: string, inputs: { cePath: string; aaPath: string; outDir: string }): BuildResult`
+- `showConfigFileDialog(title: string, defaultPath?: string): string | null` - Shows file dialog for config selection
+- `showOutputDialog(): string | null` - Shows directory dialog for output
 - `readBuildReport(serverId: string, buildId: string): BuildReport`
+- `listBuilds(serverId: string): string[]` - Lists all build IDs for a server
 
 ---
 
@@ -460,28 +499,30 @@ Minimal APIs:
 ---
 
 ## Milestones
-### M1 — GUI skeleton + Server storage
+### M1 — GUI skeleton + Server storage ✅
 - profiles list/create/select
 - profile.json persistence
 
-### M2 — Region import + onboarding editing
+### M2 — Region import + onboarding editing ✅
 - import overworld/nether
 - classification + defaults
 - onboarding editor
+- spawn center extraction from region data
 
-### M3 — AA generator + merge
+### M3 — AA generator + merge ✅
 - generate `Commands` section
 - replace in existing AA config
-- output file + diff view
+- output file + build report
 
-### M4 — CE generator + merge
+### M4 — CE generator + merge ✅
 - generate `*_discover_once`, `region_heart_discover_once`, `first_join`
 - merge into existing CE config
-- output file + diff view
+- output file + build report
 
-### M5 — Diff gate + build reports
-- ensure only owned sections change
+### M5 — Diff gate + build reports ✅
+- ensure only owned sections change (diff validation)
 - persist build history
+- build report generation with region counts and warnings
 
 ---
 
@@ -494,17 +535,18 @@ Minimal APIs:
 - **Preservation**: Maintain original formatting for non-owned sections where possible
 
 ### AA Commands Structure
-Each command achievement follows this structure:
+Each command achievement follows this flat structure (no level nesting):
 ```yaml
 Commands:
   <commandId>:
-    1:
-      Goal: "<commandId>"
-      Message: "You discovered <DisplayName>!"
-      Name: "<commandId>"
-      DisplayName: "<DisplayName>"
-      Type: "normal"
+    Goal: "<Goal Text>"
+    Message: "<Message Text>"
+    Name: "<snake_case_name>"
+    DisplayName: "<DisplayName>"
+    Type: "normal"
 ```
+
+**Note**: The actual plugin format uses a flat structure. Goal and Message text vary by region kind (heart, village, regular region, nether region).
 
 ### ConditionalEvents Actions Format
 - Actions are strings in a list
@@ -512,10 +554,45 @@ Commands:
 - Types: `wait`, `console_command`, `message`, `teleport` (if supported)
 - Example: `'console_command: aach give discoverWarriotos %player%'`
 
-## Open Decisions (implementation details)
-- Import error handling: Fail fast vs partial import (TBD)
-- Build input validation: Create missing sections vs fail (TBD)
-- Build report structure: Detailed diff vs summary (TBD)
-- File path handling: Absolute vs relative resolution (TBD)
-- IPC error handling: Structured errors vs exceptions (TBD)
-- Teleport default values: Omit yaw/pitch vs default to 0 (TBD)
+## Implementation Decisions (v1.0)
+
+### Import Error Handling
+**Decision**: Fail fast with clear error messages
+- Invalid YAML files fail immediately with parse error details
+- Missing required fields (e.g., `regions` key) fail with descriptive errors
+- File not found errors are returned to the UI for display
+
+### Build Input Validation
+**Decision**: Fail if input files are missing, but allow optional configs
+- At least one config file (AA or CE) must be provided
+- Missing input files fail with clear error messages
+- Missing `Commands` or `Events` sections are handled gracefully (created if needed)
+
+### Build Report Structure
+**Decision**: Summary format with region counts and warnings
+- Build reports include: timestamp, build ID, region counts by world/kind, generated flags, warnings, errors
+- Detailed diffs are not stored in reports (diff validation happens during build)
+- Build history is persisted per server for reference
+
+### File Path Handling
+**Decision**: Absolute paths required
+- All file paths (input configs, output directory) use absolute paths
+- File dialogs return absolute paths
+- Output directory is remembered per server profile
+
+### IPC Error Handling
+**Decision**: Structured error responses
+- All IPC handlers return result objects with `success` boolean
+- Errors include descriptive `error` messages
+- Exceptions are caught and converted to error responses
+
+### Teleport Default Values
+**Decision**: Omit yaw/pitch if not provided
+- If `yaw` and `pitch` are both provided, include them in tp command (5-parameter format)
+- If either is missing, use 3-parameter format (x, y, z only)
+- Defaults to 3-parameter format for maximum compatibility
+
+### Additional Implementation Notes
+- **Spawn Center Extraction**: When importing overworld regions, if a `spawn` region exists with cuboid type, the spawn center (x, z) is calculated and stored in `ImportedSource.spawnCenter` for use in onboarding defaults
+- **Village Tracking**: Villages are tracked separately with `Custom.villages_discovered` counter and `VillageCrate` rewards
+- **File Naming**: Generated config files use server name prefix: `<server-name>-advancedachievements-config.yml` and `<server-name>-conditionalevents-config.yml`
