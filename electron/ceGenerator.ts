@@ -158,8 +158,11 @@ export function generateOwnedCEEvents(
   owned.first_join = generateFirstJoin(onboarding, regions)
   owned.region_heart_discover_once = generateRegionHeartDiscoverOnce()
 
-  // on-enter discoveries
-  const discoverOnceRegions = regions.filter((r) => r.discover.method === 'on_enter')
+  // on-enter discoveries (skip start region — it's discovered in first_join, not on enter)
+  const startId = onboarding.startRegionId
+  const discoverOnceRegions = regions.filter(
+    (r) => r.discover.method === 'on_enter' && r.id !== startId
+  )
   const keys = discoverOnceRegions
     .map((r) => ({ key: `${r.id}_discover_once`, region: r }))
     .sort((a, b) => a.key.localeCompare(b.key))
