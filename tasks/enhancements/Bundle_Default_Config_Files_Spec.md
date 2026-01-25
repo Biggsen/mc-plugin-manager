@@ -4,17 +4,18 @@
 
 ## Purpose
 
-Bundle default template config files for AdvancedAchievements and ConditionalEvents plugins directly within the application bundle. This eliminates the requirement for users to manually select existing config files on every build, improving UX and reducing friction.
+Bundle default template config files for AdvancedAchievements, ConditionalEvents, and TAB plugins directly within the application bundle. This eliminates the requirement for users to manually select existing config files on every build, improving UX and reducing friction.
 
 ## Problem Statement
 
 ### Current Workflow Issues
 
-1. **Repetitive File Selection**: Users must select existing config files (`advancedachievements-config.yml` and `conditionalevents-config.yml`) for every build, even though these files need to conform to specific structural requirements for the generators to work correctly.
+1. **Repetitive File Selection**: Users must select existing config files (`advancedachievements-config.yml`, `conditionalevents-config.yml`, and TAB `config.yml` / `tab-config.yml`) for every build, even though these files need to conform to specific structural requirements for the generators to work correctly.
 
-2. **Structural Dependencies**: The generators (`mergeAAConfig`, `mergeCEConfig`) require existing config files with specific sections:
+2. **Structural Dependencies**: The generators (`mergeAAConfig`, `mergeCEConfig`, `mergeTABConfig`) require existing config files with specific sections:
    - **AA**: Must have a `Commands` section (will be completely replaced)
    - **CE**: Must have an `Events` section (owned events merged into it)
+   - **TAB**: Must have `header-footer`, `scoreboard.scoreboards`, and `conditions`; generator replaces/merges owned sections (header, footer, scoreboards, top-explorer conditions) and adds `region-name`, `village-name`, `heart-region` if missing
 
 3. **User Confusion**: Users may not understand why they need to provide config files when the generators will replace/merge specific sections anyway.
 
@@ -25,6 +26,7 @@ Bundle default template config files for AdvancedAchievements and ConditionalEve
 The `reference/plugin config files/defaults/` directory already contains properly structured default config files:
 - `advancedachievements-config.yml` — Full AA config with `Commands` section placeholder
 - `conditionalevents-config.yml` — Full CE config with `Events` section placeholder
+- `tab-config.yml` — Full TAB config with `header-footer`, `scoreboard.scoreboards`, and `conditions`
 
 These files represent minimal viable templates that satisfy the generator's structural requirements.
 
@@ -37,7 +39,7 @@ Bundle default config templates as application assets. Use them automatically wh
 ### Behavior Changes
 
 1. **Default Behavior (New)**: 
-   - If no existing config path is provided for AA/CE, use bundled defaults
+   - If no existing config path is provided for AA/CE/TAB, use bundled defaults
    - Build succeeds without requiring file selection
    - UI clearly indicates "Using bundled defaults"
 
@@ -47,7 +49,7 @@ Bundle default config templates as application assets. Use them automatically wh
    - UI clearly indicates "Using custom file: [path]"
 
 3. **File Selection (Updated)**:
-   - File selection becomes **optional** for AA and CE (required only for TAB currently)
+   - File selection becomes **optional** for AA, CE, and TAB
    - UI provides clear visual distinction between default and custom mode
 
 ## Implementation Details
@@ -60,6 +62,7 @@ electron/
     templates/
       advancedachievements-config.yml    (copied from reference/defaults)
       conditionalevents-config.yml       (copied from reference/defaults)
+      tab-config.yml                     (copied from reference/defaults)
 ```
 
 **Alternative**: Store in `src/assets/templates/` if bundling through Vite is preferred.
@@ -86,16 +89,17 @@ electron/
 ```typescript
 mergeAAConfig(existingConfigPath: string, newCommands: AACommandsSection): string
 mergeCEConfig(existingConfigPath: string, ownedEvents: CEEventsSection): string
+mergeTABConfig(existingConfigPath: string, ...): string
 ```
 
 **Proposed**: No changes needed. Generators continue to accept file paths. Path resolution happens at caller level.
 
 #### 3. Path Resolution Logic
 
-**New Function**: `resolveConfigPath(type: 'aa' | 'ce', userProvidedPath?: string): string`
+**New Function**: `resolveConfigPath(type: 'aa' | 'ce' | 'tab', userProvidedPath?: string): string`
 
 ```typescript
-function resolveConfigPath(type: 'aa' | 'ce', userProvidedPath?: string): string {
+function resolveConfigPath(type: 'aa' | 'ce' | 'tab', userProvidedPath?: string): string {
   // If user provided path, validate and use it
   if (userProvidedPath && userProvidedPath.trim().length > 0) {
     if (!existsSync(userProvidedPath)) {
@@ -106,11 +110,10 @@ function resolveConfigPath(type: 'aa' | 'ce', userProvidedPath?: string): string
   
   // Otherwise, use bundled default
   const appPath = app.getAppPath()
-  const defaultPath = path.join(appPath, 'electron', 'assets', 'templates', 
-    type === 'aa' 
-      ? 'advancedachievements-config.yml'
-      : 'conditionalevents-config.yml'
-  )
+  const filename = type === 'aa' ? 'advancedachievements-config.yml'
+    : type === 'ce' ? 'conditionalevents-config.yml'
+    : 'tab-config.yml'
+  const defaultPath = path.join(appPath, 'electron', 'assets', 'templates', filename)
   
   if (!existsSync(defaultPath)) {
     throw new Error(`Bundled ${type.toUpperCase()} default config not found at: ${defaultPath}`)
@@ -138,12 +141,25 @@ if (inputs.aaPath && inputs.aaPath.trim().length > 0) {
 **Updated Flow**:
 ```typescript
 // AA generation (optional)
-if (inputs.generateAA !== false) {  // Default true, or check checkbox
+if (inputs.generateAA !== false) {
   try {
     const aaConfigPath = resolveConfigPath('aa', inputs.aaPath)
     const mergedAAContent = mergeAAConfig(aaConfigPath, newCommands)
-    // Track whether using default or custom
     const usingDefaultAA = !inputs.aaPath || inputs.aaPath.trim().length === 0
+    // ... rest of generation
+  } catch (error) {
+    return { success: false, error: error.message }
+  }
+}
+
+// CE generation (optional) — same pattern with resolveConfigPath('ce', inputs.cePath)
+
+// TAB generation (optional)
+if (inputs.generateTAB !== false) {
+  try {
+    const tabConfigPath = resolveConfigPath('tab', inputs.tabPath)
+    const mergedTABContent = mergeTABConfig(tabConfigPath, ...)
+    const usingDefaultTAB = !inputs.tabPath || inputs.tabPath.trim().length === 0
     // ... rest of generation
   } catch (error) {
     return { success: false, error: error.message }
@@ -174,7 +190,7 @@ interface BuildResult {
 
 **Changes**:
 1. **File Selection UI**:
-   - Make AA/CE file pickers **optional** (add checkboxes: "Use bundled defaults" vs "Use custom file")
+   - Make AA/CE/TAB file pickers **optional** (add checkboxes: "Use bundled defaults" vs "Use custom file")
    - Default to "Use bundled defaults" checked
    - Show file path input only when "Use custom file" is selected
    - Add visual indicator showing which mode is active
@@ -193,8 +209,9 @@ interface BuildResult {
    [✓] Use bundled defaults
    [ ] Use custom file: [Browse...] [path display]
    
-   TAB (still required)
-   [Browse...] [path display]
+   TAB
+   [✓] Use bundled defaults
+   [ ] Use custom file: [Browse...] [path display]
    ```
 
 ## Default Config File Content
@@ -227,6 +244,20 @@ interface BuildResult {
 - Generator will merge owned events (`first_join`, `region_heart_discover_once`, `*_discover_once`)
 - Non-owned events preserved
 
+### TAB Default
+
+**Source**: `reference/plugin config files/defaults/tab-config.yml`
+
+**Key Characteristics**:
+- Full TAB plugin config with `header-footer`, `scoreboard` (including `scoreboards`), and `conditions`
+- Generator replaces `header-footer.header` and `header-footer.footer` with server name and top explorers
+- Generator replaces `scoreboard.scoreboards` with conditional overworld/nether/end scoreboards based on region data
+- Generator adds `conditions.top-explorers-title` and `conditions.top-explorer-1` through `top-explorer-5` with computed total count
+- If `region-name`, `village-name`, or `heart-region` are missing from `conditions`, generator adds them from the reference template (per TAB Plugin Integration Spec — "Missing Static Conditions")
+- All other TAB settings (permissions, MySQL, proxy-support, layout, etc.) preserved
+
+**Note**: The default may have a minimal `conditions` section (e.g. only `nick`). The generator merges in the static WorldGuard conditions and top-explorer conditions as needed.
+
 ## Risks & Mitigations
 
 ### Risk 1: Plugin Version Compatibility
@@ -242,7 +273,7 @@ interface BuildResult {
 **Action**: Add comment header to default files:
 ```yaml
 # MC Plugin Manager - Bundled Default Template
-# Target Plugin Version: AdvancedAchievements 6.x
+# Target Plugin Version: AdvancedAchievements 6.x / ConditionalEvents x.x / TAB 4.x
 # Last Updated: 2024-XX-XX
 # 
 # This file serves as a template. The generator will replace/merge
@@ -292,18 +323,26 @@ interface BuildResult {
 - Use absolute paths resolved from `app.getAppPath()` for reliability
 - Include verification in build/packaging tests
 
+### Risk 6: TAB Default Minimal Structure
+
+**Risk**: TAB bundled default is minimal; if TAB plugin changes its schema or owned-section layout, the bundled file may need updating.
+
+**Mitigation**:
+- Same as Risk 1: version comment in header, document supported TAB versions, clear errors on parse/merge failure
+- Per TAB Plugin Integration Spec, generator adds static conditions (`region-name`, `village-name`, `heart-region`) from reference when missing, so the default need not include them
+
 ## Testing Strategy
 
 ### Unit Tests
 
 1. **Path Resolution**:
-   - Test `resolveConfigPath` with provided path
-   - Test `resolveConfigPath` without provided path (should use default)
+   - Test `resolveConfigPath` with provided path (aa, ce, tab)
+   - Test `resolveConfigPath` without provided path (should use default for each type)
    - Test error handling for missing custom files
-   - Test error handling for missing bundled defaults
+   - Test error handling for missing bundled defaults (including TAB)
 
 2. **Generator Integration**:
-   - Verify generators work with bundled default paths
+   - Verify generators work with bundled default paths (AA, CE, TAB)
    - Verify generators work with custom paths (regression)
    - Verify merge behavior identical for both paths
 
@@ -312,21 +351,23 @@ interface BuildResult {
 1. **Build Flow**:
    - Build with AA default only
    - Build with CE default only
-   - Build with both defaults
+   - Build with TAB default only
+   - Build with all three defaults
    - Build with custom files (regression)
-   - Build with mixed (default AA, custom CE)
+   - Build with mixed (e.g. default AA and CE, custom TAB)
 
 2. **UI Flow**:
-   - Toggle between default and custom modes
+   - Toggle between default and custom modes for AA, CE, and TAB
    - Verify file picker enables/disables correctly
-   - Verify build result displays correct source information
+   - Verify build result displays correct source information (including `configSources.tab`)
 
 ### Manual Testing Checklist
 
-- [ ] Build with bundled defaults produces valid configs
+- [ ] Build with bundled defaults produces valid configs (AA, CE, TAB)
+- [ ] Build with TAB bundled default produces valid TAB config
 - [ ] Build with custom files still works (regression)
 - [ ] UI clearly shows which mode is active
-- [ ] Build reports indicate config sources correctly
+- [ ] Build reports indicate config sources correctly (including TAB path and isDefault)
 - [ ] Error messages are clear when files are missing
 - [ ] Bundled files are included in packaged app (Windows build)
 - [ ] Bundled files are accessible at runtime (verify paths)
@@ -358,12 +399,13 @@ interface BuildResult {
 1. **Build Screen Help**:
    - Explain bundled defaults feature
    - Explain when to use custom files vs defaults
-   - Document what happens to custom commands/events
+   - Document what happens to custom commands/events (AA), and to custom header/footer/scoreboard (TAB)
 
 2. **FAQ**:
    - "Why do I need to select config files?" → Answer: You don't, defaults work
    - "What if I have custom commands in AA?" → Use custom file option
    - "How do I add custom counters to AA?" → Use custom file option
+   - "What if I have custom header/footer or scoreboard in TAB?" → Use custom file option
 
 ### Developer Documentation
 
@@ -383,11 +425,12 @@ interface BuildResult {
 
 ## Acceptance Criteria
 
-- [ ] Bundled default config files included in app distribution
-- [ ] Build works without requiring AA/CE file selection
+- [ ] Bundled default config files (AA, CE, TAB) included in app distribution
+- [ ] Build works without requiring AA/CE/TAB file selection
+- [ ] Build works with all three using bundled defaults
 - [ ] UI clearly indicates default vs custom mode
-- [ ] Build reports show config source information
-- [ ] Custom file override works correctly
+- [ ] Build reports show config source information (including TAB)
+- [ ] Custom file override works correctly for AA, CE, and TAB
 - [ ] All existing functionality preserved (regression tests pass)
 - [ ] Error handling provides clear guidance
 - [ ] Documentation updated
@@ -401,13 +444,13 @@ interface BuildResult {
 ### Estimated Effort
 
 - Asset bundling setup: 1-2 hours
-- Path resolution logic: 2-3 hours
-- IPC handler updates: 2-3 hours
-- UI updates: 4-6 hours
-- Testing: 3-4 hours
+- Path resolution logic: 2-3 hours (include TAB in `resolveConfigPath`)
+- IPC handler updates: 2-3 hours (TAB path resolution and merge flow)
+- UI updates: 4-6 hours (TAB optional file picker, default/custom toggle)
+- Testing: 3-4 hours (TAB path resolution, build flows, UI)
 - Documentation: 1-2 hours
 
-**Total**: ~15-20 hours
+**Total**: ~17-23 hours
 
 ### Dependencies
 
@@ -416,11 +459,11 @@ interface BuildResult {
 
 ### Related Work
 
-- TAB plugin integration (similar pattern may apply in future)
+- TAB plugin integration — TAB is now included in bundled defaults; same pattern as AA/CE
 - Config validation improvements (could validate bundled files at startup)
 
 ---
 
-**Document Version**: 1.0  
-**Last Updated**: 2024-XX-XX  
+**Document Version**: 1.1  
+**Last Updated**: 2026-01-25  
 **Author**: Enhancement Proposal
