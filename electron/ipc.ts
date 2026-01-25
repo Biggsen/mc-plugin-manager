@@ -14,7 +14,8 @@ const { existsSync, writeFileSync, copyFileSync } = require('fs')
 const { importRegions } = require('./regionParser')
 const { generateAACommands, mergeAAConfig } = require('./aaGenerator')
 const { generateOwnedCEEvents, mergeCEConfig } = require('./ceGenerator')
-const { validateAADiff, validateCEDiff } = require('./diffValidator')
+const { generateOwnedTABSections, mergeTABConfig, computeRegionCounts } = require('./tabGenerator')
+const { validateAADiff, validateCEDiff, validateTABDiff } = require('./diffValidator')
 
 type ServerProfile = any
 type ServerSummary = any
@@ -180,7 +181,7 @@ ipcMain.handle(
   async (
     _event: any,
     serverId: string,
-    inputs: { cePath: string; aaPath: string; outDir: string }
+    inputs: { cePath: string; aaPath: string; tabPath: string; outDir: string }
   ): Promise<BuildResult> => {
     try {
       const profile = loadServerProfile(serverId)
@@ -192,10 +193,10 @@ ipcMain.handle(
       }
       
       // Validate at least one input file
-      if (!inputs.aaPath && !inputs.cePath) {
+      if (!inputs.aaPath && !inputs.cePath && !inputs.tabPath) {
         return {
           success: false,
-          error: 'At least one config file (AA or CE) must be provided',
+          error: 'At least one config file (AA, CE, or TAB) must be provided',
         }
       }
       
@@ -224,6 +225,10 @@ ipcMain.handle(
       
       let aaGenerated = false
       let ceGenerated = false
+      let tabGenerated = false
+      
+      // Compute region counts for TAB (used in build report)
+      const regionCountsForTAB = computeRegionCounts(profile.regions)
       
       // Generate AA if path provided
       if (inputs.aaPath && inputs.aaPath.trim().length > 0) {
@@ -303,15 +308,55 @@ ipcMain.handle(
         
         ceGenerated = true
       }
+
+      // Generate TAB if path provided
+      if (inputs.tabPath && inputs.tabPath.trim().length > 0) {
+        if (!existsSync(inputs.tabPath)) {
+          return {
+            success: false,
+            error: `TAB config file not found: ${inputs.tabPath}`,
+          }
+        }
+
+        const ownedTABSections = generateOwnedTABSections(profile.regions, profile.name)
+        const mergedTABContent = mergeTABConfig(inputs.tabPath, ownedTABSections)
+        
+        // Validate diff (diff gate)
+        const tabValidation = validateTABDiff(inputs.tabPath, mergedTABContent)
+        if (!tabValidation.valid) {
+          return {
+            success: false,
+            error: tabValidation.error || 'TAB diff validation failed',
+            buildId,
+          }
+        }
+        
+        // Generate filename with server name prefix
+        const serverNameSanitized = profile.name.toLowerCase().replace(/[^a-z0-9]/g, '-')
+        const tabFilename = `${serverNameSanitized}-tab-config.yml`
+        
+        // Write to output directory
+        const tabOutputPath = path.join(inputs.outDir, tabFilename)
+        writeFileSync(tabOutputPath, mergedTABContent, 'utf-8')
+        
+        // Copy to build directory
+        const buildDir = ensureBuildDirectory(serverId, buildId)
+        const tabBuildPath = path.join(buildDir, tabFilename)
+        writeFileSync(tabBuildPath, mergedTABContent, 'utf-8')
+        
+        tabGenerated = true
+      }
       
       // Create build report
       const report = {
         buildId,
         timestamp,
         regionCounts,
+        computedCounts: regionCountsForTAB,
         generated: {
           aa: aaGenerated,
           ce: ceGenerated,
+          tab: tabGenerated,
         },
         warnings,
         errors,

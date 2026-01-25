@@ -8,6 +8,7 @@ interface BuildScreenProps {
 export function BuildScreen({ server }: BuildScreenProps) {
   const [aaPath, setAaPath] = useState('')
   const [cePath, setCePath] = useState('')
+  const [tabPath, setTabPath] = useState('')
   const [outDir, setOutDir] = useState(server.build.outputDirectory || '')
   const [isBuilding, setIsBuilding] = useState(false)
   const [buildResult, setBuildResult] = useState<BuildResult | null>(null)
@@ -34,6 +35,16 @@ export function BuildScreen({ server }: BuildScreenProps) {
     }
   }
 
+  async function handleSelectTABFile() {
+    const path = await window.electronAPI.showConfigFileDialog(
+      'Select TAB config.yml',
+      tabPath || undefined
+    )
+    if (path) {
+      setTabPath(path)
+    }
+  }
+
   async function handleSelectOutputDir() {
     const path = await window.electronAPI.showOutputDialog()
     if (path) {
@@ -42,10 +53,10 @@ export function BuildScreen({ server }: BuildScreenProps) {
   }
 
   async function handleBuild() {
-    if (!aaPath && !cePath) {
+    if (!aaPath && !cePath && !tabPath) {
       setBuildResult({
         success: false,
-        error: 'Please select at least one config file (AA or CE)',
+        error: 'Please select at least one config file (AA, CE, or TAB)',
       })
       return
     }
@@ -64,7 +75,8 @@ export function BuildScreen({ server }: BuildScreenProps) {
     try {
       const result = await window.electronAPI.buildConfigs(server.id, {
         aaPath,
-        cePath, // Optional for M3, required for M4
+        cePath,
+        tabPath,
         outDir,
       })
 
@@ -115,7 +127,7 @@ export function BuildScreen({ server }: BuildScreenProps) {
     <div>
       <h2>Build Configuration Files</h2>
       <p style={{ color: '#666', marginBottom: '2rem' }}>
-        Generate AdvancedAchievements and ConditionalEvents config files from your imported regions.
+        Generate AdvancedAchievements, ConditionalEvents, and TAB config files from your imported regions.
       </p>
 
       {/* Statistics */}
@@ -222,6 +234,47 @@ export function BuildScreen({ server }: BuildScreenProps) {
           </div>
         </div>
 
+        {/* TAB Config */}
+        <div>
+          <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
+            TAB config.yml
+          </label>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <input
+              type="text"
+              value={tabPath}
+              onChange={(e) => setTabPath(e.target.value)}
+              placeholder="Select TAB config file..."
+              readOnly
+              style={{
+                flex: 1,
+                padding: '0.5rem',
+                fontSize: '1rem',
+                border: '1px solid #ddd',
+                borderRadius: '4px',
+                backgroundColor: '#f9f9f9',
+              }}
+            />
+            <button
+              onClick={handleSelectTABFile}
+              style={{
+                padding: '0.5rem 1rem',
+                fontSize: '1rem',
+                backgroundColor: '#6c757d',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+              }}
+            >
+              Browse...
+            </button>
+          </div>
+          <div style={{ fontSize: '0.875rem', color: '#666', marginTop: '0.25rem' }}>
+            Select the existing TAB config.yml file
+          </div>
+        </div>
+
         {/* Output Directory */}
         <div>
           <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
@@ -268,15 +321,15 @@ export function BuildScreen({ server }: BuildScreenProps) {
       <div>
         <button
           onClick={handleBuild}
-          disabled={isBuilding || (!aaPath && !cePath) || !outDir}
+          disabled={isBuilding || (!aaPath && !cePath && !tabPath) || !outDir}
           style={{
             padding: '0.75rem 2rem',
             fontSize: '1rem',
-            backgroundColor: isBuilding || (!aaPath && !cePath) || !outDir ? '#ccc' : '#007acc',
+            backgroundColor: isBuilding || (!aaPath && !cePath && !tabPath) || !outDir ? '#ccc' : '#007acc',
             color: 'white',
             border: 'none',
             borderRadius: '4px',
-            cursor: isBuilding || (!aaPath && !cePath) || !outDir ? 'not-allowed' : 'pointer',
+            cursor: isBuilding || (!aaPath && !cePath && !tabPath) || !outDir ? 'not-allowed' : 'pointer',
             opacity: isBuilding ? 0.6 : 1,
           }}
         >
@@ -395,10 +448,56 @@ export function BuildScreen({ server }: BuildScreenProps) {
             <div style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>Generated:</div>
             <div>
               {buildReport.generated.aa && '✓ AdvancedAchievements'}
-              {buildReport.generated.aa && buildReport.generated.ce && ' • '}
+              {buildReport.generated.aa && (buildReport.generated.ce || buildReport.generated.tab) && ' • '}
               {buildReport.generated.ce && '✓ ConditionalEvents'}
+              {(buildReport.generated.aa || buildReport.generated.ce) && buildReport.generated.tab && ' • '}
+              {buildReport.generated.tab && '✓ TAB'}
             </div>
           </div>
+
+          {buildReport.computedCounts && (
+            <div style={{ marginBottom: '1rem' }}>
+              <div style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>Computed Counts (TAB):</div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem' }}>
+                <div>
+                  <div style={{ fontSize: '0.875rem', color: '#666' }}>Overworld Regions</div>
+                  <div style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>
+                    {buildReport.computedCounts.overworldRegions}
+                  </div>
+                </div>
+                <div>
+                  <div style={{ fontSize: '0.875rem', color: '#666' }}>Overworld Hearts</div>
+                  <div style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>
+                    {buildReport.computedCounts.overworldHearts}
+                  </div>
+                </div>
+                <div>
+                  <div style={{ fontSize: '0.875rem', color: '#666' }}>Nether Regions</div>
+                  <div style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>
+                    {buildReport.computedCounts.netherRegions}
+                  </div>
+                </div>
+                <div>
+                  <div style={{ fontSize: '0.875rem', color: '#666' }}>Nether Hearts</div>
+                  <div style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>
+                    {buildReport.computedCounts.netherHearts}
+                  </div>
+                </div>
+                <div>
+                  <div style={{ fontSize: '0.875rem', color: '#666' }}>Villages</div>
+                  <div style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>
+                    {buildReport.computedCounts.villages}
+                  </div>
+                </div>
+                <div>
+                  <div style={{ fontSize: '0.875rem', color: '#666' }}>Total</div>
+                  <div style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>
+                    {buildReport.computedCounts.total}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {buildReport.warnings && buildReport.warnings.length > 0 && (
             <div style={{ marginBottom: '1rem' }}>

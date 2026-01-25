@@ -43,6 +43,95 @@ function removeOwnedCESections(config: any): any {
 }
 
 /**
+ * Remove owned sections from TAB config for comparison
+ */
+function removeOwnedTABSections(config: any): any {
+  const cleaned = { ...config }
+  
+  // Remove owned header-footer sections
+  if (cleaned['header-footer']) {
+    const cleanedHeaderFooter = { ...cleaned['header-footer'] }
+    delete cleanedHeaderFooter.header
+    delete cleanedHeaderFooter.footer
+    if (Object.keys(cleanedHeaderFooter).length === 0) {
+      delete cleaned['header-footer']
+    } else {
+      cleaned['header-footer'] = cleanedHeaderFooter
+    }
+  }
+  
+  // Remove all scoreboard sections (entire scoreboards section is owned/replaced)
+  // Also normalize enabled field since we always set it to true
+  if (cleaned.scoreboard) {
+    if (cleaned.scoreboard.scoreboards) {
+      // Remove the entire scoreboards object since we replace it entirely with generated ones
+      delete cleaned.scoreboard.scoreboards
+    }
+    // Normalize enabled field (we always set it to true)
+    cleaned.scoreboard.enabled = true
+  }
+  
+  // Remove owned conditions
+  if (cleaned.conditions) {
+    const cleanedConditions: any = {}
+    for (const [key, value] of Object.entries(cleaned.conditions)) {
+      // Owned conditions:
+      // - top-explorers-title
+      // - top-explorer-1 through top-explorer-5
+      const isOwned =
+        key === 'top-explorers-title' ||
+        key === 'top-explorer-1' ||
+        key === 'top-explorer-2' ||
+        key === 'top-explorer-3' ||
+        key === 'top-explorer-4' ||
+        key === 'top-explorer-5'
+      
+      if (!isOwned) {
+        cleanedConditions[key] = value
+      }
+    }
+    cleaned.conditions = cleanedConditions
+  } else {
+    cleaned.conditions = {}
+  }
+
+  // Normalize static conditions (add if missing, same as in mergeTABConfig)
+  // This ensures both original and generated configs have the same static conditions
+  const staticConditions = {
+    'region-name': {
+      conditions: ["%worldguard_region_name_2%!='"],
+      type: 'AND',
+      yes: '%capitalize_pascal-case-forced_{worldguard_region_name_2}%',
+      no: '%capitalize_pascal-case-forced_{worldguard_region_name_1}%',
+    },
+    'village-name': {
+      conditions: [
+        "%worldguard_region_name_2%!='",
+        '%worldguard_region_name_1%!=%worldguard_region_name_2%',
+        "%worldguard_region_name_1%!=spawn",
+      ],
+      type: 'AND',
+      yes: '%condition:heart-region%',
+      no: '-',
+    },
+    'heart-region': {
+      conditions: ["%worldguard_region_name_1%|-heart"],
+      yes: '-',
+      no: '%capitalize_pascal-case-forced_{worldguard_region_name_1}%',
+    },
+  }
+
+  // Add static conditions if missing (normalize both configs)
+  for (const [key, value] of Object.entries(staticConditions)) {
+    if (!cleaned.conditions[key]) {
+      cleaned.conditions[key] = value
+    }
+  }
+  
+  return cleaned
+}
+
+/**
  * Deep equality check (handles objects, arrays, primitives)
  */
 function deepEqual(a: any, b: any, path: string = ''): { equal: boolean; differences: string[] } {
@@ -189,4 +278,41 @@ export function validateCEDiff(
   }
 }
 
-module.exports = { validateAADiff, validateCEDiff }
+/**
+ * Validate that only owned sections changed in TAB config
+ */
+export function validateTABDiff(
+  originalPath: string,
+  generatedContent: string
+): { valid: boolean; error?: string; differences?: string[] } {
+  try {
+    // Read and parse original
+    const originalContent = readFileSync(originalPath, 'utf-8')
+    const original = yaml.parse(originalContent)
+    const originalCleaned = removeOwnedTABSections(original)
+    
+    // Parse generated
+    const generated = yaml.parse(generatedContent)
+    const generatedCleaned = removeOwnedTABSections(generated)
+    
+    // Compare
+    const result = deepEqual(originalCleaned, generatedCleaned)
+    
+    if (!result.equal) {
+      return {
+        valid: false,
+        error: 'Non-owned sections changed in TAB config',
+        differences: result.differences,
+      }
+    }
+    
+    return { valid: true }
+  } catch (error: any) {
+    return {
+      valid: false,
+      error: `Failed to validate TAB diff: ${error.message}`,
+    }
+  }
+}
+
+module.exports = { validateAADiff, validateCEDiff, validateTABDiff }
