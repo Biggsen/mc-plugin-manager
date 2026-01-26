@@ -1,4 +1,5 @@
 format: 1
+world: overworld
 regions:
   - id: spawn
     world: overworld
