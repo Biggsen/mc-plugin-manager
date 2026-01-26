@@ -15,7 +15,8 @@ const { importRegions, importRegionsMeta } = require('./regionParser')
 const { generateAACommands, mergeAAConfig } = require('./aaGenerator')
 const { generateOwnedCEEvents, mergeCEConfig } = require('./ceGenerator')
 const { generateOwnedTABSections, mergeTABConfig, computeRegionCounts } = require('./tabGenerator')
-const { validateAADiff, validateCEDiff, validateTABDiff } = require('./diffValidator')
+const { generateOwnedLMRules, mergeLMConfig } = require('./lmGenerator')
+const { validateAADiff, validateCEDiff, validateTABDiff, validateLMDiff } = require('./diffValidator')
 
 type ServerProfile = any
 type ServerSummary = any
@@ -281,7 +282,7 @@ ipcMain.handle(
   async (
     _event: any,
     serverId: string,
-    inputs: { cePath: string; aaPath: string; tabPath: string; outDir: string }
+    inputs: { cePath: string; aaPath: string; tabPath: string; lmPath: string; outDir: string }
   ): Promise<BuildResult> => {
     try {
       const profile = loadServerProfile(serverId)
@@ -293,10 +294,10 @@ ipcMain.handle(
       }
       
       // Validate at least one input file
-      if (!inputs.aaPath && !inputs.cePath && !inputs.tabPath) {
+      if (!inputs.aaPath && !inputs.cePath && !inputs.tabPath && !inputs.lmPath) {
         return {
           success: false,
-          error: 'At least one config file (AA, CE, or TAB) must be provided',
+          error: 'At least one config file (AA, CE, TAB, or LM) must be provided',
         }
       }
       
@@ -326,6 +327,7 @@ ipcMain.handle(
       let aaGenerated = false
       let ceGenerated = false
       let tabGenerated = false
+      let lmGenerated = false
       
       // Compute region counts for TAB (used in build report)
       const regionCountsForTAB = computeRegionCounts(profile.regions)
@@ -446,6 +448,50 @@ ipcMain.handle(
         
         tabGenerated = true
       }
+
+      // Generate LM if path provided
+      if (inputs.lmPath && inputs.lmPath.trim().length > 0) {
+        if (!existsSync(inputs.lmPath)) {
+          return {
+            success: false,
+            error: `LM config file not found: ${inputs.lmPath}`,
+          }
+        }
+
+        // Generate owned LM rules
+        const ownedLMRules = generateOwnedLMRules(
+          profile.regions,
+          profile.regionsMeta?.levelledMobs
+        )
+        
+        // Merge into LM config
+        const mergedLMContent = mergeLMConfig(inputs.lmPath, ownedLMRules)
+        
+        // Validate diff (diff gate)
+        const lmValidation = validateLMDiff(inputs.lmPath, mergedLMContent)
+        if (!lmValidation.valid) {
+          return {
+            success: false,
+            error: lmValidation.error || 'LM diff validation failed',
+            buildId,
+          }
+        }
+        
+        // Generate filename with server name prefix
+        const serverNameSanitized = profile.name.toLowerCase().replace(/[^a-z0-9]/g, '-')
+        const lmFilename = `${serverNameSanitized}-levelledmobs-rules.yml`
+        
+        // Write to output directory
+        const lmOutputPath = path.join(inputs.outDir, lmFilename)
+        writeFileSync(lmOutputPath, mergedLMContent, 'utf-8')
+        
+        // Copy to build directory
+        const buildDir = ensureBuildDirectory(serverId, buildId)
+        const lmBuildPath = path.join(buildDir, lmFilename)
+        writeFileSync(lmBuildPath, mergedLMContent, 'utf-8')
+        
+        lmGenerated = true
+      }
       
       // Create build report
       const report = {
@@ -457,6 +503,7 @@ ipcMain.handle(
           aa: aaGenerated,
           ce: ceGenerated,
           tab: tabGenerated,
+          lm: lmGenerated,
         },
         warnings,
         errors,

@@ -9,6 +9,7 @@ export function BuildScreen({ server }: BuildScreenProps) {
   const [aaPath, setAaPath] = useState('')
   const [cePath, setCePath] = useState('')
   const [tabPath, setTabPath] = useState('')
+  const [lmPath, setLmPath] = useState('')
   const [outDir, setOutDir] = useState(server.build.outputDirectory || '')
   const [isBuilding, setIsBuilding] = useState(false)
   const [buildResult, setBuildResult] = useState<BuildResult | null>(null)
@@ -45,6 +46,16 @@ export function BuildScreen({ server }: BuildScreenProps) {
     }
   }
 
+  async function handleSelectLMFile() {
+    const path = await window.electronAPI.showConfigFileDialog(
+      'Select LevelledMobs rules.yml',
+      lmPath || undefined
+    )
+    if (path) {
+      setLmPath(path)
+    }
+  }
+
   async function handleSelectOutputDir() {
     const path = await window.electronAPI.showOutputDialog()
     if (path) {
@@ -53,10 +64,10 @@ export function BuildScreen({ server }: BuildScreenProps) {
   }
 
   async function handleBuild() {
-    if (!aaPath && !cePath && !tabPath) {
+    if (!aaPath && !cePath && !tabPath && !lmPath) {
       setBuildResult({
         success: false,
-        error: 'Please select at least one config file (AA, CE, or TAB)',
+        error: 'Please select at least one config file (AA, CE, TAB, or LM)',
       })
       return
     }
@@ -77,6 +88,7 @@ export function BuildScreen({ server }: BuildScreenProps) {
         aaPath,
         cePath,
         tabPath,
+        lmPath,
         outDir,
       })
 
@@ -127,7 +139,7 @@ export function BuildScreen({ server }: BuildScreenProps) {
     <div>
       <h2>Build Configuration Files</h2>
       <p style={{ color: '#666', marginBottom: '2rem' }}>
-        Generate AdvancedAchievements, ConditionalEvents, and TAB config files from your imported regions.
+        Generate AdvancedAchievements, ConditionalEvents, TAB, and LevelledMobs config files from your imported regions.
       </p>
 
       {/* Statistics */}
@@ -275,6 +287,47 @@ export function BuildScreen({ server }: BuildScreenProps) {
           </div>
         </div>
 
+        {/* LM Config */}
+        <div>
+          <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
+            LevelledMobs rules.yml
+          </label>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <input
+              type="text"
+              value={lmPath}
+              onChange={(e) => setLmPath(e.target.value)}
+              placeholder="Select LevelledMobs rules.yml file..."
+              readOnly
+              style={{
+                flex: 1,
+                padding: '0.5rem',
+                fontSize: '1rem',
+                border: '1px solid #ddd',
+                borderRadius: '4px',
+                backgroundColor: '#f9f9f9',
+              }}
+            />
+            <button
+              onClick={handleSelectLMFile}
+              style={{
+                padding: '0.5rem 1rem',
+                fontSize: '1rem',
+                backgroundColor: '#6c757d',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+              }}
+            >
+              Browse...
+            </button>
+          </div>
+          <div style={{ fontSize: '0.875rem', color: '#666', marginTop: '0.25rem' }}>
+            Select the existing LevelledMobs rules.yml file
+          </div>
+        </div>
+
         {/* Output Directory */}
         <div>
           <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
@@ -321,15 +374,15 @@ export function BuildScreen({ server }: BuildScreenProps) {
       <div>
         <button
           onClick={handleBuild}
-          disabled={isBuilding || (!aaPath && !cePath && !tabPath) || !outDir}
+          disabled={isBuilding || (!aaPath && !cePath && !tabPath && !lmPath) || !outDir}
           style={{
             padding: '0.75rem 2rem',
             fontSize: '1rem',
-            backgroundColor: isBuilding || (!aaPath && !cePath && !tabPath) || !outDir ? '#ccc' : '#007acc',
+            backgroundColor: isBuilding || (!aaPath && !cePath && !tabPath && !lmPath) || !outDir ? '#ccc' : '#007acc',
             color: 'white',
             border: 'none',
             borderRadius: '4px',
-            cursor: isBuilding || (!aaPath && !cePath && !tabPath) || !outDir ? 'not-allowed' : 'pointer',
+            cursor: isBuilding || (!aaPath && !cePath && !tabPath && !lmPath) || !outDir ? 'not-allowed' : 'pointer',
             opacity: isBuilding ? 0.6 : 1,
           }}
         >
@@ -448,10 +501,12 @@ export function BuildScreen({ server }: BuildScreenProps) {
             <div style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>Generated:</div>
             <div>
               {buildReport.generated.aa && '✓ AdvancedAchievements'}
-              {buildReport.generated.aa && (buildReport.generated.ce || buildReport.generated.tab) && ' • '}
+              {buildReport.generated.aa && (buildReport.generated.ce || buildReport.generated.tab || buildReport.generated.lm) && ' • '}
               {buildReport.generated.ce && '✓ ConditionalEvents'}
-              {(buildReport.generated.aa || buildReport.generated.ce) && buildReport.generated.tab && ' • '}
+              {(buildReport.generated.aa || buildReport.generated.ce) && (buildReport.generated.tab || buildReport.generated.lm) && ' • '}
               {buildReport.generated.tab && '✓ TAB'}
+              {(buildReport.generated.aa || buildReport.generated.ce || buildReport.generated.tab) && buildReport.generated.lm && ' • '}
+              {buildReport.generated.lm && '✓ LevelledMobs'}
             </div>
           </div>
 

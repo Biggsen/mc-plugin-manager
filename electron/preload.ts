@@ -29,7 +29,7 @@ export interface ElectronAPI {
   // Build
   buildConfigs: (
     serverId: string,
-    inputs: { cePath: string; aaPath: string; tabPath: string; outDir: string }
+    inputs: { cePath: string; aaPath: string; tabPath: string; lmPath: string; outDir: string }
   ) => Promise<BuildResult>
   showConfigFileDialog: (title: string, defaultPath?: string) => Promise<string | null>
   showOutputDialog: () => Promise<string | null>
@@ -144,6 +144,7 @@ interface BuildReport {
     aa: boolean
     ce: boolean
     tab: boolean
+    lm: boolean
   }
   warnings: string[]
   errors: string[]
@@ -161,7 +162,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   showImportDialog: () => ipcRenderer.invoke('show-import-dialog'),
   updateOnboarding: (serverId: string, onboarding: OnboardingConfig) =>
     ipcRenderer.invoke('update-onboarding', serverId, onboarding),
-  buildConfigs: (serverId: string, inputs: { cePath: string; aaPath: string; tabPath: string; outDir: string }) =>
+  buildConfigs: (serverId: string, inputs: { cePath: string; aaPath: string; tabPath: string; lmPath: string; outDir: string }) =>
     ipcRenderer.invoke('build-configs', serverId, inputs),
   showConfigFileDialog: (title: string, defaultPath?: string) =>
     ipcRenderer.invoke('show-config-file-dialog', title, defaultPath),

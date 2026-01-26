@@ -118,6 +118,7 @@ export interface BuildReport {
     aa: boolean
     ce: boolean
     tab: boolean
+    lm: boolean
   }
   warnings: string[]
   errors: string[]

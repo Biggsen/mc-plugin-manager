@@ -315,4 +315,80 @@ export function validateTABDiff(
   }
 }
 
-module.exports = { validateAADiff, validateCEDiff, validateTABDiff }
+/**
+ * Remove owned sections from LevelledMobs config for comparison
+ */
+function removeOwnedLMSections(config: any): any {
+  const cleaned = { ...config }
+  
+  // Only modify custom-rules, preserve everything else
+  if (cleaned['custom-rules'] && Array.isArray(cleaned['custom-rules'])) {
+    const cleanedRules: any[] = []
+    
+    for (const rule of cleaned['custom-rules']) {
+      if (!rule.conditions || !rule.conditions['worldguard-regions']) {
+        // No worldguard-regions, preserve
+        cleanedRules.push(rule)
+        continue
+      }
+
+      const wgRegions = rule.conditions['worldguard-regions']
+      const usePreset = rule['use-preset'] || ''
+
+      // Owned rules:
+      // 1. Villages band: worldguard-regions is an array
+      // 2. Region-band: worldguard-regions is a string AND use-preset matches lvlstrategy-*
+      const isVillagesBand = Array.isArray(wgRegions)
+      const isRegionBand = typeof wgRegions === 'string' && /^lvlstrategy-(easy|normal|hard|severe|deadly)$/.test(usePreset)
+
+      if (!isVillagesBand && !isRegionBand) {
+        // Not owned, preserve
+        cleanedRules.push(rule)
+      }
+      // Otherwise, drop it (it's owned)
+    }
+    
+    cleaned['custom-rules'] = cleanedRules
+  }
+  
+  return cleaned
+}
+
+/**
+ * Validate that only owned sections changed in LevelledMobs config
+ */
+export function validateLMDiff(
+  originalPath: string,
+  generatedContent: string
+): { valid: boolean; error?: string; differences?: string[] } {
+  try {
+    // Read and parse original
+    const originalContent = readFileSync(originalPath, 'utf-8')
+    const original = yaml.parse(originalContent)
+    const originalCleaned = removeOwnedLMSections(original)
+    
+    // Parse generated
+    const generated = yaml.parse(generatedContent)
+    const generatedCleaned = removeOwnedLMSections(generated)
+    
+    // Compare
+    const result = deepEqual(originalCleaned, generatedCleaned)
+    
+    if (!result.equal) {
+      return {
+        valid: false,
+        error: 'Non-owned sections changed in LevelledMobs config',
+        differences: result.differences,
+      }
+    }
+    
+    return { valid: true }
+  } catch (error: any) {
+    return {
+      valid: false,
+      error: `Failed to validate LM diff: ${error.message}`,
+    }
+  }
+}
+
+module.exports = { validateAADiff, validateCEDiff, validateTABDiff, validateLMDiff }
