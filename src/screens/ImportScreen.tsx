@@ -10,7 +10,7 @@ export function ImportScreen({ server, onServerUpdate }: ImportScreenProps) {
   const [isImporting, setIsImporting] = useState(false)
   const [importResult, setImportResult] = useState<ImportResult | null>(null)
 
-  async function handleImport(world: 'overworld' | 'nether') {
+  async function handleImportRegionsMeta() {
     setIsImporting(true)
     setImportResult(null)
 
@@ -22,8 +22,9 @@ export function ImportScreen({ server, onServerUpdate }: ImportScreenProps) {
         return
       }
 
-      // Import regions
-      const result = await window.electronAPI.importRegions(server.id, world, filePath)
+      // Import regions-meta (world will be inferred from file)
+      // We pass 'overworld' as a default, but the parser will use the file's world field
+      const result = await window.electronAPI.importRegionsMeta(server.id, 'overworld', filePath)
       setImportResult(result)
 
       if (result.success) {
@@ -43,18 +44,19 @@ export function ImportScreen({ server, onServerUpdate }: ImportScreenProps) {
     }
   }
 
-  const hasOverworld = !!server.sources.overworld
-  const hasNether = !!server.sources.nether
+  // Find imported regions-meta source (check overworld, nether, end, or world)
+  const importedSource = server.sources.overworld || server.sources.nether || server.sources.end || server.sources.world
+  const hasImported = !!importedSource
 
   return (
     <div>
       <h2>Import Region Files</h2>
       <p style={{ color: '#666', marginBottom: '2rem' }}>
-        Import Region Forge export files to populate your server profile with region data.
+        Import regions-meta.yml from Region Forge to populate your server profile with region data, onboarding, spawn center, and LevelledMobs metadata.
       </p>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-        {/* Overworld Import */}
+        {/* Regions-meta Import */}
         <div
           style={{
             padding: '1.5rem',
@@ -65,19 +67,19 @@ export function ImportScreen({ server, onServerUpdate }: ImportScreenProps) {
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
             <div>
-              <h3 style={{ margin: 0 }}>Overworld Regions</h3>
-              {hasOverworld && (
+              <h3 style={{ margin: 0 }}>Regions Meta</h3>
+              {hasImported && importedSource && (
                 <div style={{ fontSize: '0.875rem', color: '#666', marginTop: '0.25rem' }}>
-                  Imported: {server.sources.overworld?.originalFilename}
+                  Imported: {importedSource.originalFilename}
                   <br />
                   <span style={{ fontSize: '0.75rem' }}>
-                    {new Date(server.sources.overworld?.importedAtIso || '').toLocaleString()}
+                    {new Date(importedSource.importedAtIso || '').toLocaleString()}
                   </span>
                 </div>
               )}
             </div>
             <button
-              onClick={() => handleImport('overworld')}
+              onClick={handleImportRegionsMeta}
               disabled={isImporting}
               style={{
                 padding: '0.75rem 1.5rem',
@@ -90,48 +92,7 @@ export function ImportScreen({ server, onServerUpdate }: ImportScreenProps) {
                 opacity: isImporting ? 0.6 : 1,
               }}
             >
-              {isImporting ? 'Importing...' : hasOverworld ? 'Re-import' : 'Import Overworld'}
-            </button>
-          </div>
-        </div>
-
-        {/* Nether Import */}
-        <div
-          style={{
-            padding: '1.5rem',
-            border: '1px solid #ddd',
-            borderRadius: '4px',
-            backgroundColor: '#fafafa',
-          }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-            <div>
-              <h3 style={{ margin: 0 }}>Nether Regions</h3>
-              {hasNether && (
-                <div style={{ fontSize: '0.875rem', color: '#666', marginTop: '0.25rem' }}>
-                  Imported: {server.sources.nether?.originalFilename}
-                  <br />
-                  <span style={{ fontSize: '0.75rem' }}>
-                    {new Date(server.sources.nether?.importedAtIso || '').toLocaleString()}
-                  </span>
-                </div>
-              )}
-            </div>
-            <button
-              onClick={() => handleImport('nether')}
-              disabled={isImporting}
-              style={{
-                padding: '0.75rem 1.5rem',
-                fontSize: '1rem',
-                backgroundColor: '#007acc',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: isImporting ? 'not-allowed' : 'pointer',
-                opacity: isImporting ? 0.6 : 1,
-              }}
-            >
-              {isImporting ? 'Importing...' : hasNether ? 'Re-import' : 'Import Nether'}
+              {isImporting ? 'Importing...' : hasImported ? 'Re-import' : 'Import regions-meta'}
             </button>
           </div>
         </div>

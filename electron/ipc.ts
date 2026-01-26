@@ -11,7 +11,7 @@ const {
 } = require('./storage')
 const { randomUUID } = require('crypto')
 const { existsSync, writeFileSync, copyFileSync } = require('fs')
-const { importRegions } = require('./regionParser')
+const { importRegions, importRegionsMeta } = require('./regionParser')
 const { generateAACommands, mergeAAConfig } = require('./aaGenerator')
 const { generateOwnedCEEvents, mergeCEConfig } = require('./ceGenerator')
 const { generateOwnedTABSections, mergeTABConfig, computeRegionCounts } = require('./tabGenerator')
@@ -59,8 +59,8 @@ ipcMain.handle(
         teleport: {
           world: '',
           x: 0,
-          y: 0,
           z: 0,
+          // y is optional - omit it for new profiles
         },
       },
       build: {},
@@ -125,6 +125,106 @@ ipcMain.handle(
       return {
         success: true,
         regionCount: result.regions.filter((r: any) => r.world === world).length,
+      }
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.message || 'Unknown error during import',
+      }
+    }
+  }
+)
+
+// Import regions-meta
+ipcMain.handle(
+  'import-regions-meta',
+  async (
+    _event: any,
+    serverId: string,
+    world: 'overworld' | 'nether' | 'end',
+    filePath: string
+  ): Promise<ImportResult> => {
+    try {
+      const profile = loadServerProfile(serverId)
+      if (!profile) {
+        return {
+          success: false,
+          error: `Server profile not found: ${serverId}`,
+        }
+      }
+      
+      if (!existsSync(filePath)) {
+        return {
+          success: false,
+          error: `File not found: ${filePath}`,
+        }
+      }
+      
+      // Import regions-meta
+      const result = importRegionsMeta(filePath, world)
+      
+      // Update profile: Remove existing regions for this world, then add new ones
+      profile.regions = profile.regions.filter((r: any) => r.world !== result.world)
+      profile.regions.push(...result.regions)
+      
+      // Update sources
+      if (result.world === 'overworld') {
+        profile.sources.overworld = result.source
+        profile.sources.world = result.source // Also set 'world' for backward compat
+      } else if (result.world === 'nether') {
+        profile.sources.nether = result.source
+      } else if (result.world === 'end') {
+        profile.sources.end = result.source
+      }
+      
+      // Merge spawnCenter (last import wins)
+      if (result.spawnCenter) {
+        profile.spawnCenter = result.spawnCenter
+        result.source.spawnCenter = result.spawnCenter
+      }
+      
+      // Merge onboarding
+      if (result.onboarding) {
+        profile.onboarding = {
+          ...profile.onboarding,
+          ...result.onboarding,
+          teleport: {
+            ...profile.onboarding.teleport,
+            ...result.onboarding.teleport,
+            // Preserve y if file omits it
+            y: result.onboarding.teleport.y ?? profile.onboarding.teleport.y,
+          },
+        }
+      }
+      
+      // Merge levelledMobs
+      if (result.levelledMobs) {
+        if (!profile.regionsMeta) {
+          profile.regionsMeta = { levelledMobs: {} }
+        }
+        if (!profile.regionsMeta.levelledMobs) {
+          profile.regionsMeta.levelledMobs = {}
+        }
+        
+        // villageBandStrategy: last import wins
+        if (result.levelledMobs.villageBandStrategy !== undefined) {
+          profile.regionsMeta.levelledMobs.villageBandStrategy = result.levelledMobs.villageBandStrategy
+        }
+        
+        // regionBands: merge objects (later imports overwrite)
+        if (result.levelledMobs.regionBands) {
+          profile.regionsMeta.levelledMobs.regionBands = {
+            ...profile.regionsMeta.levelledMobs.regionBands,
+            ...result.levelledMobs.regionBands,
+          }
+        }
+      }
+      
+      saveServerProfile(profile)
+      
+      return {
+        success: true,
+        regionCount: result.regions.length,
       }
     } catch (error: any) {
       return {

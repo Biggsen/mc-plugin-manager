@@ -4,12 +4,12 @@ const yaml = require('yaml')
 const { generateCommandId } = require('./aaGenerator')
 
 interface RegionRecord {
-  world: 'overworld' | 'nether'
+  world: 'overworld' | 'nether' | 'end'
   id: string
   kind: 'system' | 'region' | 'village' | 'heart'
   discover: {
     method: 'disabled' | 'on_enter' | 'first_join'
-    recipeId: 'region' | 'heart' | 'nether_region' | 'nether_heart' | 'none'
+    recipeId: 'region' | 'heart' | 'nether_region' | 'nether_heart' | 'none' | 'village'
     commandIdOverride?: string
     displayNameOverride?: string
   }
@@ -20,7 +20,7 @@ interface OnboardingConfig {
   teleport: {
     world: string
     x: number
-    y: number
+    y?: number
     z: number
     yaw?: number
     pitch?: number
@@ -39,7 +39,8 @@ type CEEvent = {
 type CEEventsSection = Record<string, CEEvent>
 
 function tpCommand(tp: OnboardingConfig['teleport']): string {
-  const base = `console_command: tp %player% ${tp.x} ${tp.y} ${tp.z}`
+  const y = tp.y ?? 64
+  const base = `console_command: tp %player% ${tp.x} ${y} ${tp.z}`
   if (typeof tp.yaw === 'number' && typeof tp.pitch === 'number') {
     return `${base} ${tp.yaw} ${tp.pitch}`
   }

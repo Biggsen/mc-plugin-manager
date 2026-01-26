@@ -21,16 +21,23 @@ export function OnboardingScreen({ server, onServerUpdate }: OnboardingScreenPro
     setTeleport(server.onboarding.teleport)
     
     // Auto-prefill from spawn center if teleport is empty/default
+    // Precedence: profile.spawnCenter -> sources.overworld -> sources.nether -> sources.end -> legacy sources.overworld
     const hasEmptyTeleport = !server.onboarding.teleport.world || 
       (server.onboarding.teleport.x === 0 && server.onboarding.teleport.z === 0)
     if (hasEmptyTeleport) {
-      const spawnCenter = server.sources.overworld?.spawnCenter
+      const spawnCenter = server.spawnCenter ||
+        server.sources.overworld?.spawnCenter ||
+        server.sources.nether?.spawnCenter ||
+        server.sources.end?.spawnCenter ||
+        server.sources.world?.spawnCenter
+      
       if (spawnCenter) {
         setTeleport({
           world: spawnCenter.world,
           x: spawnCenter.x,
           z: spawnCenter.z,
-          y: server.onboarding.teleport.y || 64, // Keep existing Y or default to 64
+          // Don't set y from spawnCenter (it has no y); use existing y or leave undefined
+          y: server.onboarding.teleport.y,
         })
       }
     }
@@ -54,7 +61,7 @@ export function OnboardingScreen({ server, onServerUpdate }: OnboardingScreenPro
       setTeleport({
         ...teleport,
         x: parseFloat(spaceParts[0]) || 0,
-        y: parseFloat(spaceParts[1]) || 0,
+        y: parseFloat(spaceParts[1]) || undefined,
         z: parseFloat(spaceParts[2]) || 0,
       })
     } else {
@@ -64,7 +71,7 @@ export function OnboardingScreen({ server, onServerUpdate }: OnboardingScreenPro
         setTeleport({
           ...teleport,
           x: parseFloat(commaParts[0]) || 0,
-          y: parseFloat(commaParts[1]) || 0,
+          y: parseFloat(commaParts[1]) || undefined,
           z: parseFloat(commaParts[2]) || 0,
         })
       }
@@ -231,8 +238,9 @@ export function OnboardingScreen({ server, onServerUpdate }: OnboardingScreenPro
               </label>
               <input
                 type="number"
-                value={teleport.y}
-                onChange={(e) => setTeleport({ ...teleport, y: parseFloat(e.target.value) || 0 })}
+                value={teleport.y ?? ''}
+                onChange={(e) => setTeleport({ ...teleport, y: e.target.value ? parseFloat(e.target.value) : undefined })}
+                placeholder="64"
                 style={{
                   width: '100%',
                   padding: '0.5rem',

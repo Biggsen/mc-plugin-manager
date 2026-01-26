@@ -13,6 +13,11 @@ export interface ElectronAPI {
     world: 'overworld' | 'nether',
     filePath: string
   ) => Promise<ImportResult>
+  importRegionsMeta: (
+    serverId: string,
+    world: 'overworld' | 'nether' | 'end',
+    filePath: string
+  ) => Promise<ImportResult>
   showImportDialog: () => Promise<string | null>
   
   // Onboarding
@@ -46,9 +51,22 @@ interface ServerProfile {
   sources: {
     overworld?: ImportedSource
     nether?: ImportedSource
+    world?: ImportedSource
+    end?: ImportedSource
   }
   regions: RegionRecord[]
   onboarding: OnboardingConfig
+  spawnCenter?: {
+    world: string
+    x: number
+    z: number
+  }
+  regionsMeta?: {
+    levelledMobs?: {
+      villageBandStrategy?: string
+      regionBands?: Record<string, string>
+    }
+  }
   build: {
     lastBuildId?: string
     outputDirectory?: string
@@ -60,15 +78,20 @@ interface ImportedSource {
   originalFilename: string
   importedAtIso: string
   fileHash: string
+  spawnCenter?: {
+    world: string
+    x: number
+    z: number
+  }
 }
 
 interface RegionRecord {
-  world: 'overworld' | 'nether'
+  world: 'overworld' | 'nether' | 'end'
   id: string
   kind: 'system' | 'region' | 'village' | 'heart'
   discover: {
     method: 'disabled' | 'on_enter' | 'first_join'
-    recipeId: 'region' | 'heart' | 'nether_region' | 'nether_heart' | 'none'
+    recipeId: 'region' | 'heart' | 'nether_region' | 'nether_heart' | 'none' | 'village'
     commandIdOverride?: string
     displayNameOverride?: string
   }
@@ -79,7 +102,7 @@ interface OnboardingConfig {
   teleport: {
     world: string
     x: number
-    y: number
+    y?: number
     z: number
     yaw?: number
     pitch?: number
@@ -133,6 +156,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getServer: (serverId: string) => ipcRenderer.invoke('get-server', serverId),
   importRegions: (serverId: string, world: 'overworld' | 'nether', filePath: string) =>
     ipcRenderer.invoke('import-regions', serverId, world, filePath),
+  importRegionsMeta: (serverId: string, world: 'overworld' | 'nether' | 'end', filePath: string) =>
+    ipcRenderer.invoke('import-regions-meta', serverId, world, filePath),
   showImportDialog: () => ipcRenderer.invoke('show-import-dialog'),
   updateOnboarding: (serverId: string, onboarding: OnboardingConfig) =>
     ipcRenderer.invoke('update-onboarding', serverId, onboarding),

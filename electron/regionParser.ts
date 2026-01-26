@@ -19,12 +19,12 @@ type RegionForgeExport = {
 }
 
 interface RegionRecord {
-  world: 'overworld' | 'nether'
+  world: 'overworld' | 'nether' | 'end'
   id: string
   kind: 'system' | 'region' | 'village' | 'heart'
   discover: {
     method: 'disabled' | 'on_enter' | 'first_join'
-    recipeId: 'region' | 'heart' | 'nether_region' | 'nether_heart' | 'none'
+    recipeId: 'region' | 'heart' | 'nether_region' | 'nether_heart' | 'none' | 'village' | 'nether_village'
     commandIdOverride?: string
     displayNameOverride?: string
   }
@@ -47,10 +47,46 @@ interface OnboardingConfig {
   teleport: {
     world: string
     x: number
-    y: number
+    y?: number
     z: number
     yaw?: number
     pitch?: number
+  }
+}
+
+type RegionsMetaExport = {
+  format: number
+  world: string
+  regions: Array<{
+    id: string
+    world: string
+    kind: 'system' | 'region' | 'village' | 'heart'
+    discover: {
+      method: 'disabled' | 'on_enter' | 'first_join'
+      recipeId: string
+      commandIdOverride?: string
+      displayNameOverride?: string
+    }
+  }>
+  onboarding?: {
+    startRegionId: string
+    teleport: {
+      world: string
+      x: number
+      y?: number
+      z: number
+      yaw?: number
+      pitch?: number
+    }
+  }
+  spawnCenter?: {
+    world: string
+    x: number
+    z: number
+  }
+  levelledMobs?: {
+    villageBandStrategy?: string
+    regionBands?: Record<string, string>
   }
 }
 
@@ -231,4 +267,174 @@ export function importRegions(
   }
 }
 
-module.exports = { importRegions }
+/**
+ * Map world string to canonical world type
+ */
+function mapWorld(world: string): 'overworld' | 'nether' | 'end' {
+  const lower = world.toLowerCase()
+  if (lower === 'nether' || lower === 'world_nether') {
+    return 'nether'
+  }
+  if (lower === 'end' || lower === 'world_the_end') {
+    return 'end'
+  }
+  return 'overworld'
+}
+
+/**
+ * Validate and map recipeId to allowed value
+ */
+function validateRecipeId(
+  recipeId: string,
+  world: 'overworld' | 'nether' | 'end'
+): 'region' | 'heart' | 'nether_region' | 'nether_heart' | 'none' | 'village' {
+  const allowed = ['none', 'region', 'nether_region', 'heart', 'nether_heart', 'village']
+  if (allowed.includes(recipeId)) {
+    return recipeId as any
+  }
+  
+  // Default based on world
+  console.warn(`Invalid recipeId: ${recipeId}, defaulting based on world`)
+  if (world === 'nether') {
+    return 'nether_region'
+  }
+  return 'region'
+}
+
+/**
+ * Import regions from a regions-meta.yml file
+ */
+export function importRegionsMeta(
+  filePath: string,
+  world?: 'overworld' | 'nether' | 'end'
+): {
+  regions: RegionRecord[]
+  world: 'overworld' | 'nether' | 'end'
+  source: ImportedSource
+  onboarding?: OnboardingConfig
+  spawnCenter?: { world: string; x: number; z: number }
+  levelledMobs?: { villageBandStrategy?: string; regionBands?: Record<string, string> }
+} {
+  // Read and parse YAML
+  let parsed: RegionsMetaExport
+  try {
+    const content = readFileSync(filePath, 'utf-8')
+    parsed = yaml.parse(content)
+    if (!parsed) {
+      throw new Error('Failed to parse YAML: file is empty or invalid')
+    }
+  } catch (error: any) {
+    throw new Error(`Failed to parse YAML file: ${error.message}`)
+  }
+
+  // Validate format
+  if (parsed.format !== 1) {
+    throw new Error(`Unsupported regions-meta format: expected 1, got ${parsed.format}`)
+  }
+
+  // Validate root world
+  if (!parsed.world) {
+    throw new Error('Missing required field: world')
+  }
+
+  // Map root world
+  const mappedWorld = mapWorld(parsed.world)
+  if (world && world !== mappedWorld) {
+    console.warn(`World parameter (${world}) does not match file world (${parsed.world} -> ${mappedWorld}), using file world`)
+  }
+
+  // Validate regions
+  if (!Array.isArray(parsed.regions)) {
+    throw new Error('Missing or invalid "regions" field: must be an array')
+  }
+
+  // Process regions
+  const regions: RegionRecord[] = []
+  for (const region of parsed.regions) {
+    // Validate required fields
+    if (!region.id || !region.world || !region.kind || !region.discover) {
+      console.warn(`Skipping region with missing required fields: ${JSON.stringify(region)}`)
+      continue
+    }
+
+    if (!region.discover.method || !region.discover.recipeId) {
+      console.warn(`Skipping region with missing discover fields: ${region.id}`)
+      continue
+    }
+
+    // Validate region.world matches root world (warn if not)
+    const regionWorldMapped = mapWorld(region.world)
+    if (regionWorldMapped !== mappedWorld) {
+      console.warn(`Region ${region.id} has world ${region.world} (mapped to ${regionWorldMapped}) but file root world is ${parsed.world} (mapped to ${mappedWorld})`)
+    }
+
+    // Map region
+    const canonicalId = canonicalizeId(region.id)
+    const recipeId = validateRecipeId(region.discover.recipeId, mappedWorld)
+
+    regions.push({
+      world: mappedWorld,
+      id: canonicalId,
+      kind: region.kind,
+      discover: {
+        method: region.discover.method,
+        recipeId,
+        commandIdOverride: region.discover.commandIdOverride,
+        displayNameOverride: region.discover.displayNameOverride,
+      },
+    })
+  }
+
+  // Build source
+  const fileHash = calculateFileHash(filePath)
+  const importedAt = new Date().toISOString()
+  const filename = require('path').basename(filePath)
+
+  const source: ImportedSource = {
+    label: mappedWorld,
+    originalFilename: filename,
+    importedAtIso: importedAt,
+    fileHash,
+    spawnCenter: parsed.spawnCenter,
+  }
+
+  // Extract optional sections
+  const result: {
+    regions: RegionRecord[]
+    world: 'overworld' | 'nether' | 'end'
+    source: ImportedSource
+    onboarding?: OnboardingConfig
+    spawnCenter?: { world: string; x: number; z: number }
+    levelledMobs?: { villageBandStrategy?: string; regionBands?: Record<string, string> }
+  } = {
+    regions,
+    world: mappedWorld,
+    source,
+  }
+
+  if (parsed.onboarding) {
+    result.onboarding = {
+      startRegionId: parsed.onboarding.startRegionId,
+      teleport: {
+        world: parsed.onboarding.teleport.world,
+        x: parsed.onboarding.teleport.x,
+        y: parsed.onboarding.teleport.y,
+        z: parsed.onboarding.teleport.z,
+        yaw: parsed.onboarding.teleport.yaw,
+        pitch: parsed.onboarding.teleport.pitch,
+      },
+    }
+  }
+
+  if (parsed.spawnCenter) {
+    result.spawnCenter = parsed.spawnCenter
+  }
+
+  if (parsed.levelledMobs) {
+    result.levelledMobs = parsed.levelledMobs
+  }
+
+  return result
+}
+
+module.exports = { importRegions, importRegionsMeta }

@@ -12,6 +12,7 @@ export type RewardRecipeId =
   | 'nether_region'
   | 'nether_heart'
   | 'none'
+  | 'village'
 
 export interface ServerProfile {
   id: ServerId
@@ -19,9 +20,22 @@ export interface ServerProfile {
   sources: {
     overworld?: ImportedSource
     nether?: ImportedSource
+    world?: ImportedSource
+    end?: ImportedSource
   }
   regions: RegionRecord[]
   onboarding: OnboardingConfig
+  spawnCenter?: {
+    world: string
+    x: number
+    z: number
+  }
+  regionsMeta?: {
+    levelledMobs?: {
+      villageBandStrategy?: string
+      regionBands?: Record<string, string>
+    }
+  }
   build: {
     lastBuildId?: string
     outputDirectory?: string
@@ -29,7 +43,7 @@ export interface ServerProfile {
 }
 
 export interface ImportedSource {
-  label: string // "overworld" | "nether"
+  label: string // "overworld" | "nether" | "end"
   originalFilename: string
   importedAtIso: string
   fileHash: string
@@ -41,7 +55,7 @@ export interface ImportedSource {
 }
 
 export interface RegionRecord {
-  world: 'overworld' | 'nether'
+  world: 'overworld' | 'nether' | 'end'
   id: string // canonical id (lowercase, snake_case)
   kind: RegionKind
   discover: {
@@ -57,7 +71,7 @@ export interface OnboardingConfig {
   teleport: {
     world: string
     x: number
-    y: number
+    y?: number
     z: number
     yaw?: number
     pitch?: number

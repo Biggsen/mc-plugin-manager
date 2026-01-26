@@ -1,12 +1,12 @@
 const yaml = require('yaml')
 
 interface RegionRecord {
-  world: 'overworld' | 'nether'
+  world: 'overworld' | 'nether' | 'end'
   id: string
   kind: 'system' | 'region' | 'village' | 'heart'
   discover: {
     method: 'disabled' | 'on_enter' | 'first_join'
-    recipeId: 'region' | 'heart' | 'nether_region' | 'nether_heart' | 'none'
+    recipeId: 'region' | 'heart' | 'nether_region' | 'nether_heart' | 'none' | 'village'
     commandIdOverride?: string
     displayNameOverride?: string
   }
