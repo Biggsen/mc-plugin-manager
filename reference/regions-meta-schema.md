@@ -9,7 +9,7 @@ This document defines the `regions-meta.yml` format. **Region Forge** should exp
 - **Filename:** `regions-meta.yml` (or any name; mc-plugin-manager will accept it via file picker)
 - **Format:** YAML
 - **Encoding:** UTF-8
-- **Root:** Single mapping with a required `format` and optional sections: `regions`, `onboarding`, `spawnCenter`, `levelledMobs`
+- **Root:** Single mapping with required `format` and `world`, and optional sections: `regions`, `onboarding`, `spawnCenter`, `levelledMobs`
 
 ---
 
@@ -18,6 +18,7 @@ This document defines the `regions-meta.yml` format. **Region Forge** should exp
 | Field        | Type   | Required | Description |
 |-------------|--------|----------|-------------|
 | `format`    | integer| **Yes**  | Schema version. Use `1`. Mc-plugin-manager rejects other values. |
+| `world`     | string | **Yes**  | The world this export represents. Typically `overworld`, `nether`, or `end`. All `regions[].world` should match this value. |
 | `regions`   | array  | **Yes**  | List of region objects. See §3. |
 | `onboarding`| object | No       | First-join teleport and start region. See §4. |
 | `spawnCenter` | object | No     | World spawn center (for spawn region). See §5. |
@@ -36,7 +37,7 @@ Each element describes one region. Order is preserved for display; mc-plugin-man
 | Field     | Type   | Required | Description |
 |----------|--------|----------|-------------|
 | `id`     | string | **Yes**  | Region ID. Lowercase, snake_case recommended. Must be unique within `world`. |
-| `world`  | string | **Yes**  | World name. Typically `overworld` or `nether`; mc-plugin-manager accepts any string. |
+| `world`  | string | **Yes**  | World name. Should match the root-level `world` field. Typically `overworld`, `nether`, or `end`; mc-plugin-manager accepts any string. |
 | `kind`   | string | **Yes**  | One of: `system`, `region`, `village`, `heart`. See §3.2. |
 | `discover` | object | **Yes**  | Discovery behaviour. See §3.3. |
 
@@ -99,7 +100,7 @@ First-join spawn and discovery. If absent, mc-plugin-manager leaves `profile.onb
 |---------|--------|----------|-------------|
 | `world` | string | **Yes**  | World name. |
 | `x`     | number | **Yes**  | X coordinate. |
-| `y`     | number | **Yes**  | Y coordinate. |
+| `y`     | number | No       | Y coordinate. Region Forge does not export this; it is set manually in mc-plugin-manager after checking in-game. |
 | `z`     | number | **Yes**  | Z coordinate. |
 | `yaw`   | number | No       | Yaw (degrees). |
 | `pitch` | number | No       | Pitch (degrees). |
@@ -141,7 +142,9 @@ Only include entries for regions that should have a LevelledMobs region-band rul
 
 ## 7. World Names
 
-- `world` in `regions[].world`, `onboarding.teleport.world`, and `spawnCenter.world` is a string. Mc-plugin-manager does not enforce specific values.
+- **Root-level `world`**: Required field indicating which world this export represents. Typically `overworld`, `nether`, or `end`. All `regions[].world` values should match this field.
+- **`regions[].world`**: Should match the root-level `world` field. Mc-plugin-manager may warn if they differ.
+- **`onboarding.teleport.world` and `spawnCenter.world`**: Use the server's actual world name (e.g. `world`, `world_nether`, `world_the_end`, or custom names like `Teledosi`). These do not need to match the root `world` field.
 - Common choices: `overworld`, `world`, `nether`, `world_nether`, `end`, `world_the_end`. Region Forge should use whatever matches the server’s world names.
 
 ---
@@ -156,6 +159,7 @@ Only include entries for regions that should have a LevelledMobs region-band rul
 
 ```yaml
 format: 1
+world: overworld
 
 onboarding:
   startRegionId: acornbrook
@@ -215,13 +219,6 @@ regions:
       method: on_enter
       recipeId: region
 
-  - id: nether_spawn
-    world: nether
-    kind: system
-    discover:
-      method: disabled
-      recipeId: none
-
 levelledMobs:
   villageBandStrategy: easy
   regionBands:
@@ -237,6 +234,7 @@ levelledMobs:
 
 ```yaml
 format: 1
+world: overworld
 regions:
   - id: spawn
     world: overworld
@@ -253,9 +251,15 @@ regions:
 - **`format`**  
   - If `format` is not `1`, mc-plugin-manager should reject the file with a clear error.
 
+- **`world`**  
+  - Required. If missing, reject.  
+  - Indicates which world this export represents. Typically `overworld`, `nether`, or `end`.  
+  - Mc-plugin-manager may validate that all `regions[].world` values match this field, or warn if they differ.
+
 - **`regions`**  
   - Required. If missing or not an array, reject.  
-  - Each element must have `id`, `world`, `kind`, `discover` (with `method`, `recipeId`). Invalid or missing required fields: warn and skip that region, or reject the file (mc-plugin-manager may choose per-field).
+  - Each element must have `id`, `world`, `kind`, `discover` (with `method`, `recipeId`). Invalid or missing required fields: warn and skip that region, or reject the file (mc-plugin-manager may choose per-field).  
+  - `regions[].world` should match the root-level `world` field. Mc-plugin-manager may warn if they differ.
 
 - **`discover.method` / `recipeId`**  
   - If `method` is `disabled`, `recipeId` should be `none`. Mc-plugin-manager may warn otherwise.
