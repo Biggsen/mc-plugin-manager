@@ -1,5 +1,9 @@
 # regions-meta Import — Specification
 
+**Status: ✅ COMPLETED** (2026-01-26)
+
+Implementation complete. All phases finished and tested. Note: `nether_village` was removed from `RewardRecipeId` as villages are overworld-only.
+
 ## Purpose
 
 Replace the existing **Region Forge `regions.yml`** import with an import of **`regions-meta.yml`**, the format that Region Forge exports as the single source of region data, onboarding, spawn center, and LevelledMobs metadata. Mc-plugin-manager becomes the consumer of this format and the single source of truth for downstream generators (AA, CE, TAB, LevelledMobs).
@@ -22,7 +26,7 @@ Replace the existing **Region Forge `regions.yml`** import with an import of **`
 - **IPC**: New `import-regions-meta` handler; deprecate or remove `import-regions` (regions.yml).
 - **ImportScreen**: Replace Overworld/Nether dual import with a single “Import regions-meta” flow.
 - **OnboardingScreen**: Prefill from `spawnCenter` (regions-meta or legacy); handle optional `teleport.y`.
-- **Generators**: `ceGenerator` must use `teleport.y ?? <default>` when building `tp` command; `recipeId` and `RegionRecord` types extended for `village` | `nether_village`.
+- **Generators**: `ceGenerator` must use `teleport.y ?? <default>` when building `tp` command; `recipeId` and `RegionRecord` types extended for `village` (villages are overworld-only, no `nether_village`).
 - **Types**: `src/types`, `preload`, and local interfaces in aa/ce/tab generators.
 
 ### Out of Scope
@@ -65,7 +69,7 @@ Replace the existing **Region Forge `regions.yml`** import with an import of **`
 See `reference/regions-meta-schema.md` for the full definition. Relevant points:
 
 - **Root**: `format` (required, must be `1`), **`world`** (required, indicates which world this export represents: `overworld`, `nether`, or `end`), `regions` (required), `onboarding`, `spawnCenter`, `levelledMobs` (optional).
-- **regions[]**: `id`, `world`, `kind`, `discover{ method, recipeId, commandIdOverride?, displayNameOverride? }`. `regions[].world` should match the root-level `world` field. `kind` ∈ `system`|`region`|`village`|`heart`; `recipeId` ∈ `none`|`region`|`nether_region`|`heart`|`nether_heart`|`village`|`nether_village`.
+- **regions[]**: `id`, `world`, `kind`, `discover{ method, recipeId, commandIdOverride?, displayNameOverride? }`. `regions[].world` should match the root-level `world` field. `kind` ∈ `system`|`region`|`village`|`heart`; `recipeId` ∈ `none`|`region`|`nether_region`|`heart`|`nether_heart`|`village` (villages are overworld-only).
 - **onboarding**: `startRegionId`, `teleport{ world, x, z, y?, yaw?, pitch? }`. `teleport.y` is **optional** (Region Forge does not export it).
 - **spawnCenter**: `world`, `x`, `z` (no `y`).
 - **levelledMobs**: `villageBandStrategy?`, `regionBands?` (map of region `id` → difficulty).
@@ -96,7 +100,7 @@ See `reference/regions-meta-schema.md` for the full definition. Relevant points:
 ### RegionRecord
 
 - `world`: remains `'overworld' | 'nether' | 'end'` for compatibility with AA/CE/TAB. **World mapping** (see § World Mapping) happens in `importRegionsMeta`. The root-level `world` field in the file is used to determine which world slot to import into.
-- `discover.recipeId`: extend type to include `'village' | 'nether_village'` so schema-conformant files are accepted. Generators use `kind` and `world`; no logic change for `recipeId` required.
+- `discover.recipeId`: extend type to include `'village'` so schema-conformant files are accepted. Generators use `kind` and `world`; no logic change for `recipeId` required. (Note: `nether_village` does not exist; villages are overworld-only.)
 
 ### OnboardingConfig.teleport
 
@@ -147,7 +151,7 @@ function importRegionsMeta(
 
 ### recipeId Validation
 
-- Allowed: `none`, `region`, `nether_region`, `heart`, `nether_heart`, `village`, `nether_village`. If the file has any other value, warn and map to a safe default (e.g. `region` or `nether_region` by world) or skip that region. Mc-plugin-manager does not need to enforce `method`/`recipeId` consistency (e.g. `disabled` + `none`) in the parser; it may warn.
+- Allowed: `none`, `region`, `nether_region`, `heart`, `nether_heart`, `village`. If the file has any other value, warn and map to a safe default (e.g. `region` or `nether_region` by world) or skip that region. Mc-plugin-manager does not need to enforce `method`/`recipeId` consistency (e.g. `disabled` + `none`) in the parser; it may warn. (Note: `nether_village` does not exist; villages are overworld-only.)
 
 ---
 
@@ -255,17 +259,19 @@ function importRegionsMeta(
 
 ### Files to Update
 
-- `src/types/index.ts`: `RewardRecipeId` add `'village' | 'nether_village'`; `OnboardingConfig.teleport.y` → `y?: number`; `ServerProfile` add `spawnCenter?`, `regionsMeta?`, `sources.world?`, `sources.end?` (and update `sources.nether?` to be from regions-meta).
+- `src/types/index.ts`: `RewardRecipeId` add `'village'`; `OnboardingConfig.teleport.y` → `y?: number`; `ServerProfile` add `spawnCenter?`, `regionsMeta?`, `sources.world?`, `sources.end?` (and update `sources.nether?` to be from regions-meta).
 - `electron/preload.ts`: Mirror `ServerProfile`, `ImportedSource`, `RegionRecord`, `OnboardingConfig`; add `importRegionsMeta(serverId, world, filePath)` to `ElectronAPI`.
 - `src/vite-env.d.ts`: `ElectronAPI` add `importRegionsMeta(serverId, world, filePath)`.
-- `electron/regionParser.ts`: `RegionRecord` and any local types; `recipeId` includes `village`|`nether_village`.
-- `electron/aaGenerator.ts`, `electron/ceGenerator.ts`, `electron/tabGenerator.ts`: Local `RegionRecord.recipeId` (and `OnboardingConfig` in CE) extended for `village`|`nether_village` and `y?`.
+- `electron/regionParser.ts`: `RegionRecord` and any local types; `recipeId` includes `village`.
+- `electron/aaGenerator.ts`, `electron/ceGenerator.ts`, `electron/tabGenerator.ts`: Local `RegionRecord.recipeId` (and `OnboardingConfig` in CE) extended for `village` and `y?`.
 
 ### RewardRecipeId (full)
 
 ```ts
-| 'region' | 'heart' | 'nether_region' | 'nether_heart' | 'none' | 'village' | 'nether_village'
+| 'region' | 'heart' | 'nether_region' | 'nether_heart' | 'none' | 'village'
 ```
+
+**Note**: `nether_village` does not exist; villages are overworld-only.
 
 ---
 
@@ -338,57 +344,57 @@ function importRegionsMeta(
 
 ### Phase 1: Types and Profile Model
 
-- [ ] `src/types/index.ts`: `OnboardingConfig.teleport.y` → optional; `RewardRecipeId` add `village`|`nether_village`; `ServerProfile` add `spawnCenter?`, `regionsMeta?`, `sources.world?`, `sources.end?`; `RegionRecord.world` add `'end'`.
-- [ ] `electron/preload.ts`: Update `ServerProfile`, `RegionRecord`, `OnboardingConfig`; add `importRegionsMeta(serverId, world, filePath)` to API.
-- [ ] `src/vite-env.d.ts`: `ElectronAPI.importRegionsMeta(serverId, world, filePath)`.
+- [x] `src/types/index.ts`: `OnboardingConfig.teleport.y` → optional; `RewardRecipeId` add `village`; `ServerProfile` add `spawnCenter?`, `regionsMeta?`, `sources.world?`, `sources.end?`; `RegionRecord.world` add `'end'`.
+- [x] `electron/preload.ts`: Update `ServerProfile`, `RegionRecord`, `OnboardingConfig`; add `importRegionsMeta(serverId, world, filePath)` to API.
+- [x] `src/vite-env.d.ts`: `ElectronAPI.importRegionsMeta(serverId, world, filePath)`.
 
 ### Phase 2: regionParser
 
-- [ ] Add `importRegionsMeta(filePath, world?)`.
-- [ ] Parse YAML; validate `format === 1`; validate root `world` field; validate `regions` array.
-- [ ] Map root `world` to `'overworld' | 'nether' | 'end'`; validate `regions[].world` matches (warn if not).
-- [ ] Map each region: `canonicalizeId`, use mapped root `world` for all regions, pass through `kind`, `discover` (including `recipeId`); handle invalid `recipeId` (warn + default or skip).
-- [ ] Build `source` with `label` = mapped root `world` and `spawnCenter` when present.
-- [ ] Return `{ regions, world, source, onboarding?, spawnCenter?, levelledMobs? }`.
-- [ ] (Optional) Deprecate or remove `importRegions` and Region Forge–specific parsing.
+- [x] Add `importRegionsMeta(filePath, world?)`.
+- [x] Parse YAML; validate `format === 1`; validate root `world` field; validate `regions` array.
+- [x] Map root `world` to `'overworld' | 'nether' | 'end'`; validate `regions[].world` matches (warn if not).
+- [x] Map each region: `canonicalizeId`, use mapped root `world` for all regions, pass through `kind`, `discover` (including `recipeId`); handle invalid `recipeId` (warn + default or skip).
+- [x] Build `source` with `label` = mapped root `world` and `spawnCenter` when present.
+- [x] Return `{ regions, world, source, onboarding?, spawnCenter?, levelledMobs? }`.
+- [x] (Optional) Deprecate or remove `importRegions` and Region Forge–specific parsing.
 
 ### Phase 3: IPC and Preload
 
-- [ ] Add `import-regions-meta(serverId, world, filePath)` handler in `ipc.ts`.
-- [ ] Implement per-world region replacement (remove existing regions for that world, add new ones).
-- [ ] Implement merge of `onboarding` (preserve `teleport.y` when file omits it), `spawnCenter` (last wins), `regionsMeta.levelledMobs` (`regionBands` merged, `villageBandStrategy` last wins).
-- [ ] Set `sources.{world}` based on `result.world`.
-- [ ] Remove or disable `import-regions` handler.
-- [ ] preload: wire `importRegionsMeta(serverId, world, filePath)` to `import-regions-meta`.
+- [x] Add `import-regions-meta(serverId, world, filePath)` handler in `ipc.ts`.
+- [x] Implement per-world region replacement (remove existing regions for that world, add new ones).
+- [x] Implement merge of `onboarding` (preserve `teleport.y` when file omits it), `spawnCenter` (last wins), `regionsMeta.levelledMobs` (`regionBands` merged, `villageBandStrategy` last wins).
+- [x] Set `sources.{world}` based on `result.world`.
+- [x] Remove or disable `import-regions` handler.
+- [x] preload: wire `importRegionsMeta(serverId, world, filePath)` to `import-regions-meta`.
 
 ### Phase 4: ImportScreen
 
-- [ ] Replace Overworld/Nether blocks with single “Import regions-meta” flow.
-- [ ] Call `importRegionsMeta` via IPC; display `sources.regionsMeta?.originalFilename` and `importedAtIso` when set.
-- [ ] (Optional) Update `show-import-dialog` title to “Select regions-meta file”.
+- [x] Replace Overworld/Nether blocks with single “Import regions-meta” flow.
+- [x] Call `importRegionsMeta` via IPC; display `sources.regionsMeta?.originalFilename` and `importedAtIso` when set.
+- [x] (Optional) Update `show-import-dialog` title to “Select regions-meta file”.
 
 ### Phase 5: OnboardingScreen
 
-- [ ] Prefill: use `profile.spawnCenter` → `sources.overworld?.spawnCenter` → `sources.nether?.spawnCenter` → `sources.end?.spawnCenter` → legacy `sources.overworld?.spawnCenter`.
-- [ ] Y input: `value={teleport.y ?? ''}`; on save, allow `y` to be undefined/omitted.
-- [ ] Prefill logic: `y: server.onboarding.teleport.y ?? 64` when constructing prefill object for world/x/z; do not overwrite `y` from spawnCenter.
+- [x] Prefill: use `profile.spawnCenter` → `sources.overworld?.spawnCenter` → `sources.nether?.spawnCenter` → `sources.end?.spawnCenter` → legacy `sources.overworld?.spawnCenter`.
+- [x] Y input: `value={teleport.y ?? ''}`; on save, allow `y` to be undefined/omitted.
+- [x] Prefill logic: `y: server.onboarding.teleport.y ?? 64` when constructing prefill object for world/x/z; do not overwrite `y` from spawnCenter.
 
 ### Phase 6: Generators and create-server
 
-- [ ] `ceGenerator`: `tpCommand` use `tp.y ?? 64`; `OnboardingConfig.teleport.y` optional; `recipeId` include `village`|`nether_village`.
-- [ ] `aaGenerator`, `tabGenerator`: `RegionRecord.recipeId` include `village`|`nether_village`.
-- [ ] `create-server` (if needed): `onboarding.teleport` omit `y` or set to `0`; ensure `regionsMeta` and `spawnCenter` are not required on new profiles.
+- [x] `ceGenerator`: `tpCommand` use `tp.y ?? 64`; `OnboardingConfig.teleport.y` optional; `recipeId` include `village`.
+- [x] `aaGenerator`, `tabGenerator`: `RegionRecord.recipeId` include `village`.
+- [x] `create-server` (if needed): `onboarding.teleport` omit `y` or set to `0`; ensure `regionsMeta` and `spawnCenter` are not required on new profiles.
 
 ### Phase 7: ServerDetailScreen and Build
 
-- [ ] ServerDetailScreen: if it displays “Imported: …”, support `sources.regionsMeta` when `overworld`/`nether` are absent. Counts from `server.regions` unchanged.
-- [ ] Build: no signature change; `profile.regions` and `profile.regionsMeta` are already consumed by existing (or future LevelledMobs) logic.
+- [x] ServerDetailScreen: if it displays “Imported: …”, support `sources.regionsMeta` when `overworld`/`nether` are absent. Counts from `server.regions` unchanged.
+- [x] Build: no signature change; `profile.regions` and `profile.regionsMeta` are already consumed by existing (or future LevelledMobs) logic.
 
 ### Phase 8: Testing and Docs
 
-- [ ] Manual test: import `reference/regions-meta.yml`; verify `regions`, `onboarding`, `spawnCenter`, `levelledMobs` stored; OnboardingScreen prefill and Y optional; CE tp command with `y` default.
-- [ ] Edge cases: `format` 0/2, missing `regions`, invalid `recipeId`, empty `regions`, no `onboarding`/`spawnCenter`/`levelledMobs`.
-- [ ] Update README or user-facing docs to describe regions-meta as the import source.
+- [x] Manual test: import `reference/regions-meta.yml`; verify `regions`, `onboarding`, `spawnCenter`, `levelledMobs` stored; OnboardingScreen prefill and Y optional; CE tp command with `y` default.
+- [x] Edge cases: `format` 0/2, missing `regions`, invalid `recipeId`, empty `regions`, no `onboarding`/`spawnCenter`/`levelledMobs`.
+- [x] Update README or user-facing docs to describe regions-meta as the import source.
 
 ---
 
