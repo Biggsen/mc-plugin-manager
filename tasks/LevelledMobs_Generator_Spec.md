@@ -269,7 +269,7 @@ inputs: {
 ### Prerequisites (from regions-meta work)
 
 - [ ] regions-meta schema defined and accepted.
-- [ ] Mc-plugin-manager: import `regions-meta.yml` → `profile.regions` and `profile.regionsMeta.levelledMobs`.
+- [ ] Mc-plugin-manager: import `regions-meta.yml` → `profile.regions` and `profile.regionsMeta.levelledMobs`. **Spec**: `tasks/Regions_Meta_Import_Spec.md`.
 
 ### Phase 1: Generator
 
