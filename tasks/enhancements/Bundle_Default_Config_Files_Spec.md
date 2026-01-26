@@ -4,18 +4,19 @@
 
 ## Purpose
 
-Bundle default template config files for AdvancedAchievements, ConditionalEvents, and TAB plugins directly within the application bundle. This eliminates the requirement for users to manually select existing config files on every build, improving UX and reducing friction.
+Bundle default template config files for AdvancedAchievements, ConditionalEvents, TAB, and LevelledMobs plugins directly within the application bundle. This eliminates the requirement for users to manually select existing config files on every build, improving UX and reducing friction.
 
 ## Problem Statement
 
 ### Current Workflow Issues
 
-1. **Repetitive File Selection**: Users must select existing config files (`advancedachievements-config.yml`, `conditionalevents-config.yml`, and TAB `config.yml` / `tab-config.yml`) for every build, even though these files need to conform to specific structural requirements for the generators to work correctly.
+1. **Repetitive File Selection**: Users must select existing config files (`advancedachievements-config.yml`, `conditionalevents-config.yml`, TAB `config.yml` / `tab-config.yml`, and `levelledmobs-rules.yml`) for every build, even though these files need to conform to specific structural requirements for the generators to work correctly.
 
-2. **Structural Dependencies**: The generators (`mergeAAConfig`, `mergeCEConfig`, `mergeTABConfig`) require existing config files with specific sections:
+2. **Structural Dependencies**: The generators (`mergeAAConfig`, `mergeCEConfig`, `mergeTABConfig`, `mergeLMConfig`) require existing config files with specific sections:
    - **AA**: Must have a `Commands` section (will be completely replaced)
    - **CE**: Must have an `Events` section (owned events merged into it)
    - **TAB**: Must have `header-footer`, `scoreboard.scoreboards`, and `conditions`; generator replaces/merges owned sections (header, footer, scoreboards, top-explorer conditions) and adds `region-name`, `village-name`, `heart-region` if missing
+   - **LM**: Must have a `custom-rules` array; generator merges owned rules (villages rule and region-band rules) while preserving non-owned rules
 
 3. **User Confusion**: Users may not understand why they need to provide config files when the generators will replace/merge specific sections anyway.
 
@@ -23,10 +24,11 @@ Bundle default template config files for AdvancedAchievements, ConditionalEvents
 
 ### Why Defaults Exist
 
-The `reference/plugin config files/defaults/` directory already contains properly structured default config files:
+The `reference/plugin config files/to be bundled/` directory contains properly structured default config files ready for bundling:
 - `advancedachievements-config.yml` — Full AA config with `Commands` section placeholder
 - `conditionalevents-config.yml` — Full CE config with `Events` section placeholder
 - `tab-config.yml` — Full TAB config with `header-footer`, `scoreboard.scoreboards`, and `conditions`
+- `levelledmobs-rules.yml` — Full LM config with `custom-rules` array structure
 
 These files represent minimal viable templates that satisfy the generator's structural requirements.
 
@@ -38,19 +40,13 @@ Bundle default config templates as application assets. Use them automatically wh
 
 ### Behavior Changes
 
-1. **Default Behavior (New)**: 
-   - If no existing config path is provided for AA/CE/TAB, use bundled defaults
-   - Build succeeds without requiring file selection
-   - UI clearly indicates "Using bundled defaults"
+1. **Plugin checkboxes (new)**: Users select which plugins to generate (AA, CE, TAB, LM). Checked = generate; unchecked = skip. Only checked plugins are built.
 
-2. **Override Behavior (Preserved)**:
-   - Users can still provide custom existing config files via file picker
-   - Custom files take precedence when provided
-   - UI clearly indicates "Using custom file: [path]"
+2. **Default vs override**: For each checked plugin, if no path is provided, use the bundled default. If a path is provided (file picker), use that custom file as the base. Path overrides default when provided.
 
-3. **File Selection (Updated)**:
-   - File selection becomes **optional** for AA, CE, and TAB
-   - UI provides clear visual distinction between default and custom mode
+3. **Build button**: Always enabled. Validation runs on submit: if no plugins are checked or `outDir` is not set, show validation feedback and do not invoke build. Invalid submission is not a disabled button — it's an error message.
+
+4. **File selection**: Paths are optional per plugin. UI clearly indicates default vs custom (e.g. in build report via `configSources`).
 
 ## Implementation Details
 
@@ -60,12 +56,19 @@ Bundle default config templates as application assets. Use them automatically wh
 electron/
   assets/
     templates/
-      advancedachievements-config.yml    (copied from reference/defaults)
-      conditionalevents-config.yml       (copied from reference/defaults)
-      tab-config.yml                     (copied from reference/defaults)
+      advancedachievements-config.yml    (copied from reference/to be bundled)
+      conditionalevents-config.yml       (copied from reference/to be bundled)
+      tab-config.yml                     (copied from reference/to be bundled)
+      levelledmobs-rules.yml             (copied from reference/to be bundled)
 ```
 
 **Alternative**: Store in `src/assets/templates/` if bundling through Vite is preferred.
+
+### Packaging
+
+1. **Pre-packager copy**: Add a build step that copies `reference/plugin config files/to be bundled/*` → `electron/assets/templates/` before packaging (e.g. `prepack` or `prebuild` script, or as part of `build:electron`). Ensure the four template files exist in `electron/assets/templates/` prior to running electron-packager.
+
+2. **Verification**: Include verification in **build/packaging tests**. Automatically assert that the four template files exist in the packager output (and optionally that they are readable at the resolved `app.getAppPath()`-based path) before considering the build valid.
 
 ### Code Changes
 
@@ -90,16 +93,18 @@ electron/
 mergeAAConfig(existingConfigPath: string, newCommands: AACommandsSection): string
 mergeCEConfig(existingConfigPath: string, ownedEvents: CEEventsSection): string
 mergeTABConfig(existingConfigPath: string, ...): string
+mergeLMConfig(existingConfigPath: string, owned: OwnedLMRules): string
 ```
 
 **Proposed**: No changes needed. Generators continue to accept file paths. Path resolution happens at caller level.
 
 #### 3. Path Resolution Logic
 
-**New Function**: `resolveConfigPath(type: 'aa' | 'ce' | 'tab', userProvidedPath?: string): string`
+**New Function**: `resolveConfigPath(type: 'aa' | 'ce' | 'tab' | 'lm', userProvidedPath?: string): string`  
+**Requires**: `app` from `electron` (for `app.getAppPath()`). Ensure the module that defines `resolveConfigPath` (e.g. `ipc.ts`) imports `app` from `electron`.
 
 ```typescript
-function resolveConfigPath(type: 'aa' | 'ce' | 'tab', userProvidedPath?: string): string {
+function resolveConfigPath(type: 'aa' | 'ce' | 'tab' | 'lm', userProvidedPath?: string): string {
   // If user provided path, validate and use it
   if (userProvidedPath && userProvidedPath.trim().length > 0) {
     if (!existsSync(userProvidedPath)) {
@@ -112,7 +117,8 @@ function resolveConfigPath(type: 'aa' | 'ce' | 'tab', userProvidedPath?: string)
   const appPath = app.getAppPath()
   const filename = type === 'aa' ? 'advancedachievements-config.yml'
     : type === 'ce' ? 'conditionalevents-config.yml'
-    : 'tab-config.yml'
+    : type === 'tab' ? 'tab-config.yml'
+    : 'levelledmobs-rules.yml'
   const defaultPath = path.join(appPath, 'electron', 'assets', 'templates', filename)
   
   if (!existsSync(defaultPath)) {
@@ -127,6 +133,12 @@ function resolveConfigPath(type: 'aa' | 'ce' | 'tab', userProvidedPath?: string)
 
 **File**: `electron/ipc.ts` — `build-configs` handler
 
+**Input validation**: Require at least one of `generateAA` / `generateCE` / `generateTAB` / `generateLM` true and `outDir` set. The UI validates on submit and does not invoke build when invalid; the IPC handler should also validate defensively and return a clear error if these preconditions fail.
+
+**Build inputs**: Add `generateAA`, `generateCE`, `generateTAB`, `generateLM` (booleans). Keep `aaPath`, `cePath`, `tabPath`, `lmPath` as optional overrides. Only generate plugins that are checked; for those, use path when provided, else bundled default.
+
+**Diff validation**: Diff validation (`validateAADiff`, `validateCEDiff`, `validateTABDiff`, `validateLMDiff`) still runs for each generated plugin. Use the **resolved** path (bundled default or custom) for both merge and validation. Do not special-case default vs custom.
+
 **Current Flow**:
 ```typescript
 if (inputs.aaPath && inputs.aaPath.trim().length > 0) {
@@ -134,37 +146,29 @@ if (inputs.aaPath && inputs.aaPath.trim().length > 0) {
     return { success: false, error: `AA config file not found: ${inputs.aaPath}` }
   }
   const mergedAAContent = mergeAAConfig(inputs.aaPath, newCommands)
-  // ...
+  // ... validate, write ...
 }
 ```
 
-**Updated Flow**:
+**Updated Flow** (per-plugin: only run when plugin is checked; path overrides default when provided):
 ```typescript
-// AA generation (optional)
-if (inputs.generateAA !== false) {
+// AA generation (when generateAA checked)
+if (inputs.generateAA) {
   try {
     const aaConfigPath = resolveConfigPath('aa', inputs.aaPath)
     const mergedAAContent = mergeAAConfig(aaConfigPath, newCommands)
+    const aaValidation = validateAADiff(aaConfigPath, mergedAAContent)
+    if (!aaValidation.valid) {
+      return { success: false, error: aaValidation.error || 'AA diff validation failed', buildId }
+    }
     const usingDefaultAA = !inputs.aaPath || inputs.aaPath.trim().length === 0
-    // ... rest of generation
+    // ... write to outDir + build dir, push to configSources ...
   } catch (error) {
     return { success: false, error: error.message }
   }
 }
 
-// CE generation (optional) — same pattern with resolveConfigPath('ce', inputs.cePath)
-
-// TAB generation (optional)
-if (inputs.generateTAB !== false) {
-  try {
-    const tabConfigPath = resolveConfigPath('tab', inputs.tabPath)
-    const mergedTABContent = mergeTABConfig(tabConfigPath, ...)
-    const usingDefaultTAB = !inputs.tabPath || inputs.tabPath.trim().length === 0
-    // ... rest of generation
-  } catch (error) {
-    return { success: false, error: error.message }
-  }
-}
+// CE, TAB, LM — same pattern: resolveConfigPath → merge → validateXxxDiff(resolvedPath, merged) → write → configSources
 ```
 
 #### 5. Build Result Metadata
@@ -180,45 +184,48 @@ interface BuildResult {
     aa?: { path: string; isDefault: boolean }
     ce?: { path: string; isDefault: boolean }
     tab?: { path: string; isDefault: boolean }
+    lm?: { path: string; isDefault: boolean }
   }
 }
 ```
+
+**Drop `aaGenerated`, `ceGenerated`, `tabGenerated`, `lmGenerated`.** Use `configSources` as the single source of truth: a plugin was generated iff it appears in `configSources`. Build report and UI should derive "generated" from presence in `configSources`.
 
 #### 6. UI Updates
 
 **File**: `src/screens/BuildScreen.tsx`
 
-**Changes**:
-1. **File Selection UI**:
-   - Make AA/CE/TAB file pickers **optional** (add checkboxes: "Use bundled defaults" vs "Use custom file")
-   - Default to "Use bundled defaults" checked
-   - Show file path input only when "Use custom file" is selected
-   - Add visual indicator showing which mode is active
+**Split layout**:
 
-2. **Build Status Display**:
-   - Show which config sources were used (default vs custom) in build result
+1. **Top — Plugin checkboxes**: One checkbox per plugin (AA, CE, TAB, LM). Checked = generate that plugin; unchecked = skip it. Only checked plugins are included in the build.
+
+2. **Bottom — Path overrides**: The existing path UI (file pickers). For each **checked** plugin, if a path is provided, use that custom file as the base; if no path, use the bundled default. Paths apply only to checked plugins; unchecked plugins ignore paths.
+
+3. **Build button**: Always enabled (no disabled state). On submit, validate: if no plugins are checked, or `outDir` is not set, show a validation message (e.g. "Select at least one plugin", "Choose an output directory") and do not invoke the build IPC. Invalid submission = validation feedback only.
+
+4. **Build Status Display**:
+   - Show which config sources were used (default vs custom) in build result via `configSources`
    - Display paths clearly in build report
 
-3. **Layout Updates**:
-   ```
-   AdvancedAchievements
-   [✓] Use bundled defaults
-   [ ] Use custom file: [Browse...] [path display]
-   
-   ConditionalEvents
-   [✓] Use bundled defaults
-   [ ] Use custom file: [Browse...] [path display]
-   
-   TAB
-   [✓] Use bundled defaults
-   [ ] Use custom file: [Browse...] [path display]
-   ```
+**Layout**:
+```
+[ ] AdvancedAchievements    [ ] ConditionalEvents    [ ] TAB    [ ] LevelledMobs
+     (or vertical checkboxes per plugin)
+
+--- Path overrides (existing file pickers) ---
+AA:   [Browse...] [path display]
+CE:   [Browse...] [path display]
+TAB:  [Browse...] [path display]
+LM:   [Browse...] [path display]
+
+[Build]   (always enabled)
+```
 
 ## Default Config File Content
 
 ### AdvancedAchievements Default
 
-**Source**: `reference/plugin config files/defaults/advancedachievements-config.yml`
+**Source**: `reference/plugin config files/to be bundled/advancedachievements-config.yml`
 
 **Key Characteristics**:
 - Full plugin config with all standard sections
@@ -236,7 +243,7 @@ interface BuildResult {
 
 ### ConditionalEvents Default
 
-**Source**: `reference/plugin config files/defaults/conditionalevents-config.yml`
+**Source**: `reference/plugin config files/to be bundled/conditionalevents-config.yml`
 
 **Key Characteristics**:
 - Full plugin config with `Config`, `Messages`, and `Events` sections
@@ -246,7 +253,7 @@ interface BuildResult {
 
 ### TAB Default
 
-**Source**: `reference/plugin config files/defaults/tab-config.yml`
+**Source**: `reference/plugin config files/to be bundled/tab-config.yml`
 
 **Key Characteristics**:
 - Full TAB plugin config with `header-footer`, `scoreboard` (including `scoreboards`), and `conditions`
@@ -257,6 +264,21 @@ interface BuildResult {
 - All other TAB settings (permissions, MySQL, proxy-support, layout, etc.) preserved
 
 **Note**: The default may have a minimal `conditions` section (e.g. only `nick`). The generator merges in the static WorldGuard conditions and top-explorer conditions as needed.
+
+### LevelledMobs Default
+
+**Source**: `reference/plugin config files/to be bundled/levelledmobs-rules.yml`
+
+**Key Characteristics**:
+- Full LevelledMobs config with `custom-rules` array structure
+- Generator merges owned rules (villages rule and region-band rules) into `custom-rules`
+- Owned rules are identified by:
+  - Villages rule: `worldguard-regions` is an array (multiple village IDs)
+  - Region-band rules: `worldguard-regions` is a string (single region ID) AND `use-preset` matches pattern `lvlstrategy-(easy|normal|hard|severe|deadly)`
+- Non-owned rules (any rule not matching the above patterns) are preserved
+- Generator adds villages rule first (if present), then region-band rules (sorted by `custom-rule` name)
+
+**Note**: The generator preserves all non-owned custom rules, so users can maintain their own custom LevelledMobs rules alongside generated ones.
 
 ## Risks & Mitigations
 
@@ -270,10 +292,11 @@ interface BuildResult {
 - Provide clear error messages if config parsing fails (likely indicates version mismatch)
 - Consider versioning bundled templates if major changes occur
 
-**Action**: Add comment header to default files:
+**Action**: Add comment header to **bundled template** files only (in `reference/plugin config files/to be bundled/` or the copies in `electron/assets/templates/`). **Strip this header from generated output** — the files written to outDir / build dir (e.g. `{server}-advancedachievements-config.yml`) must not include it. Implement as part of this work; add headers to templates, and ensure the merge/output step removes them from generated files.
+
 ```yaml
 # MC Plugin Manager - Bundled Default Template
-# Target Plugin Version: AdvancedAchievements 6.x / ConditionalEvents x.x / TAB 4.x
+# Target Plugin Version: AdvancedAchievements 6.x / ConditionalEvents x.x / TAB 4.x / LevelledMobs x.x
 # Last Updated: 2024-XX-XX
 # 
 # This file serves as a template. The generator will replace/merge
@@ -336,41 +359,45 @@ interface BuildResult {
 ### Unit Tests
 
 1. **Path Resolution**:
-   - Test `resolveConfigPath` with provided path (aa, ce, tab)
+   - Test `resolveConfigPath` with provided path (aa, ce, tab, lm)
    - Test `resolveConfigPath` without provided path (should use default for each type)
    - Test error handling for missing custom files
-   - Test error handling for missing bundled defaults (including TAB)
+   - Test error handling for missing bundled defaults (including TAB and LM)
 
 2. **Generator Integration**:
-   - Verify generators work with bundled default paths (AA, CE, TAB)
+   - Verify generators work with bundled default paths (AA, CE, TAB, LM)
    - Verify generators work with custom paths (regression)
    - Verify merge behavior identical for both paths
 
 ### Integration Tests
 
 1. **Build Flow**:
-   - Build with AA default only
-   - Build with CE default only
-   - Build with TAB default only
-   - Build with all three defaults
+   - Build with one plugin checked (AA only, CE only, TAB only, LM only) using bundled defaults
+   - Build with all four checked using bundled defaults
    - Build with custom files (regression)
-   - Build with mixed (e.g. default AA and CE, custom TAB)
+   - Build with mixed (e.g. AA and CE checked + defaults, TAB and LM checked + custom paths)
+   - Submit with no plugins checked → validation error, no IPC call
+   - Submit with no outDir → validation error, no IPC call
 
 2. **UI Flow**:
-   - Toggle between default and custom modes for AA, CE, and TAB
-   - Verify file picker enables/disables correctly
-   - Verify build result displays correct source information (including `configSources.tab`)
+   - Toggle checkboxes; verify only checked plugins are generated
+   - Path overrides: when checked, provide path → custom base; no path → default
+   - Build button always enabled; invalid submit shows validation message
+   - Verify build result displays `configSources` (path, isDefault) for each generated plugin
 
 ### Manual Testing Checklist
 
-- [ ] Build with bundled defaults produces valid configs (AA, CE, TAB)
+- [ ] Build with bundled defaults produces valid configs (AA, CE, TAB, LM)
 - [ ] Build with TAB bundled default produces valid TAB config
+- [ ] Build with LM bundled default produces valid LM config
 - [ ] Build with custom files still works (regression)
-- [ ] UI clearly shows which mode is active
-- [ ] Build reports indicate config sources correctly (including TAB path and isDefault)
+- [ ] Plugin checkboxes control which configs are generated; path overrides work when provided
+- [ ] Build button always enabled; invalid submit (no plugins checked / no outDir) shows validation message
+- [ ] Build reports use `configSources` (path, isDefault); no `*Generated` flags
 - [ ] Error messages are clear when files are missing
 - [ ] Bundled files are included in packaged app (Windows build)
 - [ ] Bundled files are accessible at runtime (verify paths)
+- [ ] Packager output verification (four templates present) runs as part of build/packaging tests
 
 ## Migration Considerations
 
@@ -382,7 +409,7 @@ interface BuildResult {
 - New users get improved default experience
 
 **Optional Migration**:
-- Users can switch to bundled defaults by simply not selecting files
+- Users can use bundled defaults by checking the desired plugins and not providing paths
 - No data migration required
 - No server profile changes needed
 
@@ -399,13 +426,14 @@ interface BuildResult {
 1. **Build Screen Help**:
    - Explain bundled defaults feature
    - Explain when to use custom files vs defaults
-   - Document what happens to custom commands/events (AA), and to custom header/footer/scoreboard (TAB)
+   - Document what happens to custom commands/events (AA), custom header/footer/scoreboard (TAB), and custom rules (LM)
 
 2. **FAQ**:
    - "Why do I need to select config files?" → Answer: You don't, defaults work
    - "What if I have custom commands in AA?" → Use custom file option
    - "How do I add custom counters to AA?" → Use custom file option
    - "What if I have custom header/footer or scoreboard in TAB?" → Use custom file option
+   - "What if I have custom LevelledMobs rules?" → Use custom file option (non-owned rules are preserved)
 
 ### Developer Documentation
 
@@ -425,12 +453,15 @@ interface BuildResult {
 
 ## Acceptance Criteria
 
-- [ ] Bundled default config files (AA, CE, TAB) included in app distribution
-- [ ] Build works without requiring AA/CE/TAB file selection
-- [ ] Build works with all three using bundled defaults
-- [ ] UI clearly indicates default vs custom mode
-- [ ] Build reports show config source information (including TAB)
-- [ ] Custom file override works correctly for AA, CE, and TAB
+- [ ] Bundled default config files (AA, CE, TAB, LM) included in app distribution
+- [ ] Pre-packager copy step populates `electron/assets/templates/`; packaging tests verify templates in packager output
+- [ ] Plugin checkboxes (AA, CE, TAB, LM) control which configs are generated; path overrides use custom file when provided
+- [ ] Build works with one or more plugins using bundled defaults (no paths)
+- [ ] Build button always enabled; invalid submit (no plugins checked / no outDir) shows validation message, no IPC call
+- [ ] Build reports use `configSources` only (no `*Generated`); default vs custom clear
+- [ ] Custom file override works correctly for AA, CE, TAB, and LM
+- [ ] Diff validation runs for each generated plugin using resolved path
+- [ ] Version headers on templates only; stripped from generated output
 - [ ] All existing functionality preserved (regression tests pass)
 - [ ] Error handling provides clear guidance
 - [ ] Documentation updated
@@ -443,14 +474,15 @@ interface BuildResult {
 
 ### Estimated Effort
 
-- Asset bundling setup: 1-2 hours
-- Path resolution logic: 2-3 hours (include TAB in `resolveConfigPath`)
-- IPC handler updates: 2-3 hours (TAB path resolution and merge flow)
-- UI updates: 4-6 hours (TAB optional file picker, default/custom toggle)
-- Testing: 3-4 hours (TAB path resolution, build flows, UI)
+- Asset bundling + packaging: 1-2 hours (copy step, packager inclusion)
+- Path resolution logic: 2-3 hours (include TAB and LM in `resolveConfigPath`; requires `app` from electron)
+- IPC handler updates: 3-4 hours (generateAA/CE/TAB/LM, path resolution, diff validation, configSources; drop *Generated)
+- UI updates: 5-7 hours (plugin checkboxes, path overrides, validate-on-submit, build always enabled)
+- Packaging tests: 1-2 hours (verify templates in packager output)
+- Other testing: 3-4 hours (path resolution, build flows, UI)
 - Documentation: 1-2 hours
 
-**Total**: ~17-23 hours
+**Total**: ~16-24 hours
 
 ### Dependencies
 
@@ -460,10 +492,11 @@ interface BuildResult {
 ### Related Work
 
 - TAB plugin integration — TAB is now included in bundled defaults; same pattern as AA/CE
+- LevelledMobs generator — LM is now included in bundled defaults; same pattern as other generators
 - Config validation improvements (could validate bundled files at startup)
 
 ---
 
-**Document Version**: 1.1  
-**Last Updated**: 2026-01-25  
+**Document Version**: 1.3  
+**Last Updated**: 2026-01-26  
 **Author**: Enhancement Proposal
