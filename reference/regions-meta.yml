@@ -1,0 +1,604 @@
+format: 1
+regions:
+  - id: spawn
+    world: overworld
+    kind: system
+    discover:
+      method: disabled
+      recipeId: none
+  - id: dradacliff
+    world: overworld
+    kind: region
+    discover:
+      method: on_enter
+      recipeId: region
+  - id: heart_of_dradacliff
+    world: overworld
+    kind: heart
+    discover:
+      method: on_enter
+      recipeId: heart
+  - id: rotherhithe
+    world: overworld
+    kind: village
+    discover:
+      method: on_enter
+      recipeId: village
+  - id: travercraig
+    world: overworld
+    kind: village
+    discover:
+      method: on_enter
+      recipeId: village
+  - id: elfdonia
+    world: overworld
+    kind: region
+    discover:
+      method: on_enter
+      recipeId: region
+  - id: heart_of_elfdonia
+    world: overworld
+    kind: heart
+    discover:
+      method: on_enter
+      recipeId: heart
+  - id: firekeep
+    world: overworld
+    kind: region
+    discover:
+      method: on_enter
+      recipeId: region
+  - id: heart_of_firekeep
+    world: overworld
+    kind: heart
+    discover:
+      method: on_enter
+      recipeId: heart
+  - id: acornbrook
+    world: overworld
+    kind: village
+    discover:
+      method: on_enter
+      recipeId: village
+  - id: vetchbrook
+    world: overworld
+    kind: village
+    discover:
+      method: on_enter
+      recipeId: village
+  - id: laraethia
+    world: overworld
+    kind: region
+    discover:
+      method: on_enter
+      recipeId: region
+  - id: heart_of_laraethia
+    world: overworld
+    kind: heart
+    discover:
+      method: on_enter
+      recipeId: heart
+  - id: highbury
+    world: overworld
+    kind: village
+    discover:
+      method: on_enter
+      recipeId: village
+  - id: poormeed
+    world: overworld
+    kind: village
+    discover:
+      method: on_enter
+      recipeId: village
+  - id: fernthorpe
+    world: overworld
+    kind: village
+    discover:
+      method: on_enter
+      recipeId: village
+  - id: goldenbrook
+    world: overworld
+    kind: village
+    discover:
+      method: on_enter
+      recipeId: village
+  - id: ramrip
+    world: overworld
+    kind: village
+    discover:
+      method: on_enter
+      recipeId: village
+  - id: dawntower
+    world: overworld
+    kind: region
+    discover:
+      method: on_enter
+      recipeId: region
+  - id: heart_of_dawntower
+    world: overworld
+    kind: heart
+    discover:
+      method: on_enter
+      recipeId: heart
+  - id: norvomoor
+    world: overworld
+    kind: region
+    discover:
+      method: on_enter
+      recipeId: region
+  - id: heart_of_norvomoor
+    world: overworld
+    kind: heart
+    discover:
+      method: on_enter
+      recipeId: heart
+  - id: stelamoor
+    world: overworld
+    kind: region
+    discover:
+      method: on_enter
+      recipeId: region
+  - id: heart_of_stelamoor
+    world: overworld
+    kind: heart
+    discover:
+      method: on_enter
+      recipeId: heart
+  - id: mouwal
+    world: overworld
+    kind: village
+    discover:
+      method: on_enter
+      recipeId: village
+  - id: foulbridge
+    world: overworld
+    kind: village
+    discover:
+      method: on_enter
+      recipeId: village
+  - id: whitania
+    world: overworld
+    kind: region
+    discover:
+      method: on_enter
+      recipeId: region
+  - id: heart_of_whitania
+    world: overworld
+    kind: heart
+    discover:
+      method: on_enter
+      recipeId: heart
+  - id: vercraigbottom
+    world: overworld
+    kind: village
+    discover:
+      method: on_enter
+      recipeId: village
+  - id: duckchalcedony
+    world: overworld
+    kind: village
+    discover:
+      method: on_enter
+      recipeId: village
+  - id: steadygrang
+    world: overworld
+    kind: village
+    discover:
+      method: on_enter
+      recipeId: village
+  - id: valtos
+    world: overworld
+    kind: region
+    discover:
+      method: on_enter
+      recipeId: region
+  - id: heart_of_valtos
+    world: overworld
+    kind: heart
+    discover:
+      method: on_enter
+      recipeId: heart
+  - id: warmley
+    world: overworld
+    kind: village
+    discover:
+      method: on_enter
+      recipeId: village
+  - id: ravencliff
+    world: overworld
+    kind: village
+    discover:
+      method: on_enter
+      recipeId: village
+  - id: darkd
+    world: overworld
+    kind: village
+    discover:
+      method: on_enter
+      recipeId: village
+  - id: zonorthu
+    world: overworld
+    kind: region
+    discover:
+      method: on_enter
+      recipeId: region
+  - id: heart_of_zonorthu
+    world: overworld
+    kind: heart
+    discover:
+      method: on_enter
+      recipeId: heart
+  - id: helcrest
+    world: overworld
+    kind: region
+    discover:
+      method: on_enter
+      recipeId: region
+  - id: heart_of_helcrest
+    world: overworld
+    kind: heart
+    discover:
+      method: on_enter
+      recipeId: heart
+  - id: wildwood
+    world: overworld
+    kind: village
+    discover:
+      method: on_enter
+      recipeId: village
+  - id: littleheath
+    world: overworld
+    kind: village
+    discover:
+      method: on_enter
+      recipeId: village
+  - id: opalwater
+    world: overworld
+    kind: village
+    discover:
+      method: on_enter
+      recipeId: village
+  - id: shaanen
+    world: overworld
+    kind: region
+    discover:
+      method: on_enter
+      recipeId: region
+  - id: heart_of_shaanen
+    world: overworld
+    kind: heart
+    discover:
+      method: on_enter
+      recipeId: heart
+  - id: portcrescent
+    world: overworld
+    kind: village
+    discover:
+      method: on_enter
+      recipeId: village
+  - id: fernkep
+    world: overworld
+    kind: village
+    discover:
+      method: on_enter
+      recipeId: village
+  - id: ashgrang
+    world: overworld
+    kind: village
+    discover:
+      method: on_enter
+      recipeId: village
+  - id: hornsted
+    world: overworld
+    kind: village
+    discover:
+      method: on_enter
+      recipeId: village
+  - id: majadtindra
+    world: overworld
+    kind: region
+    discover:
+      method: on_enter
+      recipeId: region
+  - id: heart_of_majadtindra
+    world: overworld
+    kind: heart
+    discover:
+      method: on_enter
+      recipeId: heart
+  - id: marktcottage
+    world: overworld
+    kind: village
+    discover:
+      method: on_enter
+      recipeId: village
+  - id: quadaethia
+    world: overworld
+    kind: region
+    discover:
+      method: on_enter
+      recipeId: region
+  - id: heart_of_quadaethia
+    world: overworld
+    kind: heart
+    discover:
+      method: on_enter
+      recipeId: heart
+  - id: sloat
+    world: overworld
+    kind: village
+    discover:
+      method: on_enter
+      recipeId: village
+  - id: valdora
+    world: overworld
+    kind: region
+    discover:
+      method: on_enter
+      recipeId: region
+  - id: heart_of_valdora
+    world: overworld
+    kind: heart
+    discover:
+      method: on_enter
+      recipeId: heart
+  - id: blahal
+    world: overworld
+    kind: village
+    discover:
+      method: on_enter
+      recipeId: village
+  - id: ramshorn
+    world: overworld
+    kind: village
+    discover:
+      method: on_enter
+      recipeId: village
+  - id: rubnaara
+    world: overworld
+    kind: region
+    discover:
+      method: on_enter
+      recipeId: region
+  - id: heart_of_rubnaara
+    world: overworld
+    kind: heart
+    discover:
+      method: on_enter
+      recipeId: heart
+  - id: aureas
+    world: overworld
+    kind: region
+    discover:
+      method: on_enter
+      recipeId: region
+  - id: heart_of_aureas
+    world: overworld
+    kind: heart
+    discover:
+      method: on_enter
+      recipeId: heart
+  - id: wolfonia
+    world: overworld
+    kind: region
+    discover:
+      method: on_enter
+      recipeId: region
+  - id: heart_of_wolfonia
+    world: overworld
+    kind: heart
+    discover:
+      method: on_enter
+      recipeId: heart
+  - id: hillwik
+    world: overworld
+    kind: village
+    discover:
+      method: on_enter
+      recipeId: village
+  - id: millcombe
+    world: overworld
+    kind: village
+    discover:
+      method: on_enter
+      recipeId: village
+  - id: poorwater
+    world: overworld
+    kind: village
+    discover:
+      method: on_enter
+      recipeId: village
+  - id: summitspinney
+    world: overworld
+    kind: village
+    discover:
+      method: on_enter
+      recipeId: village
+  - id: blackwater
+    world: overworld
+    kind: village
+    discover:
+      method: on_enter
+      recipeId: village
+  - id: quietford
+    world: overworld
+    kind: village
+    discover:
+      method: on_enter
+      recipeId: village
+  - id: nabroko
+    world: overworld
+    kind: region
+    discover:
+      method: on_enter
+      recipeId: region
+  - id: heart_of_nabroko
+    world: overworld
+    kind: heart
+    discover:
+      method: on_enter
+      recipeId: heart
+  - id: nearmoor
+    world: overworld
+    kind: village
+    discover:
+      method: on_enter
+      recipeId: village
+  - id: sedgeford
+    world: overworld
+    kind: village
+    discover:
+      method: on_enter
+      recipeId: village
+  - id: holarea
+    world: overworld
+    kind: region
+    discover:
+      method: first_join
+      recipeId: region
+  - id: heart_of_holarea
+    world: overworld
+    kind: heart
+    discover:
+      method: on_enter
+      recipeId: heart
+  - id: richford
+    world: overworld
+    kind: village
+    discover:
+      method: on_enter
+      recipeId: village
+  - id: thistlebrook
+    world: overworld
+    kind: village
+    discover:
+      method: on_enter
+      recipeId: village
+  - id: wesdraland
+    world: overworld
+    kind: region
+    discover:
+      method: on_enter
+      recipeId: region
+  - id: heart_of_wesdraland
+    world: overworld
+    kind: heart
+    discover:
+      method: on_enter
+      recipeId: heart
+  - id: golridge
+    world: overworld
+    kind: region
+    discover:
+      method: on_enter
+      recipeId: region
+  - id: heart_of_golridge
+    world: overworld
+    kind: heart
+    discover:
+      method: on_enter
+      recipeId: heart
+  - id: wallhall
+    world: overworld
+    kind: village
+    discover:
+      method: on_enter
+      recipeId: village
+  - id: walnutgrove
+    world: overworld
+    kind: village
+    discover:
+      method: on_enter
+      recipeId: village
+  - id: hawkhollow
+    world: overworld
+    kind: region
+    discover:
+      method: on_enter
+      recipeId: region
+  - id: heart_of_hawkhollow
+    world: overworld
+    kind: heart
+    discover:
+      method: on_enter
+      recipeId: heart
+  - id: kofroqu
+    world: overworld
+    kind: region
+    discover:
+      method: on_enter
+      recipeId: region
+  - id: heart_of_kofroqu
+    world: overworld
+    kind: heart
+    discover:
+      method: on_enter
+      recipeId: heart
+  - id: kranoria
+    world: overworld
+    kind: region
+    discover:
+      method: on_enter
+      recipeId: region
+  - id: heart_of_kranoria
+    world: overworld
+    kind: heart
+    discover:
+      method: on_enter
+      recipeId: heart
+  - id: foxmeadow
+    world: overworld
+    kind: village
+    discover:
+      method: on_enter
+      recipeId: village
+  - id: abingdon
+    world: overworld
+    kind: village
+    discover:
+      method: on_enter
+      recipeId: village
+  - id: vetchgarden
+    world: overworld
+    kind: village
+    discover:
+      method: on_enter
+      recipeId: village
+spawnCenter:
+  world: Teledosi
+  x: 326
+  z: -291
+onboarding:
+  startRegionId: holarea
+  teleport:
+    world: Teledosi
+    x: 326
+    z: -291
+levelledMobs:
+  villageBandStrategy: easy
+  regionBands:
+    dradacliff: normal
+    elfdonia: severe
+    firekeep: easy
+    laraethia: easy
+    dawntower: normal
+    norvomoor: normal
+    stelamoor: easy
+    whitania: easy
+    valtos: severe
+    zonorthu: easy
+    helcrest: normal
+    shaanen: easy
+    majadtindra: hard
+    quadaethia: easy
+    valdora: easy
+    rubnaara: normal
+    aureas: easy
+    wolfonia: easy
+    nabroko: easy
+    holarea: easy
+    wesdraland: severe
+    golridge: normal
+    hawkhollow: normal
+    kofroqu: normal
+    kranoria: hard
