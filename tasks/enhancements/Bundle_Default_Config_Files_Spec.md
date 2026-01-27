@@ -53,38 +53,39 @@ Bundle default config templates as application assets. Use them automatically wh
 ### File Structure
 
 ```
-electron/
+dist-electron/
   assets/
     templates/
-      advancedachievements-config.yml    (copied from reference/to be bundled)
-      conditionalevents-config.yml       (copied from reference/to be bundled)
-      tab-config.yml                     (copied from reference/to be bundled)
-      levelledmobs-rules.yml             (copied from reference/to be bundled)
+      advancedachievements-config.yml    (copied from reference/to be bundled, headers stripped)
+      conditionalevents-config.yml       (copied from reference/to be bundled, headers stripped)
+      tab-config.yml                     (copied from reference/to be bundled, headers stripped)
+      levelledmobs-rules.yml             (copied from reference/to be bundled, headers stripped)
 ```
 
-**Alternative**: Store in `src/assets/templates/` if bundling through Vite is preferred.
+**Note**: Templates are copied to `dist-electron/assets/templates/` during the build process. This location works in both dev and packaged modes when resolved via `app.getAppPath()`.
 
 ### Packaging
 
-1. **Pre-packager copy**: Add a build step that copies `reference/plugin config files/to be bundled/*` → `electron/assets/templates/` before packaging (e.g. `prepack` or `prebuild` script, or as part of `build:electron`). Ensure the four template files exist in `electron/assets/templates/` prior to running electron-packager.
+1. **Build-time copy script**: Create `scripts/copy-templates.js` that:
+   - Copies `reference/plugin config files/to be bundled/*` → `dist-electron/assets/templates/`
+   - Strips version headers from templates during copy (headers are only in source files)
+   - Creates the target directory if it doesn't exist
+   - Validates that all four template files were copied successfully
 
-2. **Verification**: Include verification in **build/packaging tests**. Automatically assert that the four template files exist in the packager output (and optionally that they are readable at the resolved `app.getAppPath()`-based path) before considering the build valid.
+2. **Build script integration**: Add `"prebuild:electron": "node scripts/copy-templates.js"` to `package.json` so templates are copied automatically before TypeScript compilation. This ensures templates are available in both dev (`electron:dev`) and production builds.
+
+3. **Verification**: Include verification in **build/packaging tests**. Automatically assert that the four template files exist in the packager output (and optionally that they are readable at the resolved `app.getAppPath()`-based path) before considering the build valid.
 
 ### Code Changes
 
 #### 1. Asset Bundling
 
-**Option A: Electron Assets (Recommended)**
-- Copy default config files to `electron/assets/templates/`
-- Reference via `app.getAppPath()` + relative path
-- Files are included in build/dist-electron
-
-**Option B: Vite Assets**
-- Store in `src/assets/templates/`
-- Use `import` to bundle (may require raw loader)
-- Access via Electron IPC from renderer
-
-**Recommendation**: Option A — simpler, files remain accessible at runtime without bundler complexity.
+**Implementation**: Copy default config files to `dist-electron/assets/templates/` during build
+- Templates are copied from `reference/plugin config files/to be bundled/` via `scripts/copy-templates.js`
+- Version headers are stripped during copy (templates in `dist-electron` are clean)
+- Reference via `app.getAppPath()` + relative path `assets/templates/`
+- Works in both dev and packaged modes: `app.getAppPath()` returns `dist-electron` in dev, `resources/app` in packaged builds
+- Files are included in packager output automatically (packager includes `dist-electron/**/*`)
 
 #### 2. Generator Interface Changes
 
@@ -119,10 +120,10 @@ function resolveConfigPath(type: 'aa' | 'ce' | 'tab' | 'lm', userProvidedPath?: 
     : type === 'ce' ? 'conditionalevents-config.yml'
     : type === 'tab' ? 'tab-config.yml'
     : 'levelledmobs-rules.yml'
-  const defaultPath = path.join(appPath, 'electron', 'assets', 'templates', filename)
+  const defaultPath = path.join(appPath, 'assets', 'templates', filename)
   
   if (!existsSync(defaultPath)) {
-    throw new Error(`Bundled ${type.toUpperCase()} default config not found at: ${defaultPath}`)
+    throw new Error(`Bundled ${type.toUpperCase()} default config not found at: ${defaultPath}. This may indicate a packaging issue. Please ensure templates were copied during build.`)
   }
   
   return defaultPath
@@ -189,7 +190,30 @@ interface BuildResult {
 }
 ```
 
-**Drop `aaGenerated`, `ceGenerated`, `tabGenerated`, `lmGenerated`.** Use `configSources` as the single source of truth: a plugin was generated iff it appears in `configSources`. Build report and UI should derive "generated" from presence in `configSources`.
+**Enhanced BuildReport** (transitional approach for backward compatibility):
+```typescript
+interface BuildReport {
+  // ... existing fields
+  generated: {
+    aa: boolean
+    ce: boolean
+    tab: boolean
+    lm: boolean
+  }
+  configSources?: {
+    aa?: { path: string; isDefault: boolean }
+    ce?: { path: string; isDefault: boolean }
+    tab?: { path: string; isDefault: boolean }
+    lm?: { path: string; isDefault: boolean }
+  }
+}
+```
+
+**Migration Strategy**: 
+- Add `configSources` to both `BuildResult` and `BuildReport`
+- Keep `generated` in `BuildReport` for backward compatibility with existing build reports
+- UI should prefer `configSources` when available, but fall back to `generated` for older reports
+- New builds populate both fields (derived from the same data)
 
 #### 6. UI Updates
 
@@ -292,7 +316,7 @@ LM:   [Browse...] [path display]
 - Provide clear error messages if config parsing fails (likely indicates version mismatch)
 - Consider versioning bundled templates if major changes occur
 
-**Action**: Add comment header to **bundled template** files only (in `reference/plugin config files/to be bundled/` or the copies in `electron/assets/templates/`). **Strip this header from generated output** — the files written to outDir / build dir (e.g. `{server}-advancedachievements-config.yml`) must not include it. Implement as part of this work; add headers to templates, and ensure the merge/output step removes them from generated files.
+**Action**: Add comment header to **source template** files in `reference/plugin config files/to be bundled/`. **Strip this header during copy** — the `scripts/copy-templates.js` script removes headers when copying to `dist-electron/assets/templates/`. Since templates in `dist-electron` are clean (no headers), and merge functions read from those templates, generated output files will not include headers. Implement as part of this work; add headers to source templates, and ensure the copy script strips them.
 
 ```yaml
 # MC Plugin Manager - Bundled Default Template
@@ -393,7 +417,7 @@ LM:   [Browse...] [path display]
 - [ ] Build with custom files still works (regression)
 - [ ] Plugin checkboxes control which configs are generated; path overrides work when provided
 - [ ] Build button always enabled; invalid submit (no plugins checked / no outDir) shows validation message
-- [ ] Build reports use `configSources` (path, isDefault); no `*Generated` flags
+- [ ] Build reports include `configSources` (path, isDefault); `generated` flags maintained for backward compatibility
 - [ ] Error messages are clear when files are missing
 - [ ] Bundled files are included in packaged app (Windows build)
 - [ ] Bundled files are accessible at runtime (verify paths)
@@ -458,7 +482,7 @@ LM:   [Browse...] [path display]
 - [ ] Plugin checkboxes (AA, CE, TAB, LM) control which configs are generated; path overrides use custom file when provided
 - [ ] Build works with one or more plugins using bundled defaults (no paths)
 - [ ] Build button always enabled; invalid submit (no plugins checked / no outDir) shows validation message, no IPC call
-- [ ] Build reports use `configSources` only (no `*Generated`); default vs custom clear
+- [ ] Build reports include `configSources` (preferred) with fallback to `generated` for backward compatibility; default vs custom clear
 - [ ] Custom file override works correctly for AA, CE, TAB, and LM
 - [ ] Diff validation runs for each generated plugin using resolved path
 - [ ] Version headers on templates only; stripped from generated output
@@ -474,9 +498,9 @@ LM:   [Browse...] [path display]
 
 ### Estimated Effort
 
-- Asset bundling + packaging: 1-2 hours (copy step, packager inclusion)
+- Asset bundling + packaging: 1-2 hours (copy script with header stripping, `prebuild:electron` hook, packager inclusion)
 - Path resolution logic: 2-3 hours (include TAB and LM in `resolveConfigPath`; requires `app` from electron)
-- IPC handler updates: 3-4 hours (generateAA/CE/TAB/LM, path resolution, diff validation, configSources; drop *Generated)
+- IPC handler updates: 3-4 hours (generateAA/CE/TAB/LM, path resolution, diff validation, configSources; maintain generated for backward compatibility)
 - UI updates: 5-7 hours (plugin checkboxes, path overrides, validate-on-submit, build always enabled)
 - Packaging tests: 1-2 hours (verify templates in packager output)
 - Other testing: 3-4 hours (path resolution, build flows, UI)
@@ -497,6 +521,18 @@ LM:   [Browse...] [path display]
 
 ---
 
-**Document Version**: 1.3  
-**Last Updated**: 2026-01-26  
+**Document Version**: 1.4  
+**Last Updated**: 2026-01-27  
 **Author**: Enhancement Proposal
+
+## Implementation Decisions (2026-01-27)
+
+The following decisions were made during spec review:
+
+1. **Path Resolution**: Always use `dist-electron/assets/templates/`, resolve via `app.getAppPath() + 'assets/templates/'`. This works in both dev and packaged modes without branching logic.
+
+2. **Version Header Stripping**: Headers are stripped during template copy in `scripts/copy-templates.js`. Templates in `dist-electron` are clean, so merge functions never see headers, and generated output won't include them.
+
+3. **Type Migration**: Transitional approach - add `configSources` to `BuildResult` and `BuildReport`, but keep `generated` in `BuildReport` for backward compatibility. UI prefers `configSources` but falls back to `generated` for older reports.
+
+4. **Build Script Integration**: Create `scripts/copy-templates.js` that copies templates and strips headers. Add `"prebuild:electron": "node scripts/copy-templates.js"` to `package.json` so it runs automatically before TypeScript compilation.
