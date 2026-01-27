@@ -57,7 +57,7 @@ Unknown keys on a region object are ignored.
 | Field               | Type   | Required | Description |
 |---------------------|--------|----------|-------------|
 | `method`            | string | **Yes**  | One of: `disabled`, `on_enter`, `first_join`. See §3.4. |
-| `recipeId`         | string | **Yes**  | One of: `none`, `region`, `nether_region`, `heart`, `nether_heart`, `village`, `nether_village`. See §3.5. |
+| `recipeId`         | string | **Yes**  | One of: `none`, `region`, `nether_region`, `heart`, `nether_heart`, `village`. See §3.5. |
 | `commandIdOverride` | string | No       | Override for AA command ID. If omitted, mc-plugin-manager derives from `id`. |
 | `displayNameOverride` | string | No     | Override for AA display name. If omitted, derived from `id`. |
 
@@ -78,8 +78,7 @@ Unknown keys on a region object are ignored.
 | `nether_region`| Nether region. |
 | `heart`        | Overworld heart. |
 | `nether_heart` | Nether heart. |
-| `village`      | Overworld village. |
-| `nether_village`| Nether village. |
+| `village`      | Overworld village. (Note: Villages are overworld-only; there is no `nether_village`.) |
 
 `recipeId` should match `kind` and `world`. Mc-plugin-manager uses `kind` and `world` for CE reward logic; `recipeId` can be used for consistency checks or future features.
 
