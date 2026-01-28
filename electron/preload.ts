@@ -29,7 +29,17 @@ export interface ElectronAPI {
   // Build
   buildConfigs: (
     serverId: string,
-    inputs: { cePath: string; aaPath: string; tabPath: string; lmPath: string; outDir: string }
+    inputs: {
+      generateAA?: boolean
+      generateCE?: boolean
+      generateTAB?: boolean
+      generateLM?: boolean
+      aaPath?: string
+      cePath?: string
+      tabPath?: string
+      lmPath?: string
+      outDir: string
+    }
   ) => Promise<BuildResult>
   showConfigFileDialog: (title: string, defaultPath?: string) => Promise<string | null>
   showOutputDialog: () => Promise<string | null>
@@ -119,6 +129,12 @@ interface BuildResult {
   success: boolean
   buildId?: string
   error?: string
+  configSources?: {
+    aa?: { path: string; isDefault: boolean }
+    ce?: { path: string; isDefault: boolean }
+    tab?: { path: string; isDefault: boolean }
+    lm?: { path: string; isDefault: boolean }
+  }
 }
 
 interface BuildReport {
@@ -146,6 +162,12 @@ interface BuildReport {
     tab: boolean
     lm: boolean
   }
+  configSources?: {
+    aa?: { path: string; isDefault: boolean }
+    ce?: { path: string; isDefault: boolean }
+    tab?: { path: string; isDefault: boolean }
+    lm?: { path: string; isDefault: boolean }
+  }
   warnings: string[]
   errors: string[]
 }
@@ -162,8 +184,20 @@ contextBridge.exposeInMainWorld('electronAPI', {
   showImportDialog: () => ipcRenderer.invoke('show-import-dialog'),
   updateOnboarding: (serverId: string, onboarding: OnboardingConfig) =>
     ipcRenderer.invoke('update-onboarding', serverId, onboarding),
-  buildConfigs: (serverId: string, inputs: { cePath: string; aaPath: string; tabPath: string; lmPath: string; outDir: string }) =>
-    ipcRenderer.invoke('build-configs', serverId, inputs),
+  buildConfigs: (
+    serverId: string,
+    inputs: {
+      generateAA?: boolean
+      generateCE?: boolean
+      generateTAB?: boolean
+      generateLM?: boolean
+      aaPath?: string
+      cePath?: string
+      tabPath?: string
+      lmPath?: string
+      outDir: string
+    }
+  ) => ipcRenderer.invoke('build-configs', serverId, inputs),
   showConfigFileDialog: (title: string, defaultPath?: string) =>
     ipcRenderer.invoke('show-config-file-dialog', title, defaultPath),
   showOutputDialog: () => ipcRenderer.invoke('show-output-dialog'),

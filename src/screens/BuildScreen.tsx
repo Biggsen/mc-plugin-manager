@@ -6,6 +6,10 @@ interface BuildScreenProps {
 }
 
 export function BuildScreen({ server }: BuildScreenProps) {
+  const [generateAA, setGenerateAA] = useState(false)
+  const [generateCE, setGenerateCE] = useState(false)
+  const [generateTAB, setGenerateTAB] = useState(false)
+  const [generateLM, setGenerateLM] = useState(false)
   const [aaPath, setAaPath] = useState('')
   const [cePath, setCePath] = useState('')
   const [tabPath, setTabPath] = useState('')
@@ -15,6 +19,8 @@ export function BuildScreen({ server }: BuildScreenProps) {
   const [buildResult, setBuildResult] = useState<BuildResult | null>(null)
   const [buildReport, setBuildReport] = useState<BuildReport | null>(null)
   const [pastBuilds, setPastBuilds] = useState<string[]>([])
+  const [validationError, setValidationError] = useState<string | null>(null)
+  const [showOverrides, setShowOverrides] = useState(false)
 
   async function handleSelectAAFile() {
     const path = await window.electronAPI.showConfigFileDialog(
@@ -64,19 +70,16 @@ export function BuildScreen({ server }: BuildScreenProps) {
   }
 
   async function handleBuild() {
-    if (!aaPath && !cePath && !tabPath && !lmPath) {
-      setBuildResult({
-        success: false,
-        error: 'Please select at least one config file (AA, CE, TAB, or LM)',
-      })
+    // Validate on submit
+    setValidationError(null)
+    
+    if (!generateAA && !generateCE && !generateTAB && !generateLM) {
+      setValidationError('Please select at least one plugin to generate')
       return
     }
 
-    if (!outDir) {
-      setBuildResult({
-        success: false,
-        error: 'Please select output directory',
-      })
+    if (!outDir || outDir.trim().length === 0) {
+      setValidationError('Please select an output directory')
       return
     }
 
@@ -85,10 +88,14 @@ export function BuildScreen({ server }: BuildScreenProps) {
 
     try {
       const result = await window.electronAPI.buildConfigs(server.id, {
-        aaPath,
-        cePath,
-        tabPath,
-        lmPath,
+        generateAA,
+        generateCE,
+        generateTAB,
+        generateLM,
+        ...(generateAA && aaPath ? { aaPath } : {}),
+        ...(generateCE && cePath ? { cePath } : {}),
+        ...(generateTAB && tabPath ? { tabPath } : {}),
+        ...(generateLM && lmPath ? { lmPath } : {}),
         outDir,
       })
 
@@ -162,174 +169,256 @@ export function BuildScreen({ server }: BuildScreenProps) {
         </div>
       </div>
 
-      {/* File Selection */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', marginBottom: '2rem' }}>
-        {/* AA Config */}
-        <div>
-          <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
-            AdvancedAchievements config.yml
-          </label>
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
+      {/* Plugin Selection Checkboxes */}
+      <div style={{ marginBottom: '2rem' }}>
+        <label style={{ display: 'block', marginBottom: '0.75rem', fontWeight: 'bold' }}>
+          Select Plugins to Generate:
+        </label>
+        <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
             <input
-              type="text"
-              value={aaPath}
-              onChange={(e) => setAaPath(e.target.value)}
-              placeholder="Select AdvancedAchievements config file..."
-              readOnly
-              style={{
-                flex: 1,
-                padding: '0.5rem',
-                fontSize: '1rem',
-                border: '1px solid #ddd',
-                borderRadius: '4px',
-                backgroundColor: '#f9f9f9',
-              }}
+              type="checkbox"
+              checked={generateAA}
+              onChange={(e) => setGenerateAA(e.target.checked)}
+              style={{ width: '1.25rem', height: '1.25rem', cursor: 'pointer' }}
             />
-            <button
-              onClick={handleSelectAAFile}
-              style={{
-                padding: '0.5rem 1rem',
-                fontSize: '1rem',
-                backgroundColor: '#6c757d',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-              }}
-            >
-              Browse...
-            </button>
-          </div>
-          <div style={{ fontSize: '0.875rem', color: '#666', marginTop: '0.25rem' }}>
-            Select the existing AdvancedAchievements config.yml file
-          </div>
+            <span>AdvancedAchievements</span>
+          </label>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+            <input
+              type="checkbox"
+              checked={generateCE}
+              onChange={(e) => setGenerateCE(e.target.checked)}
+              style={{ width: '1.25rem', height: '1.25rem', cursor: 'pointer' }}
+            />
+            <span>ConditionalEvents</span>
+          </label>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+            <input
+              type="checkbox"
+              checked={generateTAB}
+              onChange={(e) => setGenerateTAB(e.target.checked)}
+              style={{ width: '1.25rem', height: '1.25rem', cursor: 'pointer' }}
+            />
+            <span>TAB</span>
+          </label>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+            <input
+              type="checkbox"
+              checked={generateLM}
+              onChange={(e) => setGenerateLM(e.target.checked)}
+              style={{ width: '1.25rem', height: '1.25rem', cursor: 'pointer' }}
+            />
+            <span>LevelledMobs</span>
+          </label>
         </div>
+        <div style={{ fontSize: '0.875rem', color: '#666', marginTop: '0.5rem' }}>
+          Checked plugins will be generated. Leave paths empty to use bundled defaults, or provide custom config files.
+        </div>
+      </div>
+
+      {/* Path Overrides - Collapsible */}
+      {(generateAA || generateCE || generateTAB || generateLM) && (
+        <div style={{ marginBottom: '2rem' }}>
+          <button
+            onClick={() => setShowOverrides(!showOverrides)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              padding: '0.5rem 0',
+              backgroundColor: 'transparent',
+              border: 'none',
+              color: '#007acc',
+              cursor: 'pointer',
+              fontSize: '0.875rem',
+              textDecoration: 'underline',
+            }}
+          >
+            <span>{showOverrides ? '▼' : '▶'}</span>
+            <span>Custom config file overrides (optional)</span>
+          </button>
+          
+          {showOverrides && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', marginTop: '1rem' }}>
+        {/* AA Config */}
+        {generateAA && (
+          <div>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
+              AdvancedAchievements config.yml (optional override)
+            </label>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <input
+                type="text"
+                value={aaPath}
+                onChange={(e) => setAaPath(e.target.value)}
+                placeholder="Leave empty to use bundled default, or select custom file..."
+                readOnly
+                style={{
+                  flex: 1,
+                  padding: '0.5rem',
+                  fontSize: '1rem',
+                  border: '1px solid #ddd',
+                  borderRadius: '4px',
+                  backgroundColor: '#f9f9f9',
+                }}
+              />
+              <button
+                onClick={handleSelectAAFile}
+                style={{
+                  padding: '0.5rem 1rem',
+                  fontSize: '1rem',
+                  backgroundColor: '#6c757d',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                }}
+              >
+                Browse...
+              </button>
+            </div>
+            <div style={{ fontSize: '0.875rem', color: '#666', marginTop: '0.25rem' }}>
+              {aaPath ? 'Using custom file' : 'Will use bundled default template'}
+            </div>
+          </div>
+        )}
 
         {/* CE Config */}
-        <div>
-          <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
-            ConditionalEvents config.yml
-          </label>
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <input
-              type="text"
-              value={cePath}
-              onChange={(e) => setCePath(e.target.value)}
-              placeholder="Select ConditionalEvents config file..."
-              readOnly
-              style={{
-                flex: 1,
-                padding: '0.5rem',
-                fontSize: '1rem',
-                border: '1px solid #ddd',
-                borderRadius: '4px',
-                backgroundColor: '#f9f9f9',
-              }}
-            />
-            <button
-              onClick={handleSelectCEFile}
-              style={{
-                padding: '0.5rem 1rem',
-                fontSize: '1rem',
-                backgroundColor: '#6c757d',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-              }}
-            >
-              Browse...
-            </button>
+        {generateCE && (
+          <div>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
+              ConditionalEvents config.yml (optional override)
+            </label>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <input
+                type="text"
+                value={cePath}
+                onChange={(e) => setCePath(e.target.value)}
+                placeholder="Leave empty to use bundled default, or select custom file..."
+                readOnly
+                style={{
+                  flex: 1,
+                  padding: '0.5rem',
+                  fontSize: '1rem',
+                  border: '1px solid #ddd',
+                  borderRadius: '4px',
+                  backgroundColor: '#f9f9f9',
+                }}
+              />
+              <button
+                onClick={handleSelectCEFile}
+                style={{
+                  padding: '0.5rem 1rem',
+                  fontSize: '1rem',
+                  backgroundColor: '#6c757d',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                }}
+              >
+                Browse...
+              </button>
+            </div>
+            <div style={{ fontSize: '0.875rem', color: '#666', marginTop: '0.25rem' }}>
+              {cePath ? 'Using custom file' : 'Will use bundled default template'}
+            </div>
           </div>
-          <div style={{ fontSize: '0.875rem', color: '#666', marginTop: '0.25rem' }}>
-            Select the existing ConditionalEvents config.yml file
-          </div>
-        </div>
+        )}
 
         {/* TAB Config */}
-        <div>
-          <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
-            TAB config.yml
-          </label>
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <input
-              type="text"
-              value={tabPath}
-              onChange={(e) => setTabPath(e.target.value)}
-              placeholder="Select TAB config file..."
-              readOnly
-              style={{
-                flex: 1,
-                padding: '0.5rem',
-                fontSize: '1rem',
-                border: '1px solid #ddd',
-                borderRadius: '4px',
-                backgroundColor: '#f9f9f9',
-              }}
-            />
-            <button
-              onClick={handleSelectTABFile}
-              style={{
-                padding: '0.5rem 1rem',
-                fontSize: '1rem',
-                backgroundColor: '#6c757d',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-              }}
-            >
-              Browse...
-            </button>
+        {generateTAB && (
+          <div>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
+              TAB config.yml (optional override)
+            </label>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <input
+                type="text"
+                value={tabPath}
+                onChange={(e) => setTabPath(e.target.value)}
+                placeholder="Leave empty to use bundled default, or select custom file..."
+                readOnly
+                style={{
+                  flex: 1,
+                  padding: '0.5rem',
+                  fontSize: '1rem',
+                  border: '1px solid #ddd',
+                  borderRadius: '4px',
+                  backgroundColor: '#f9f9f9',
+                }}
+              />
+              <button
+                onClick={handleSelectTABFile}
+                style={{
+                  padding: '0.5rem 1rem',
+                  fontSize: '1rem',
+                  backgroundColor: '#6c757d',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                }}
+              >
+                Browse...
+              </button>
+            </div>
+            <div style={{ fontSize: '0.875rem', color: '#666', marginTop: '0.25rem' }}>
+              {tabPath ? 'Using custom file' : 'Will use bundled default template'}
+            </div>
           </div>
-          <div style={{ fontSize: '0.875rem', color: '#666', marginTop: '0.25rem' }}>
-            Select the existing TAB config.yml file
-          </div>
-        </div>
+        )}
 
         {/* LM Config */}
-        <div>
-          <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
-            LevelledMobs rules.yml
-          </label>
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <input
-              type="text"
-              value={lmPath}
-              onChange={(e) => setLmPath(e.target.value)}
-              placeholder="Select LevelledMobs rules.yml file..."
-              readOnly
-              style={{
-                flex: 1,
-                padding: '0.5rem',
-                fontSize: '1rem',
-                border: '1px solid #ddd',
-                borderRadius: '4px',
-                backgroundColor: '#f9f9f9',
-              }}
-            />
-            <button
-              onClick={handleSelectLMFile}
-              style={{
-                padding: '0.5rem 1rem',
-                fontSize: '1rem',
-                backgroundColor: '#6c757d',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-              }}
-            >
-              Browse...
-            </button>
+        {generateLM && (
+          <div>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
+              LevelledMobs rules.yml (optional override)
+            </label>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <input
+                type="text"
+                value={lmPath}
+                onChange={(e) => setLmPath(e.target.value)}
+                placeholder="Leave empty to use bundled default, or select custom file..."
+                readOnly
+                style={{
+                  flex: 1,
+                  padding: '0.5rem',
+                  fontSize: '1rem',
+                  border: '1px solid #ddd',
+                  borderRadius: '4px',
+                  backgroundColor: '#f9f9f9',
+                }}
+              />
+              <button
+                onClick={handleSelectLMFile}
+                style={{
+                  padding: '0.5rem 1rem',
+                  fontSize: '1rem',
+                  backgroundColor: '#6c757d',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                }}
+              >
+                Browse...
+              </button>
+            </div>
+            <div style={{ fontSize: '0.875rem', color: '#666', marginTop: '0.25rem' }}>
+              {lmPath ? 'Using custom file' : 'Will use bundled default template'}
+            </div>
           </div>
-          <div style={{ fontSize: '0.875rem', color: '#666', marginTop: '0.25rem' }}>
-            Select the existing LevelledMobs rules.yml file
-          </div>
+        )}
+            </div>
+          )}
         </div>
+      )}
 
-        {/* Output Directory */}
-        <div>
+      {/* Output Directory */}
+      <div style={{ marginBottom: '2rem' }}>
           <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
             Output Directory <span style={{ color: '#d9534f' }}>*</span>
           </label>
@@ -367,22 +456,37 @@ export function BuildScreen({ server }: BuildScreenProps) {
           <div style={{ fontSize: '0.875rem', color: '#666', marginTop: '0.25rem' }}>
             Generated files will be written to this directory
           </div>
-        </div>
       </div>
+
+      {/* Validation Error */}
+      {validationError && (
+        <div
+          style={{
+            marginBottom: '1rem',
+            padding: '0.75rem',
+            borderRadius: '4px',
+            backgroundColor: '#f8d7da',
+            border: '1px solid #f5c6cb',
+            color: '#721c24',
+          }}
+        >
+          {validationError}
+        </div>
+      )}
 
       {/* Build Button */}
       <div>
         <button
           onClick={handleBuild}
-          disabled={isBuilding || (!aaPath && !cePath && !tabPath && !lmPath) || !outDir}
+          disabled={isBuilding}
           style={{
             padding: '0.75rem 2rem',
             fontSize: '1rem',
-            backgroundColor: isBuilding || (!aaPath && !cePath && !tabPath && !lmPath) || !outDir ? '#ccc' : '#007acc',
+            backgroundColor: isBuilding ? '#ccc' : '#007acc',
             color: 'white',
             border: 'none',
             borderRadius: '4px',
-            cursor: isBuilding || (!aaPath && !cePath && !tabPath && !lmPath) || !outDir ? 'not-allowed' : 'pointer',
+            cursor: isBuilding ? 'not-allowed' : 'pointer',
             opacity: isBuilding ? 0.6 : 1,
           }}
         >
@@ -509,6 +613,54 @@ export function BuildScreen({ server }: BuildScreenProps) {
               {buildReport.generated.lm && '✓ LevelledMobs'}
             </div>
           </div>
+
+          {buildReport.configSources && (
+            <div style={{ marginBottom: '1rem' }}>
+              <div style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>Config Sources:</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.875rem' }}>
+                {buildReport.configSources.aa && (
+                  <div>
+                    <strong>AdvancedAchievements:</strong>{' '}
+                    {buildReport.configSources.aa.isDefault ? (
+                      <span style={{ color: '#28a745' }}>Bundled default</span>
+                    ) : (
+                      <span style={{ color: '#666' }}>{buildReport.configSources.aa.path}</span>
+                    )}
+                  </div>
+                )}
+                {buildReport.configSources.ce && (
+                  <div>
+                    <strong>ConditionalEvents:</strong>{' '}
+                    {buildReport.configSources.ce.isDefault ? (
+                      <span style={{ color: '#28a745' }}>Bundled default</span>
+                    ) : (
+                      <span style={{ color: '#666' }}>{buildReport.configSources.ce.path}</span>
+                    )}
+                  </div>
+                )}
+                {buildReport.configSources.tab && (
+                  <div>
+                    <strong>TAB:</strong>{' '}
+                    {buildReport.configSources.tab.isDefault ? (
+                      <span style={{ color: '#28a745' }}>Bundled default</span>
+                    ) : (
+                      <span style={{ color: '#666' }}>{buildReport.configSources.tab.path}</span>
+                    )}
+                  </div>
+                )}
+                {buildReport.configSources.lm && (
+                  <div>
+                    <strong>LevelledMobs:</strong>{' '}
+                    {buildReport.configSources.lm.isDefault ? (
+                      <span style={{ color: '#28a745' }}>Bundled default</span>
+                    ) : (
+                      <span style={{ color: '#666' }}>{buildReport.configSources.lm.path}</span>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {buildReport.computedCounts && (
             <div style={{ marginBottom: '1rem' }}>

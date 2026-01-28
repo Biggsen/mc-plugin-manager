@@ -93,6 +93,12 @@ export interface BuildResult {
   success: boolean
   buildId?: string
   error?: string
+  configSources?: {
+    aa?: { path: string; isDefault: boolean }
+    ce?: { path: string; isDefault: boolean }
+    tab?: { path: string; isDefault: boolean }
+    lm?: { path: string; isDefault: boolean }
+  }
 }
 
 export interface BuildReport {
@@ -119,6 +125,12 @@ export interface BuildReport {
     ce: boolean
     tab: boolean
     lm: boolean
+  }
+  configSources?: {
+    aa?: { path: string; isDefault: boolean }
+    ce?: { path: string; isDefault: boolean }
+    tab?: { path: string; isDefault: boolean }
+    lm?: { path: string; isDefault: boolean }
   }
   warnings: string[]
   errors: string[]
