@@ -25,14 +25,14 @@ function createWindow() {
   const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged
   
   if (isDev) {
-    mainWindow.loadURL('http://localhost:5173')
+    mainWindow.loadURL('http://localhost:5176')
     mainWindow.webContents.openDevTools()
     
     // If dev server isn't ready, wait a bit and try again
     mainWindow.webContents.on('did-fail-load', () => {
       console.log('Failed to load from dev server, will retry...')
       setTimeout(() => {
-        mainWindow?.loadURL('http://localhost:5173')
+        mainWindow?.loadURL('http://localhost:5176')
       }, 1000)
     })
   } else {
