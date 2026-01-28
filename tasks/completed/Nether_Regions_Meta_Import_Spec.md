@@ -1,6 +1,6 @@
 # Nether regions-meta Import — Specification
 
-**Status: 📋 PENDING**
+**Status: ✅ COMPLETED** (2026-01-28)
 
 ## Purpose
 
@@ -92,21 +92,21 @@ Extend the existing regions-meta import functionality to support **separate, ind
 
 **File**: `electron/regionParser.ts`
 
-- [ ] Make `world` parameter **required** (remove `?` from type): `importRegionsMeta(filePath: string, world: 'overworld' | 'nether' | 'end')`
-- [ ] Change validation from warning to **error** if `mappedWorld !== world`:
+- [x] Make `world` parameter **required** (remove `?` from type): `importRegionsMeta(filePath: string, world: 'overworld' | 'nether' | 'end')`
+- [x] Change validation from warning to **error** if `mappedWorld !== world`:
   ```typescript
   if (mappedWorld !== world) {
     throw new Error(`World mismatch: file contains world "${parsed.world}" (mapped to "${mappedWorld}") but import requested "${world}"`)
   }
   ```
-- [ ] Remove the warning log that currently allows mismatches.
+- [x] Remove the warning log that currently allows mismatches.
 
 ### Phase 2: IPC Handler Updates
 
 **File**: `electron/ipc.ts`
 
-- [ ] Ensure `world` parameter is **required** (not optional) in IPC handler signature.
-- [ ] Update merge logic to **only set `spawnCenter` and `onboarding` for overworld imports**:
+- [x] Ensure `world` parameter is **required** (not optional) in IPC handler signature.
+- [x] Update merge logic to **only set `spawnCenter` and `onboarding` for overworld imports**:
   ```typescript
   // Merge spawnCenter (only from overworld)
   if (result.spawnCenter && result.world === 'overworld') {
@@ -127,45 +127,45 @@ Extend the existing regions-meta import functionality to support **separate, ind
     }
   }
   ```
-- [ ] Verify that `levelledMobs` merging works for both overworld and nether (current behavior is fine).
+- [x] Verify that `levelledMobs` merging works for both overworld and nether (current behavior is fine).
 
 ### Phase 3: ImportScreen UI
 
 **File**: `src/screens/ImportScreen.tsx`
 
-- [ ] Replace single "Regions Meta" section with **two separate sections**:
+- [x] Replace single "Regions Meta" section with **two separate sections**:
   - "Overworld Regions Meta" section
   - "Nether Regions Meta" section
-- [ ] Each section should have:
+- [x] Each section should have:
   - Title (e.g., "Overworld Regions Meta" / "Nether Regions Meta")
   - Import button (e.g., "Import overworld regions-meta" / "Import nether regions-meta")
   - Status display showing:
     - Imported filename from `server.sources.overworld?.originalFilename` or `server.sources.nether?.originalFilename`
     - Import timestamp
     - "Re-import" button text if already imported
-- [ ] Create separate handler functions:
+- [x] Create separate handler functions:
   - `handleImportOverworldRegionsMeta()` → calls `importRegionsMeta(server.id, 'overworld', filePath)`
   - `handleImportNetherRegionsMeta()` → calls `importRegionsMeta(server.id, 'nether', filePath)`
-- [ ] Update import result display to show which world was imported (if needed for clarity).
+- [x] Update import result display to show which world was imported (if needed for clarity).
 
 ### Phase 4: Preload Types
 
 **File**: `electron/preload.ts`
 
-- [ ] Verify `importRegionsMeta` signature already requires `world` parameter (should be: `world: 'overworld' | 'nether' | 'end'`).
-- [ ] No changes needed if signature is already correct.
+- [x] Verify `importRegionsMeta` signature already requires `world` parameter (should be: `world: 'overworld' | 'nether' | 'end'`).
+- [x] No changes needed if signature is already correct.
 
 ### Phase 5: Testing
 
-- [ ] Test importing overworld regions-meta file (should work as before).
-- [ ] Test importing nether regions-meta file (should import nether regions only).
-- [ ] Test importing nether file with `world: overworld` parameter (should error).
-- [ ] Test importing overworld file with `world: nether` parameter (should error).
-- [ ] Test that nether import doesn't affect overworld regions.
-- [ ] Test that overworld import doesn't affect nether regions.
-- [ ] Test that nether import doesn't set/update `spawnCenter` or `onboarding`.
-- [ ] Test that overworld import still sets/updates `spawnCenter` and `onboarding`.
-- [ ] Test that `levelledMobs` from nether imports merges correctly with overworld data.
+- [x] Test importing overworld regions-meta file (should work as before).
+- [x] Test importing nether regions-meta file (should import nether regions only).
+- [x] Test importing nether file with `world: overworld` parameter (should error).
+- [x] Test importing overworld file with `world: nether` parameter (should error).
+- [x] Test that nether import doesn't affect overworld regions.
+- [x] Test that overworld import doesn't affect nether regions.
+- [x] Test that nether import doesn't set/update `spawnCenter` or `onboarding`.
+- [x] Test that overworld import still sets/updates `spawnCenter` and `onboarding`.
+- [x] Test that `levelledMobs` from nether imports merges correctly with overworld data.
 
 ---
 
@@ -210,15 +210,15 @@ No changes to the data model. Existing structure already supports:
 
 ## Acceptance Criteria
 
-- [ ] User can import overworld regions-meta file via "Import Overworld regions-meta" button.
-- [ ] User can import nether regions-meta file via "Import Nether regions-meta" button.
-- [ ] Importing overworld doesn't affect existing nether regions.
-- [ ] Importing nether doesn't affect existing overworld regions.
-- [ ] Importing nether file with wrong world parameter shows clear error.
-- [ ] Nether imports don't set/update `spawnCenter` or `onboarding`.
-- [ ] Overworld imports still set/update `spawnCenter` and `onboarding`.
-- [ ] UI shows separate import status for overworld and nether.
-- [ ] `levelledMobs` data merges correctly from both world imports.
+- [x] User can import overworld regions-meta file via "Import Overworld regions-meta" button.
+- [x] User can import nether regions-meta file via "Import Nether regions-meta" button.
+- [x] Importing overworld doesn't affect existing nether regions.
+- [x] Importing nether doesn't affect existing overworld regions.
+- [x] Importing nether file with wrong world parameter shows clear error.
+- [x] Nether imports don't set/update `spawnCenter` or `onboarding`.
+- [x] Overworld imports still set/update `spawnCenter` and `onboarding`.
+- [x] UI shows separate import status for overworld and nether.
+- [x] `levelledMobs` data merges correctly from both world imports.
 
 ---
 

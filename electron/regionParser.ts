@@ -306,7 +306,7 @@ function validateRecipeId(
  */
 export function importRegionsMeta(
   filePath: string,
-  world?: 'overworld' | 'nether' | 'end'
+  world: 'overworld' | 'nether' | 'end'
 ): {
   regions: RegionRecord[]
   world: 'overworld' | 'nether' | 'end'
@@ -339,8 +339,8 @@ export function importRegionsMeta(
 
   // Map root world
   const mappedWorld = mapWorld(parsed.world)
-  if (world && world !== mappedWorld) {
-    console.warn(`World parameter (${world}) does not match file world (${parsed.world} -> ${mappedWorld}), using file world`)
+  if (world !== mappedWorld) {
+    throw new Error(`World mismatch: file contains world "${parsed.world}" (mapped to "${mappedWorld}") but import requested "${world}"`)
   }
 
   // Validate regions

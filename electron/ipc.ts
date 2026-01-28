@@ -208,14 +208,14 @@ ipcMain.handle(
         profile.sources.end = result.source
       }
       
-      // Merge spawnCenter (last import wins)
-      if (result.spawnCenter) {
+      // Merge spawnCenter (only from overworld imports)
+      if (result.spawnCenter && result.world === 'overworld') {
         profile.spawnCenter = result.spawnCenter
         result.source.spawnCenter = result.spawnCenter
       }
       
-      // Merge onboarding
-      if (result.onboarding) {
+      // Merge onboarding (only from overworld imports)
+      if (result.onboarding && result.world === 'overworld') {
         profile.onboarding = {
           ...profile.onboarding,
           ...result.onboarding,
