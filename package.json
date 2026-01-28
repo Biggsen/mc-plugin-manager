@@ -10,7 +10,7 @@
     "build:electron": "tsc -p tsconfig.electron.json",
     "preview": "vite preview",
     "electron:dev": "npm run build:electron && electron .",
-    "electron:build": "npm run build:electron && vite build && electron-packager . --platform=win32 --arch=x64 --icon=build/icon.ico --out=release --overwrite"
+    "electron:build": "npm run build:electron && vite build && node scripts/package-electron.js"
   },
   "keywords": [
     "minecraft",

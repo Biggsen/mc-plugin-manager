@@ -39,14 +39,19 @@ function resolveConfigPath(type: 'aa' | 'ce' | 'tab' | 'lm', userProvidedPath?: 
   
   // Otherwise, use bundled default
   // In dev mode, __dirname points to dist-electron (where this file is compiled to)
-  // In packaged mode, app.getAppPath() returns resources/app (or similar)
+  // In packaged mode, app.getAppPath() returns resources/app, but templates are in dist-electron/assets/templates
   const isPackaged = electron.app.isPackaged
   const basePath = isPackaged ? electron.app.getAppPath() : __dirname
   const filename = type === 'aa' ? 'advancedachievements-config.yml'
     : type === 'ce' ? 'conditionalevents-config.yml'
     : type === 'tab' ? 'tab-config.yml'
     : 'levelledmobs-rules.yml'
-  const defaultPath = path.join(basePath, 'assets', 'templates', filename)
+  // In packaged mode, templates are in dist-electron/assets/templates relative to app.getAppPath()
+  // In dev mode, __dirname is already dist-electron, so we just need assets/templates
+  const templatesPath = isPackaged 
+    ? path.join(basePath, 'dist-electron', 'assets', 'templates', filename)
+    : path.join(basePath, 'assets', 'templates', filename)
+  const defaultPath = templatesPath
   
   if (!existsSync(defaultPath)) {
     throw new Error(`Bundled ${type.toUpperCase()} default config not found at: ${defaultPath}. This may indicate a packaging issue. Please ensure templates were copied during build.`)
