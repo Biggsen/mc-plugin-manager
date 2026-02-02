@@ -102,15 +102,17 @@ function generateOverworldScoreboard(serverName: string, counts: RegionCounts): 
     lines: [
       '%animation:MyAnimation1%',
       '&bRegions',
-      '* &eCurrent&7:||%condition:region-name%',
-      `* &eDiscovered&7:||%aach_custom_regions_discovered%/${counts.overworldRegions}`,
+      '&eCurrent&7:||%condition:region-name%',
+      `&eDiscovered&7:||%aach_custom_regions_discovered%/${counts.overworldRegions}`,
       '',
       '&bVillages',
-      '* &eCurrent&7:||%condition:village-name%',
-      `* &eDiscovered&7:||%aach_custom_villages_discovered%/${counts.villages}`,
+      '&eCurrent&7:||%condition:village-name%',
+      `&eDiscovered&7:||%aach_custom_villages_discovered%/${counts.villages}`,
       '',
       '&bRegion Hearts',
-      `* &eDiscovered&7:||%aach_custom_hearts_discovered%/${counts.overworldHearts}`,
+      `&eDiscovered&7:||%aach_custom_hearts_discovered%/${counts.overworldHearts}`,
+      '%animation:MyAnimation1%',
+      '&2🧭 %player_direction%||&7%player_x% %player_y% %player_z%',
     ],
   }
 }
@@ -125,11 +127,13 @@ function generateNetherScoreboard(serverName: string, counts: RegionCounts): any
     lines: [
       '%animation:MyAnimation1%',
       '&bNether Regions',
-      '* &eCurrent&7:||%condition:region-name%',
-      `* &eDiscovered&7:||%aach_custom_nether_regions_discovered%/${counts.netherRegions}`,
+      '&eCurrent&7:||%condition:region-name%',
+      `&eDiscovered&7:||%aach_custom_nether_regions_discovered%/${counts.netherRegions}`,
       '',
       '&bNether Region Hearts',
-      `* &eDiscovered&7:||%aach_custom_nether_hearts_discovered%/${counts.netherHearts}`,
+      `&eDiscovered&7:||%aach_custom_nether_hearts_discovered%/${counts.netherHearts}`,
+      '%animation:MyAnimation1%',
+      '&2🧭 %player_direction%||&7%player_x% %player_y% %player_z%',
     ],
   }
 }
@@ -140,12 +144,12 @@ function generateNetherScoreboard(serverName: string, counts: RegionCounts): any
 function generateTopExplorersConditions(totalCount: number): Record<string, any> {
   const conditions: Record<string, any> = {
     'top-explorers-title': {
-      conditions: ["%ajlb_lb_aach_custom_total_discovered_1_alltime_name%!='"],
+      conditions: ["%ajlb_lb_aach_custom_total_discovered_1_alltime_name%!="],
       yes: 'TOP EXPLORERS',
       no: '',
     },
     'top-explorer-1': {
-      conditions: ["%ajlb_lb_aach_custom_total_discovered_1_alltime_name%!='"],
+      conditions: ["%ajlb_lb_aach_custom_total_discovered_1_alltime_name%!="],
       yes: `1. %ajlb_lb_aach_custom_total_discovered_1_alltime_name% - %math_0_round({ajlb_lb_aach_custom_total_discovered_1_alltime_value}/${totalCount}*100,0)%%`,
       no: '',
     },
