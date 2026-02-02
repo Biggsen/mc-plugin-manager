@@ -1,0 +1,92 @@
+# Exploration Server Commands
+
+server_help:
+  command: /help
+  type: TEXT
+  permission-required: false
+  register: true
+  text:
+  - "§6— Quick Help —"
+  - "§7How to play guides: §f/guides"
+  - "§7Crates Commands: §f/keys, /cc"
+  - "§7Rules: §fBe respectful; no griefing; no cheats."
+
+server_guides:
+  command: /guides
+  type: RAW_TEXT
+  permission-required: false
+  register: true
+  text:
+  - ''
+  - "§6— Server Guides §6—"
+  - '&e> Intro to {SERVER_NAME} Exploration; &d/guideintro;/guideintro'
+  - '&e> Regions & difficulty; &d/guideregions;/guideregions'
+  - '&e> Death & keep-inventory; &d/guidedeath;/guidedeath'
+  - '&e> Navigation & maps; &d/guidemaps;/guidemaps'
+  - '&e> Crates & keys; &d/guidecrates;/guidecrates'
+  - '&e> Protection; &d/guideprotection;/guideprotection'
+
+server_guide_intro:
+  command: /guideintro
+  type: TEXT
+  permission-required: false
+  register: true
+  text:
+  - ''
+  - "§6— Welcome to &l{SERVER_NAME} Exploration&r §6—"
+  - "§7This server invites you to experience Minecraft differently:"
+  - "§f- be an explorer, not a grinder"
+  - "§f- go far and wide, and take in the beauty of the world"
+  - "§f- travel light and smart, with purpose"
+
+server_guide_regions:
+  command: /guideregions
+  type: TEXT
+  permission-required: false
+  register: true
+  text:
+  - ''
+  - "§6— Regions & difficulty —"
+  - "§fEach region has its own mob strength. When you enter, you'll see a short message about how tough it is. Discovering a new region gets you a Region Key. Use those to open Region Crates (&e/cc&f)"
+
+server_guide_death:
+  command: /guidedeath
+  type: TEXT
+  permission-required: false
+  register: true
+  text:
+  - ''
+  - "§6— Death & keep-inventory —"
+  - "§fKeep Inventory is on. If you die, you keep your gear. It's there to make long expeditions less punishing — pick yourself up and keep moving."
+
+server_guide_maps:
+  command: /guidemaps
+  type: TEXT
+  permission-required: false
+  register: true
+  text:
+  - ''
+  - "§6— Navigation & maps —"
+  - "§fMaps are your friend. Use a Cartography Table to max-zoom a map (add paper 4 times). You can also copy maps to give to friends or keep one for display and one for travelling. Use named banners to set markers on maps."
+  - "§fCarry a boat for rivers and oceans, and beds for setting day."
+
+server_guide_crates:
+  command: /guidecrates
+  type: TEXT
+  permission-required: false
+  register: true
+  text:
+  - ''
+  - "§6— Crates & keys —"
+  - "§fDiscoveries of regions, villages and region hearts award keys. These are virtual keys, so they won't appear in your inventory. You can check them with &e/keys&f. Use your keys to open crates (&e/cc&f) and get rewards."
+
+server_guide_protection:
+  command: /guideprotection
+  type: TEXT
+  permission-required: false
+  register: true
+  text:
+  - ''
+  - "§6— Protection —"
+  - "§fWhen you place chests, they are private and protected by default. You can unlock and lock chests (and other items) with &e/bolt unlock&f and &e/bolt lock&f. You can also give friends access with &e/bolt trust add <player>&f."
+  

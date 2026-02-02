@@ -19,6 +19,7 @@ const { generateAACommands, generateAACustom, mergeAAConfig } = require('./aaGen
 const { generateOwnedCEEvents, mergeCEConfig } = require('./ceGenerator')
 const { generateOwnedTABSections, mergeTABConfig, computeRegionCounts } = require('./tabGenerator')
 const { generateOwnedLMRules, mergeLMConfig } = require('./lmGenerator')
+const { generateMCConfig } = require('./mcGenerator')
 const { validateAADiff, validateCEDiff, validateTABDiff, validateLMDiff } = require('./diffValidator')
 
 type ServerProfile = any
@@ -29,7 +30,7 @@ type BuildReport = any
 type OnboardingConfig = any
 
 // Resolve config path: use user-provided path if available, otherwise use bundled default
-function resolveConfigPath(type: 'aa' | 'ce' | 'tab' | 'lm', userProvidedPath?: string): string {
+function resolveConfigPath(type: 'aa' | 'ce' | 'tab' | 'lm' | 'mc', userProvidedPath?: string): string {
   // If user provided path, validate and use it
   if (userProvidedPath && userProvidedPath.trim().length > 0) {
     if (!existsSync(userProvidedPath)) {
@@ -46,7 +47,8 @@ function resolveConfigPath(type: 'aa' | 'ce' | 'tab' | 'lm', userProvidedPath?: 
   const filename = type === 'aa' ? 'advancedachievements-config.yml'
     : type === 'ce' ? 'conditionalevents-config.yml'
     : type === 'tab' ? 'tab-config.yml'
-    : 'levelledmobs-rules.yml'
+    : type === 'lm' ? 'levelledmobs-rules.yml'
+    : 'mycommand-commands.yml'
   // In packaged mode, templates are in dist-electron/assets/templates relative to app.getAppPath()
   // In dev mode, __dirname is already dist-electron, so we just need assets/templates
   const templatesPath = isPackaged 
@@ -323,10 +325,12 @@ ipcMain.handle(
       generateCE?: boolean
       generateTAB?: boolean
       generateLM?: boolean
+      generateMC?: boolean
       aaPath?: string
       cePath?: string
       tabPath?: string
       lmPath?: string
+      mcPath?: string
       outDir: string
     }
   ): Promise<BuildResult> => {
@@ -340,10 +344,10 @@ ipcMain.handle(
       }
       
       // Validate at least one plugin is checked
-      if (!inputs.generateAA && !inputs.generateCE && !inputs.generateTAB && !inputs.generateLM) {
+      if (!inputs.generateAA && !inputs.generateCE && !inputs.generateTAB && !inputs.generateLM && !inputs.generateMC) {
         return {
           success: false,
-          error: 'At least one plugin (AA, CE, TAB, or LM) must be selected',
+          error: 'At least one plugin (AA, CE, TAB, LM, or MC) must be selected',
         }
       }
       
@@ -381,6 +385,7 @@ ipcMain.handle(
       let ceGenerated = false
       let tabGenerated = false
       let lmGenerated = false
+      let mcGenerated = false
       
       // Track config sources
       const configSources: any = {}
@@ -586,6 +591,42 @@ ipcMain.handle(
           }
         }
       }
+
+      // Generate MC if checked
+      if (inputs.generateMC) {
+        try {
+          const mcConfigPath = resolveConfigPath('mc', inputs.mcPath)
+          const usingDefaultMC = !inputs.mcPath || inputs.mcPath.trim().length === 0
+
+          // Generate MC config with server name substitution
+          const generatedMCContent = generateMCConfig(mcConfigPath, profile.name)
+          
+          // Generate filename with server name prefix
+          const serverNameSanitized = profile.name.toLowerCase().replace(/[^a-z0-9]/g, '-')
+          const mcFilename = `${serverNameSanitized}-mycommand-commands.yml`
+          
+          // Write to output directory
+          const mcOutputPath = path.join(inputs.outDir, mcFilename)
+          writeFileSync(mcOutputPath, generatedMCContent, 'utf-8')
+          
+          // Copy to build directory
+          const buildDir = ensureBuildDirectory(serverId, buildId)
+          const mcBuildPath = path.join(buildDir, mcFilename)
+          writeFileSync(mcBuildPath, generatedMCContent, 'utf-8')
+          
+          mcGenerated = true
+          configSources.mc = {
+            path: mcConfigPath,
+            isDefault: usingDefaultMC,
+          }
+        } catch (error: any) {
+          return {
+            success: false,
+            error: error.message || 'MC generation failed',
+            buildId,
+          }
+        }
+      }
       
       // Create build report
       const report = {
@@ -598,6 +639,7 @@ ipcMain.handle(
           ce: ceGenerated,
           tab: tabGenerated,
           lm: lmGenerated,
+          mc: mcGenerated,
         },
         configSources,
         warnings,

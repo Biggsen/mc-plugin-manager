@@ -11,7 +11,8 @@ const templates = [
   'advancedachievements-config.yml',
   'conditionalevents-config.yml',
   'tab-config.yml',
-  'levelledmobs-rules.yml'
+  'levelledmobs-rules.yml',
+  'mycommand-commands.yml'
 ]
 
 // Strip version headers from content
