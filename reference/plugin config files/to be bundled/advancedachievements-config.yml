@@ -1986,7 +1986,21 @@ Custom:
         Command:
           Execute:
             - ce call get_book_depth_strider_3 player:PLAYER
-    59:
+    60:
+      Message: You discovered 60 villages!
+      Name: villages_discovered_60
+      DisplayName: Village Vanguard
+      Type: rare
+      Reward:
+        Experience: 100
+        Item:
+          - iron_ingot 32
+          - diamond 8
+          - emerald 32
+        Command:
+          Execute:
+            - ce call get_book_efficiency_5 player:PLAYER
+    67:
       Message: You discovered all the villages!
       Name: villages_discovered_59
       DisplayName: Village Legend

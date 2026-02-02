@@ -3,11 +3,26 @@ const { readFileSync } = require('fs')
 
 /**
  * Remove owned sections from AA config for comparison
+ * Owned sections:
+ * - Commands (entire section)
+ * - Custom.villages_discovered
+ * - Custom.regions_discovered
+ * - Custom.hearts_discovered
  */
 function removeOwnedAASections(config: any): any {
   const cleaned = { ...config }
+  
   // Remove Commands section (owned)
   delete cleaned.Commands
+  
+  // Remove owned Custom categories
+  if (cleaned.Custom) {
+    cleaned.Custom = { ...cleaned.Custom }
+    delete cleaned.Custom.villages_discovered
+    delete cleaned.Custom.regions_discovered
+    delete cleaned.Custom.hearts_discovered
+  }
+  
   return cleaned
 }
 

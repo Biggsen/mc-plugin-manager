@@ -1,5 +1,6 @@
 const { ipcMain, dialog } = require('electron')
 const electron = require('electron')
+const yaml = require('yaml')
 const {
   loadServerProfile,
   saveServerProfile,
@@ -14,7 +15,7 @@ const { randomUUID } = require('crypto')
 const { existsSync, writeFileSync, copyFileSync } = require('fs')
 const path = require('path')
 const { importRegions, importRegionsMeta } = require('./regionParser')
-const { generateAACommands, mergeAAConfig } = require('./aaGenerator')
+const { generateAACommands, generateAACustom, mergeAAConfig } = require('./aaGenerator')
 const { generateOwnedCEEvents, mergeCEConfig } = require('./ceGenerator')
 const { generateOwnedTABSections, mergeTABConfig, computeRegionCounts } = require('./tabGenerator')
 const { generateOwnedLMRules, mergeLMConfig } = require('./lmGenerator')
@@ -396,8 +397,14 @@ ipcMain.handle(
           // Generate AA Commands
           const newCommands = generateAACommands(profile.regions)
           
-          // Merge into AA config
-          const mergedAAContent = mergeAAConfig(aaConfigPath, newCommands)
+          // Generate AA Custom sections (requires reading template for reward definitions)
+          const fs = require('fs')
+          const templateContent = fs.readFileSync(aaConfigPath, 'utf-8')
+          const templateConfig = yaml.parse(templateContent)
+          const newCustom = generateAACustom(profile.regions, templateConfig)
+          
+          // Merge into AA config (Commands and Custom)
+          const mergedAAContent = mergeAAConfig(aaConfigPath, newCommands, newCustom)
           
           // Validate diff (diff gate)
           const aaValidation = validateAADiff(aaConfigPath, mergedAAContent)
