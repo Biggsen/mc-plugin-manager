@@ -1,23 +1,33 @@
 import { useState, useEffect } from 'react'
 import type { ServerProfile, BuildResult, BuildReport } from '../types'
 
+const BUILD_PLUGINS = [
+  { id: 'aa', label: 'AdvancedAchievements', overrideLabel: 'AdvancedAchievements config.yml (optional override)', dialogTitle: 'Select AdvancedAchievements config.yml', generateKey: 'generateAA', pathKey: 'aaPath' },
+  { id: 'cw', label: 'CommandWhitelist', overrideLabel: 'CommandWhitelist config.yml (optional override)', dialogTitle: 'Select CommandWhitelist config.yml', generateKey: 'generateCW', pathKey: 'cwPath' },
+  { id: 'ce', label: 'ConditionalEvents', overrideLabel: 'ConditionalEvents config.yml (optional override)', dialogTitle: 'Select ConditionalEvents config.yml', generateKey: 'generateCE', pathKey: 'cePath' },
+  { id: 'lm', label: 'LevelledMobs', overrideLabel: 'LevelledMobs rules.yml (optional override)', dialogTitle: 'Select LevelledMobs rules.yml', generateKey: 'generateLM', pathKey: 'lmPath' },
+  { id: 'mc', label: 'MyCommand', overrideLabel: 'MyCommand commands.yml (optional override)', dialogTitle: 'Select MyCommand commands.yml', generateKey: 'generateMC', pathKey: 'mcPath' },
+  { id: 'tab', label: 'TAB', overrideLabel: 'TAB config.yml (optional override)', dialogTitle: 'Select TAB config.yml', generateKey: 'generateTAB', pathKey: 'tabPath' },
+] as const
+
+type BuildPluginId = (typeof BUILD_PLUGINS)[number]['id']
+
+function getInitialPluginOptions(): Record<BuildPluginId, { generate: boolean; path: string }> {
+  return BUILD_PLUGINS.reduce(
+    (acc, p) => {
+      acc[p.id] = { generate: false, path: '' }
+      return acc
+    },
+    {} as Record<BuildPluginId, { generate: boolean; path: string }>
+  )
+}
+
 interface BuildScreenProps {
   server: ServerProfile
 }
 
 export function BuildScreen({ server }: BuildScreenProps) {
-  const [generateAA, setGenerateAA] = useState(false)
-  const [generateCE, setGenerateCE] = useState(false)
-  const [generateTAB, setGenerateTAB] = useState(false)
-  const [generateLM, setGenerateLM] = useState(false)
-  const [generateMC, setGenerateMC] = useState(false)
-  const [generateCW, setGenerateCW] = useState(false)
-  const [aaPath, setAaPath] = useState('')
-  const [cePath, setCePath] = useState('')
-  const [tabPath, setTabPath] = useState('')
-  const [lmPath, setLmPath] = useState('')
-  const [mcPath, setMcPath] = useState('')
-  const [cwPath, setCwPath] = useState('')
+  const [pluginOptions, setPluginOptions] = useState(getInitialPluginOptions)
   const [outDir, setOutDir] = useState(server.build.outputDirectory || '')
   const [isBuilding, setIsBuilding] = useState(false)
   const [buildResult, setBuildResult] = useState<BuildResult | null>(null)
@@ -26,63 +36,18 @@ export function BuildScreen({ server }: BuildScreenProps) {
   const [validationError, setValidationError] = useState<string | null>(null)
   const [showOverrides, setShowOverrides] = useState(false)
 
-  async function handleSelectAAFile() {
+  async function handleSelectPluginFile(id: BuildPluginId) {
+    const plugin = BUILD_PLUGINS.find((p) => p.id === id)
+    if (!plugin) return
     const path = await window.electronAPI.showConfigFileDialog(
-      'Select AdvancedAchievements config.yml',
-      aaPath || undefined
+      plugin.dialogTitle,
+      pluginOptions[id].path || undefined
     )
     if (path) {
-      setAaPath(path)
-    }
-  }
-
-  async function handleSelectCEFile() {
-    const path = await window.electronAPI.showConfigFileDialog(
-      'Select ConditionalEvents config.yml',
-      cePath || undefined
-    )
-    if (path) {
-      setCePath(path)
-    }
-  }
-
-  async function handleSelectTABFile() {
-    const path = await window.electronAPI.showConfigFileDialog(
-      'Select TAB config.yml',
-      tabPath || undefined
-    )
-    if (path) {
-      setTabPath(path)
-    }
-  }
-
-  async function handleSelectLMFile() {
-    const path = await window.electronAPI.showConfigFileDialog(
-      'Select LevelledMobs rules.yml',
-      lmPath || undefined
-    )
-    if (path) {
-      setLmPath(path)
-    }
-  }
-
-  async function handleSelectMCFile() {
-    const path = await window.electronAPI.showConfigFileDialog(
-      'Select MyCommand commands.yml',
-      mcPath || undefined
-    )
-    if (path) {
-      setMcPath(path)
-    }
-  }
-
-  async function handleSelectCWFile() {
-    const path = await window.electronAPI.showConfigFileDialog(
-      'Select CommandWhitelist config.yml',
-      cwPath || undefined
-    )
-    if (path) {
-      setCwPath(path)
+      setPluginOptions((prev) => ({
+        ...prev,
+        [id]: { ...prev[id], path },
+      }))
     }
   }
 
@@ -97,7 +62,7 @@ export function BuildScreen({ server }: BuildScreenProps) {
     // Validate on submit
     setValidationError(null)
     
-    if (!generateAA && !generateCE && !generateTAB && !generateLM && !generateMC && !generateCW) {
+    if (!BUILD_PLUGINS.some((p) => pluginOptions[p.id].generate)) {
       setValidationError('Please select at least one plugin to generate')
       return
     }
@@ -111,21 +76,17 @@ export function BuildScreen({ server }: BuildScreenProps) {
     setBuildResult(null)
 
     try {
-      const result = await window.electronAPI.buildConfigs(server.id, {
-        generateAA,
-        generateCE,
-        generateTAB,
-        generateLM,
-        generateMC,
-        generateCW,
-        ...(generateAA && aaPath ? { aaPath } : {}),
-        ...(generateCE && cePath ? { cePath } : {}),
-        ...(generateTAB && tabPath ? { tabPath } : {}),
-        ...(generateLM && lmPath ? { lmPath } : {}),
-        ...(generateMC && mcPath ? { mcPath } : {}),
-        ...(generateCW && cwPath ? { cwPath } : {}),
-        outDir,
-      })
+      const payload: Record<string, boolean | string> = { outDir }
+      for (const p of BUILD_PLUGINS) {
+        payload[p.generateKey] = pluginOptions[p.id].generate
+        if (pluginOptions[p.id].generate && pluginOptions[p.id].path) {
+          payload[p.pathKey] = pluginOptions[p.id].path
+        }
+      }
+      const result = await window.electronAPI.buildConfigs(
+        server.id,
+        payload as Parameters<typeof window.electronAPI.buildConfigs>[1]
+      )
 
       setBuildResult(result)
       
@@ -180,60 +141,22 @@ export function BuildScreen({ server }: BuildScreenProps) {
           Select Plugins to Generate:
         </label>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-            <input
-              type="checkbox"
-              checked={generateAA}
-              onChange={(e) => setGenerateAA(e.target.checked)}
-              style={{ width: '1.25rem', height: '1.25rem', cursor: 'pointer' }}
-            />
-            <span>AdvancedAchievements</span>
-          </label>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-            <input
-              type="checkbox"
-              checked={generateCW}
-              onChange={(e) => setGenerateCW(e.target.checked)}
-              style={{ width: '1.25rem', height: '1.25rem', cursor: 'pointer' }}
-            />
-            <span>CommandWhitelist</span>
-          </label>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-            <input
-              type="checkbox"
-              checked={generateCE}
-              onChange={(e) => setGenerateCE(e.target.checked)}
-              style={{ width: '1.25rem', height: '1.25rem', cursor: 'pointer' }}
-            />
-            <span>ConditionalEvents</span>
-          </label>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-            <input
-              type="checkbox"
-              checked={generateLM}
-              onChange={(e) => setGenerateLM(e.target.checked)}
-              style={{ width: '1.25rem', height: '1.25rem', cursor: 'pointer' }}
-            />
-            <span>LevelledMobs</span>
-          </label>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-            <input
-              type="checkbox"
-              checked={generateMC}
-              onChange={(e) => setGenerateMC(e.target.checked)}
-              style={{ width: '1.25rem', height: '1.25rem', cursor: 'pointer' }}
-            />
-            <span>MyCommand</span>
-          </label>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-            <input
-              type="checkbox"
-              checked={generateTAB}
-              onChange={(e) => setGenerateTAB(e.target.checked)}
-              style={{ width: '1.25rem', height: '1.25rem', cursor: 'pointer' }}
-            />
-            <span>TAB</span>
-          </label>
+          {BUILD_PLUGINS.map((p) => (
+            <label key={p.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+              <input
+                type="checkbox"
+                checked={pluginOptions[p.id].generate}
+                onChange={(e) =>
+                  setPluginOptions((prev) => ({
+                    ...prev,
+                    [p.id]: { ...prev[p.id], generate: e.target.checked },
+                  }))
+                }
+                style={{ width: '1.25rem', height: '1.25rem', cursor: 'pointer' }}
+              />
+              <span>{p.label}</span>
+            </label>
+          ))}
         </div>
         <div style={{ fontSize: '0.875rem', color: '#666', marginTop: '0.5rem' }}>
           Checked plugins will be generated. Leave paths empty to use bundled defaults, or provide custom config files.
@@ -241,7 +164,7 @@ export function BuildScreen({ server }: BuildScreenProps) {
       </div>
 
       {/* Path Overrides - Collapsible */}
-      {(generateAA || generateCE || generateTAB || generateLM || generateMC || generateCW) && (
+      {BUILD_PLUGINS.some((p) => pluginOptions[p.id].generate) && (
         <div style={{ marginBottom: '2rem' }}>
           <button
             onClick={() => setShowOverrides(!showOverrides)}
@@ -261,266 +184,55 @@ export function BuildScreen({ server }: BuildScreenProps) {
             <span>{showOverrides ? '▼' : '▶'}</span>
             <span>Custom config file overrides (optional)</span>
           </button>
-          
+
           {showOverrides && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', marginTop: '1rem' }}>
-        {/* AA Config */}
-        {generateAA && (
-          <div>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
-              AdvancedAchievements config.yml (optional override)
-            </label>
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <input
-                type="text"
-                value={aaPath}
-                onChange={(e) => setAaPath(e.target.value)}
-                placeholder="Leave empty to use bundled default, or select custom file..."
-                readOnly
-                style={{
-                  flex: 1,
-                  padding: '0.5rem',
-                  fontSize: '1rem',
-                  border: '1px solid #ddd',
-                  borderRadius: '4px',
-                  backgroundColor: '#f9f9f9',
-                }}
-              />
-              <button
-                onClick={handleSelectAAFile}
-                style={{
-                  padding: '0.5rem 1rem',
-                  fontSize: '1rem',
-                  backgroundColor: '#6c757d',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                }}
-              >
-                Browse...
-              </button>
-            </div>
-            <div style={{ fontSize: '0.875rem', color: '#666', marginTop: '0.25rem' }}>
-              {aaPath ? 'Using custom file' : 'Will use bundled default template'}
-            </div>
-          </div>
-        )}
-
-        {/* CE Config */}
-        {generateCE && (
-          <div>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
-              ConditionalEvents config.yml (optional override)
-            </label>
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <input
-                type="text"
-                value={cePath}
-                onChange={(e) => setCePath(e.target.value)}
-                placeholder="Leave empty to use bundled default, or select custom file..."
-                readOnly
-                style={{
-                  flex: 1,
-                  padding: '0.5rem',
-                  fontSize: '1rem',
-                  border: '1px solid #ddd',
-                  borderRadius: '4px',
-                  backgroundColor: '#f9f9f9',
-                }}
-              />
-              <button
-                onClick={handleSelectCEFile}
-                style={{
-                  padding: '0.5rem 1rem',
-                  fontSize: '1rem',
-                  backgroundColor: '#6c757d',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                }}
-              >
-                Browse...
-              </button>
-            </div>
-            <div style={{ fontSize: '0.875rem', color: '#666', marginTop: '0.25rem' }}>
-              {cePath ? 'Using custom file' : 'Will use bundled default template'}
-            </div>
-          </div>
-        )}
-
-        {/* TAB Config */}
-        {generateTAB && (
-          <div>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
-              TAB config.yml (optional override)
-            </label>
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <input
-                type="text"
-                value={tabPath}
-                onChange={(e) => setTabPath(e.target.value)}
-                placeholder="Leave empty to use bundled default, or select custom file..."
-                readOnly
-                style={{
-                  flex: 1,
-                  padding: '0.5rem',
-                  fontSize: '1rem',
-                  border: '1px solid #ddd',
-                  borderRadius: '4px',
-                  backgroundColor: '#f9f9f9',
-                }}
-              />
-              <button
-                onClick={handleSelectTABFile}
-                style={{
-                  padding: '0.5rem 1rem',
-                  fontSize: '1rem',
-                  backgroundColor: '#6c757d',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                }}
-              >
-                Browse...
-              </button>
-            </div>
-            <div style={{ fontSize: '0.875rem', color: '#666', marginTop: '0.25rem' }}>
-              {tabPath ? 'Using custom file' : 'Will use bundled default template'}
-            </div>
-          </div>
-        )}
-
-        {/* LM Config */}
-        {generateLM && (
-          <div>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
-              LevelledMobs rules.yml (optional override)
-            </label>
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <input
-                type="text"
-                value={lmPath}
-                onChange={(e) => setLmPath(e.target.value)}
-                placeholder="Leave empty to use bundled default, or select custom file..."
-                readOnly
-                style={{
-                  flex: 1,
-                  padding: '0.5rem',
-                  fontSize: '1rem',
-                  border: '1px solid #ddd',
-                  borderRadius: '4px',
-                  backgroundColor: '#f9f9f9',
-                }}
-              />
-              <button
-                onClick={handleSelectLMFile}
-                style={{
-                  padding: '0.5rem 1rem',
-                  fontSize: '1rem',
-                  backgroundColor: '#6c757d',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                }}
-              >
-                Browse...
-              </button>
-            </div>
-            <div style={{ fontSize: '0.875rem', color: '#666', marginTop: '0.25rem' }}>
-              {lmPath ? 'Using custom file' : 'Will use bundled default template'}
-            </div>
-          </div>
-        )}
-
-        {/* MC Config */}
-        {generateMC && (
-          <div>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
-              MyCommand commands.yml (optional override)
-            </label>
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <input
-                type="text"
-                value={mcPath}
-                onChange={(e) => setMcPath(e.target.value)}
-                placeholder="Leave empty to use bundled default, or select custom file..."
-                readOnly
-                style={{
-                  flex: 1,
-                  padding: '0.5rem',
-                  fontSize: '1rem',
-                  border: '1px solid #ddd',
-                  borderRadius: '4px',
-                  backgroundColor: '#f9f9f9',
-                }}
-              />
-              <button
-                onClick={handleSelectMCFile}
-                style={{
-                  padding: '0.5rem 1rem',
-                  fontSize: '1rem',
-                  backgroundColor: '#6c757d',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                }}
-              >
-                Browse...
-              </button>
-            </div>
-            <div style={{ fontSize: '0.875rem', color: '#666', marginTop: '0.25rem' }}>
-              {mcPath ? 'Using custom file' : 'Will use bundled default template'}
-            </div>
-          </div>
-        )}
-
-        {/* CW Config */}
-        {generateCW && (
-          <div>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
-              CommandWhitelist config.yml (optional override)
-            </label>
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <input
-                type="text"
-                value={cwPath}
-                onChange={(e) => setCwPath(e.target.value)}
-                placeholder="Leave empty to use bundled default, or select custom file..."
-                readOnly
-                style={{
-                  flex: 1,
-                  padding: '0.5rem',
-                  fontSize: '1rem',
-                  border: '1px solid #ddd',
-                  borderRadius: '4px',
-                  backgroundColor: '#f9f9f9',
-                }}
-              />
-              <button
-                onClick={handleSelectCWFile}
-                style={{
-                  padding: '0.5rem 1rem',
-                  fontSize: '1rem',
-                  backgroundColor: '#6c757d',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                }}
-              >
-                Browse...
-              </button>
-            </div>
-            <div style={{ fontSize: '0.875rem', color: '#666', marginTop: '0.25rem' }}>
-              {cwPath ? 'Using custom file' : 'Will use bundled default template'}
-            </div>
-          </div>
-        )}
+              {BUILD_PLUGINS.filter((p) => pluginOptions[p.id].generate).map((p) => (
+                <div key={p.id}>
+                  <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
+                    {p.overrideLabel}
+                  </label>
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <input
+                      type="text"
+                      value={pluginOptions[p.id].path}
+                      onChange={(e) =>
+                        setPluginOptions((prev) => ({
+                          ...prev,
+                          [p.id]: { ...prev[p.id], path: e.target.value },
+                        }))
+                      }
+                      placeholder="Leave empty to use bundled default, or select custom file..."
+                      readOnly
+                      style={{
+                        flex: 1,
+                        padding: '0.5rem',
+                        fontSize: '1rem',
+                        border: '1px solid #ddd',
+                        borderRadius: '4px',
+                        backgroundColor: '#f9f9f9',
+                      }}
+                    />
+                    <button
+                      onClick={() => handleSelectPluginFile(p.id)}
+                      style={{
+                        padding: '0.5rem 1rem',
+                        fontSize: '1rem',
+                        backgroundColor: '#6c757d',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Browse...
+                    </button>
+                  </div>
+                  <div style={{ fontSize: '0.875rem', color: '#666', marginTop: '0.25rem' }}>
+                    {pluginOptions[p.id].path ? 'Using custom file' : 'Will use bundled default template'}
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>
@@ -713,17 +425,10 @@ export function BuildScreen({ server }: BuildScreenProps) {
           <div style={{ marginBottom: '1rem' }}>
             <div style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>Generated:</div>
             <div>
-              {buildReport.generated.aa && '✓ AdvancedAchievements'}
-              {buildReport.generated.aa && (buildReport.generated.ce || buildReport.generated.tab || buildReport.generated.lm || buildReport.generated.mc || buildReport.generated.cw) && ' • '}
-              {buildReport.generated.ce && '✓ ConditionalEvents'}
-              {buildReport.generated.ce && (buildReport.generated.tab || buildReport.generated.lm || buildReport.generated.mc || buildReport.generated.cw) && ' • '}
-              {buildReport.generated.tab && '✓ TAB'}
-              {buildReport.generated.tab && (buildReport.generated.lm || buildReport.generated.mc || buildReport.generated.cw) && ' • '}
-              {buildReport.generated.lm && '✓ LevelledMobs'}
-              {buildReport.generated.lm && (buildReport.generated.mc || buildReport.generated.cw) && ' • '}
-              {buildReport.generated.mc && '✓ MyCommand'}
-              {buildReport.generated.mc && buildReport.generated.cw && ' • '}
-              {buildReport.generated.cw && '✓ CommandWhitelist'}
+              {(() => {
+                const generated = BUILD_PLUGINS.filter((p) => buildReport.generated?.[p.id]).map((p) => '✓ ' + p.label)
+                return generated.length > 0 ? generated.join(' • ') : 'None'
+              })()}
             </div>
           </div>
 
@@ -731,66 +436,20 @@ export function BuildScreen({ server }: BuildScreenProps) {
             <div style={{ marginBottom: '1rem' }}>
               <div style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>Config Sources:</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.875rem' }}>
-                {buildReport.configSources.aa && (
-                  <div>
-                    <strong>AdvancedAchievements:</strong>{' '}
-                    {buildReport.configSources.aa.isDefault ? (
-                      <span style={{ color: '#28a745' }}>Bundled default</span>
-                    ) : (
-                      <span style={{ color: '#666' }}>{buildReport.configSources.aa.path}</span>
-                    )}
-                  </div>
-                )}
-                {buildReport.configSources.ce && (
-                  <div>
-                    <strong>ConditionalEvents:</strong>{' '}
-                    {buildReport.configSources.ce.isDefault ? (
-                      <span style={{ color: '#28a745' }}>Bundled default</span>
-                    ) : (
-                      <span style={{ color: '#666' }}>{buildReport.configSources.ce.path}</span>
-                    )}
-                  </div>
-                )}
-                {buildReport.configSources.tab && (
-                  <div>
-                    <strong>TAB:</strong>{' '}
-                    {buildReport.configSources.tab.isDefault ? (
-                      <span style={{ color: '#28a745' }}>Bundled default</span>
-                    ) : (
-                      <span style={{ color: '#666' }}>{buildReport.configSources.tab.path}</span>
-                    )}
-                  </div>
-                )}
-                {buildReport.configSources.lm && (
-                  <div>
-                    <strong>LevelledMobs:</strong>{' '}
-                    {buildReport.configSources.lm.isDefault ? (
-                      <span style={{ color: '#28a745' }}>Bundled default</span>
-                    ) : (
-                      <span style={{ color: '#666' }}>{buildReport.configSources.lm.path}</span>
-                    )}
-                  </div>
-                )}
-                {buildReport.configSources.mc && (
-                  <div>
-                    <strong>MyCommand:</strong>{' '}
-                    {buildReport.configSources.mc.isDefault ? (
-                      <span style={{ color: '#28a745' }}>Bundled default</span>
-                    ) : (
-                      <span style={{ color: '#666' }}>{buildReport.configSources.mc.path}</span>
-                    )}
-                  </div>
-                )}
-                {buildReport.configSources.cw && (
-                  <div>
-                    <strong>CommandWhitelist:</strong>{' '}
-                    {buildReport.configSources.cw.isDefault ? (
-                      <span style={{ color: '#28a745' }}>Bundled default</span>
-                    ) : (
-                      <span style={{ color: '#666' }}>{buildReport.configSources.cw.path}</span>
-                    )}
-                  </div>
-                )}
+                {BUILD_PLUGINS.map((p) => {
+                  const src = buildReport.configSources?.[p.id]
+                  if (!src) return null
+                  return (
+                    <div key={p.id}>
+                      <strong>{p.label}:</strong>{' '}
+                      {src.isDefault ? (
+                        <span style={{ color: '#28a745' }}>Bundled default</span>
+                      ) : (
+                        <span style={{ color: '#666' }}>{src.path}</span>
+                      )}
+                    </div>
+                  )
+                })}
               </div>
             </div>
           )}
