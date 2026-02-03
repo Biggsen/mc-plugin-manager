@@ -9,10 +9,11 @@ const targetDir = path.join(__dirname, '..', 'dist-electron', 'assets', 'templat
 // Template files to copy
 const templates = [
   'advancedachievements-config.yml',
+  'commandwhitelist-config.yml',
   'conditionalevents-config.yml',
-  'tab-config.yml',
   'levelledmobs-rules.yml',
-  'mycommand-commands.yml'
+  'mycommand-commands.yml',
+  'tab-config.yml'
 ]
 
 // Strip version headers from content

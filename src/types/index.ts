@@ -98,6 +98,8 @@ export interface BuildResult {
     ce?: { path: string; isDefault: boolean }
     tab?: { path: string; isDefault: boolean }
     lm?: { path: string; isDefault: boolean }
+    mc?: { path: string; isDefault: boolean }
+    cw?: { path: string; isDefault: boolean }
   }
 }
 
@@ -125,12 +127,16 @@ export interface BuildReport {
     ce: boolean
     tab: boolean
     lm: boolean
+    mc: boolean
+    cw: boolean
   }
   configSources?: {
     aa?: { path: string; isDefault: boolean }
     ce?: { path: string; isDefault: boolean }
     tab?: { path: string; isDefault: boolean }
     lm?: { path: string; isDefault: boolean }
+    mc?: { path: string; isDefault: boolean }
+    cw?: { path: string; isDefault: boolean }
   }
   warnings: string[]
   errors: string[]

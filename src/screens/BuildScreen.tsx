@@ -11,11 +11,13 @@ export function BuildScreen({ server }: BuildScreenProps) {
   const [generateTAB, setGenerateTAB] = useState(false)
   const [generateLM, setGenerateLM] = useState(false)
   const [generateMC, setGenerateMC] = useState(false)
+  const [generateCW, setGenerateCW] = useState(false)
   const [aaPath, setAaPath] = useState('')
   const [cePath, setCePath] = useState('')
   const [tabPath, setTabPath] = useState('')
   const [lmPath, setLmPath] = useState('')
   const [mcPath, setMcPath] = useState('')
+  const [cwPath, setCwPath] = useState('')
   const [outDir, setOutDir] = useState(server.build.outputDirectory || '')
   const [isBuilding, setIsBuilding] = useState(false)
   const [buildResult, setBuildResult] = useState<BuildResult | null>(null)
@@ -74,6 +76,16 @@ export function BuildScreen({ server }: BuildScreenProps) {
     }
   }
 
+  async function handleSelectCWFile() {
+    const path = await window.electronAPI.showConfigFileDialog(
+      'Select CommandWhitelist config.yml',
+      cwPath || undefined
+    )
+    if (path) {
+      setCwPath(path)
+    }
+  }
+
   async function handleSelectOutputDir() {
     const path = await window.electronAPI.showOutputDialog()
     if (path) {
@@ -85,7 +97,7 @@ export function BuildScreen({ server }: BuildScreenProps) {
     // Validate on submit
     setValidationError(null)
     
-    if (!generateAA && !generateCE && !generateTAB && !generateLM && !generateMC) {
+    if (!generateAA && !generateCE && !generateTAB && !generateLM && !generateMC && !generateCW) {
       setValidationError('Please select at least one plugin to generate')
       return
     }
@@ -105,11 +117,13 @@ export function BuildScreen({ server }: BuildScreenProps) {
         generateTAB,
         generateLM,
         generateMC,
+        generateCW,
         ...(generateAA && aaPath ? { aaPath } : {}),
         ...(generateCE && cePath ? { cePath } : {}),
         ...(generateTAB && tabPath ? { tabPath } : {}),
         ...(generateLM && lmPath ? { lmPath } : {}),
         ...(generateMC && mcPath ? { mcPath } : {}),
+        ...(generateCW && cwPath ? { cwPath } : {}),
         outDir,
       })
 
@@ -157,7 +171,7 @@ export function BuildScreen({ server }: BuildScreenProps) {
     <div>
       <h2>Build Configuration Files</h2>
       <p style={{ color: '#666', marginBottom: '2rem' }}>
-        Generate AdvancedAchievements, ConditionalEvents, TAB, and LevelledMobs config files from your imported regions.
+        Generate or include config files for the selected plugins. Use bundled defaults or provide custom sources.
       </p>
 
       {/* Plugin Selection Checkboxes */}
@@ -178,20 +192,20 @@ export function BuildScreen({ server }: BuildScreenProps) {
           <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
             <input
               type="checkbox"
+              checked={generateCW}
+              onChange={(e) => setGenerateCW(e.target.checked)}
+              style={{ width: '1.25rem', height: '1.25rem', cursor: 'pointer' }}
+            />
+            <span>CommandWhitelist</span>
+          </label>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+            <input
+              type="checkbox"
               checked={generateCE}
               onChange={(e) => setGenerateCE(e.target.checked)}
               style={{ width: '1.25rem', height: '1.25rem', cursor: 'pointer' }}
             />
             <span>ConditionalEvents</span>
-          </label>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-            <input
-              type="checkbox"
-              checked={generateTAB}
-              onChange={(e) => setGenerateTAB(e.target.checked)}
-              style={{ width: '1.25rem', height: '1.25rem', cursor: 'pointer' }}
-            />
-            <span>TAB</span>
           </label>
           <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
             <input
@@ -211,6 +225,15 @@ export function BuildScreen({ server }: BuildScreenProps) {
             />
             <span>MyCommand</span>
           </label>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+            <input
+              type="checkbox"
+              checked={generateTAB}
+              onChange={(e) => setGenerateTAB(e.target.checked)}
+              style={{ width: '1.25rem', height: '1.25rem', cursor: 'pointer' }}
+            />
+            <span>TAB</span>
+          </label>
         </div>
         <div style={{ fontSize: '0.875rem', color: '#666', marginTop: '0.5rem' }}>
           Checked plugins will be generated. Leave paths empty to use bundled defaults, or provide custom config files.
@@ -218,7 +241,7 @@ export function BuildScreen({ server }: BuildScreenProps) {
       </div>
 
       {/* Path Overrides - Collapsible */}
-      {(generateAA || generateCE || generateTAB || generateLM || generateMC) && (
+      {(generateAA || generateCE || generateTAB || generateLM || generateMC || generateCW) && (
         <div style={{ marginBottom: '2rem' }}>
           <button
             onClick={() => setShowOverrides(!showOverrides)}
@@ -455,6 +478,49 @@ export function BuildScreen({ server }: BuildScreenProps) {
             </div>
           </div>
         )}
+
+        {/* CW Config */}
+        {generateCW && (
+          <div>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
+              CommandWhitelist config.yml (optional override)
+            </label>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <input
+                type="text"
+                value={cwPath}
+                onChange={(e) => setCwPath(e.target.value)}
+                placeholder="Leave empty to use bundled default, or select custom file..."
+                readOnly
+                style={{
+                  flex: 1,
+                  padding: '0.5rem',
+                  fontSize: '1rem',
+                  border: '1px solid #ddd',
+                  borderRadius: '4px',
+                  backgroundColor: '#f9f9f9',
+                }}
+              />
+              <button
+                onClick={handleSelectCWFile}
+                style={{
+                  padding: '0.5rem 1rem',
+                  fontSize: '1rem',
+                  backgroundColor: '#6c757d',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                }}
+              >
+                Browse...
+              </button>
+            </div>
+            <div style={{ fontSize: '0.875rem', color: '#666', marginTop: '0.25rem' }}>
+              {cwPath ? 'Using custom file' : 'Will use bundled default template'}
+            </div>
+          </div>
+        )}
             </div>
           )}
         </div>
@@ -648,14 +714,16 @@ export function BuildScreen({ server }: BuildScreenProps) {
             <div style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>Generated:</div>
             <div>
               {buildReport.generated.aa && '✓ AdvancedAchievements'}
-              {buildReport.generated.aa && (buildReport.generated.ce || buildReport.generated.tab || buildReport.generated.lm || buildReport.generated.mc) && ' • '}
+              {buildReport.generated.aa && (buildReport.generated.ce || buildReport.generated.tab || buildReport.generated.lm || buildReport.generated.mc || buildReport.generated.cw) && ' • '}
               {buildReport.generated.ce && '✓ ConditionalEvents'}
-              {buildReport.generated.ce && (buildReport.generated.tab || buildReport.generated.lm || buildReport.generated.mc) && ' • '}
+              {buildReport.generated.ce && (buildReport.generated.tab || buildReport.generated.lm || buildReport.generated.mc || buildReport.generated.cw) && ' • '}
               {buildReport.generated.tab && '✓ TAB'}
-              {buildReport.generated.tab && (buildReport.generated.lm || buildReport.generated.mc) && ' • '}
+              {buildReport.generated.tab && (buildReport.generated.lm || buildReport.generated.mc || buildReport.generated.cw) && ' • '}
               {buildReport.generated.lm && '✓ LevelledMobs'}
-              {buildReport.generated.lm && buildReport.generated.mc && ' • '}
+              {buildReport.generated.lm && (buildReport.generated.mc || buildReport.generated.cw) && ' • '}
               {buildReport.generated.mc && '✓ MyCommand'}
+              {buildReport.generated.mc && buildReport.generated.cw && ' • '}
+              {buildReport.generated.cw && '✓ CommandWhitelist'}
             </div>
           </div>
 
@@ -710,6 +778,16 @@ export function BuildScreen({ server }: BuildScreenProps) {
                       <span style={{ color: '#28a745' }}>Bundled default</span>
                     ) : (
                       <span style={{ color: '#666' }}>{buildReport.configSources.mc.path}</span>
+                    )}
+                  </div>
+                )}
+                {buildReport.configSources.cw && (
+                  <div>
+                    <strong>CommandWhitelist:</strong>{' '}
+                    {buildReport.configSources.cw.isDefault ? (
+                      <span style={{ color: '#28a745' }}>Bundled default</span>
+                    ) : (
+                      <span style={{ color: '#666' }}>{buildReport.configSources.cw.path}</span>
                     )}
                   </div>
                 )}

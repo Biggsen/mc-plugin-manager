@@ -30,7 +30,7 @@ type BuildReport = any
 type OnboardingConfig = any
 
 // Resolve config path: use user-provided path if available, otherwise use bundled default
-function resolveConfigPath(type: 'aa' | 'ce' | 'tab' | 'lm' | 'mc', userProvidedPath?: string): string {
+function resolveConfigPath(type: 'aa' | 'ce' | 'tab' | 'lm' | 'mc' | 'cw', userProvidedPath?: string): string {
   // If user provided path, validate and use it
   if (userProvidedPath && userProvidedPath.trim().length > 0) {
     if (!existsSync(userProvidedPath)) {
@@ -48,7 +48,8 @@ function resolveConfigPath(type: 'aa' | 'ce' | 'tab' | 'lm' | 'mc', userProvided
     : type === 'ce' ? 'conditionalevents-config.yml'
     : type === 'tab' ? 'tab-config.yml'
     : type === 'lm' ? 'levelledmobs-rules.yml'
-    : 'mycommand-commands.yml'
+    : type === 'mc' ? 'mycommand-commands.yml'
+    : 'commandwhitelist-config.yml'
   // In packaged mode, templates are in dist-electron/assets/templates relative to app.getAppPath()
   // In dev mode, __dirname is already dist-electron, so we just need assets/templates
   const templatesPath = isPackaged 
@@ -326,11 +327,13 @@ ipcMain.handle(
       generateTAB?: boolean
       generateLM?: boolean
       generateMC?: boolean
+      generateCW?: boolean
       aaPath?: string
       cePath?: string
       tabPath?: string
       lmPath?: string
       mcPath?: string
+      cwPath?: string
       outDir: string
     }
   ): Promise<BuildResult> => {
@@ -344,10 +347,10 @@ ipcMain.handle(
       }
       
       // Validate at least one plugin is checked
-      if (!inputs.generateAA && !inputs.generateCE && !inputs.generateTAB && !inputs.generateLM && !inputs.generateMC) {
+      if (!inputs.generateAA && !inputs.generateCE && !inputs.generateTAB && !inputs.generateLM && !inputs.generateMC && !inputs.generateCW) {
         return {
           success: false,
-          error: 'At least one plugin (AA, CE, TAB, LM, or MC) must be selected',
+          error: 'At least one plugin (AA, CE, TAB, LM, MC, or CommandWhitelist) must be selected',
         }
       }
       
@@ -386,6 +389,7 @@ ipcMain.handle(
       let tabGenerated = false
       let lmGenerated = false
       let mcGenerated = false
+      let cwGenerated = false
       
       // Track config sources
       const configSources: any = {}
@@ -627,6 +631,38 @@ ipcMain.handle(
           }
         }
       }
+
+      // CommandWhitelist: copy from bundle/override (no generator yet)
+      if (inputs.generateCW) {
+        try {
+          const cwConfigPath = resolveConfigPath('cw', inputs.cwPath)
+          const usingDefaultCW = !inputs.cwPath || inputs.cwPath.trim().length === 0
+          const fs = require('fs')
+          const cwContent = fs.readFileSync(cwConfigPath, 'utf-8')
+
+          const serverNameSanitized = profile.name.toLowerCase().replace(/[^a-z0-9]/g, '-')
+          const cwFilename = `${serverNameSanitized}-commandwhitelist-config.yml`
+
+          const cwOutputPath = path.join(inputs.outDir, cwFilename)
+          writeFileSync(cwOutputPath, cwContent, 'utf-8')
+
+          const buildDir = ensureBuildDirectory(serverId, buildId)
+          const cwBuildPath = path.join(buildDir, cwFilename)
+          writeFileSync(cwBuildPath, cwContent, 'utf-8')
+
+          cwGenerated = true
+          configSources.cw = {
+            path: cwConfigPath,
+            isDefault: usingDefaultCW,
+          }
+        } catch (error: any) {
+          return {
+            success: false,
+            error: error.message || 'CommandWhitelist copy failed',
+            buildId,
+          }
+        }
+      }
       
       // Create build report
       const report = {
@@ -640,6 +676,7 @@ ipcMain.handle(
           tab: tabGenerated,
           lm: lmGenerated,
           mc: mcGenerated,
+          cw: cwGenerated,
         },
         configSources,
         warnings,

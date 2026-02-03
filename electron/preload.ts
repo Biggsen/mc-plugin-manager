@@ -34,10 +34,14 @@ export interface ElectronAPI {
       generateCE?: boolean
       generateTAB?: boolean
       generateLM?: boolean
+      generateMC?: boolean
+      generateCW?: boolean
       aaPath?: string
       cePath?: string
       tabPath?: string
       lmPath?: string
+      mcPath?: string
+      cwPath?: string
       outDir: string
     }
   ) => Promise<BuildResult>
@@ -134,6 +138,8 @@ interface BuildResult {
     ce?: { path: string; isDefault: boolean }
     tab?: { path: string; isDefault: boolean }
     lm?: { path: string; isDefault: boolean }
+    mc?: { path: string; isDefault: boolean }
+    cw?: { path: string; isDefault: boolean }
   }
 }
 
@@ -161,12 +167,16 @@ interface BuildReport {
     ce: boolean
     tab: boolean
     lm: boolean
+    mc: boolean
+    cw: boolean
   }
   configSources?: {
     aa?: { path: string; isDefault: boolean }
     ce?: { path: string; isDefault: boolean }
     tab?: { path: string; isDefault: boolean }
     lm?: { path: string; isDefault: boolean }
+    mc?: { path: string; isDefault: boolean }
+    cw?: { path: string; isDefault: boolean }
   }
   warnings: string[]
   errors: string[]
@@ -191,10 +201,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
       generateCE?: boolean
       generateTAB?: boolean
       generateLM?: boolean
+      generateMC?: boolean
+      generateCW?: boolean
       aaPath?: string
       cePath?: string
       tabPath?: string
       lmPath?: string
+      mcPath?: string
+      cwPath?: string
       outDir: string
     }
   ) => ipcRenderer.invoke('build-configs', serverId, inputs),
