@@ -30,10 +30,14 @@ npm run build:electron
 
 This will compile TypeScript files and prepare the app for Electron.
 
+## UI
+
+The frontend uses [Mantine](https://mantine.dev/) v8 for consistent, accessible components and theming. Global styles and theme are configured in `src/main.tsx`.
+
 ## Project Structure
 
 - `electron/` - Electron main process code
-- `src/` - React renderer application
+- `src/` - React renderer application (Mantine UI)
 - `spec/` - Specification documentation
 - `reference/` - Reference plugin config files
 

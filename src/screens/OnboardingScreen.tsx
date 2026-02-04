@@ -1,4 +1,16 @@
 import { useState, useEffect } from 'react'
+import {
+  Title,
+  Text,
+  TextInput,
+  NumberInput,
+  Select,
+  Button,
+  Group,
+  Stack,
+  SimpleGrid,
+  Paper,
+} from '@mantine/core'
 import type { ServerProfile, OnboardingConfig } from '../types'
 
 interface OnboardingScreenProps {
@@ -109,243 +121,122 @@ export function OnboardingScreen({ server, onServerUpdate }: OnboardingScreenPro
   const hasStartRegion = regionIds.includes(startRegionId)
 
   return (
-    <div>
-      <h2>Onboarding Configuration</h2>
-      <p style={{ color: '#666', marginBottom: '2rem' }}>
+    <Stack gap="xl">
+      <Title order={2}>Onboarding Configuration</Title>
+      <Text size="sm" c="dimmed">
         Configure the teleport location and starting region for new players.
-      </p>
+      </Text>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-        {/* Start Region */}
-        <div>
-          <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
-            Start Region ID
-          </label>
-          <select
+      <Stack gap="lg">
+        <Stack gap="xs">
+          <Select
+            label="Start Region ID"
+            placeholder="-- Select region --"
             value={startRegionId}
-            onChange={(e) => setStartRegionId(e.target.value)}
-            style={{
-              width: '100%',
-              padding: '0.5rem',
-              fontSize: '1rem',
-              border: '1px solid #ddd',
-              borderRadius: '4px',
-            }}
-          >
-            <option value="">-- Select region --</option>
-            {regionIds.map((id) => (
-              <option key={id} value={id}>
-                {id}
-              </option>
-            ))}
-          </select>
+            onChange={(v) => setStartRegionId(v ?? '')}
+            data={[{ value: '', label: '-- Select region --' }, ...regionIds.map((id) => ({ value: id, label: id }))]}
+          />
           {startRegionId && !hasStartRegion && (
-            <div style={{ marginTop: '0.5rem', color: '#d9534f', fontSize: '0.875rem' }}>
+            <Text size="sm" c="red">
               ⚠ Warning: This region ID is not in your imported regions.
-            </div>
+            </Text>
           )}
-          <div style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: '#666' }}>
+          <Text size="sm" c="dimmed">
             This region will be marked with <code>first_join</code> discovery method.
-          </div>
-        </div>
+          </Text>
+        </Stack>
 
-        {/* Teleport Location */}
-        <div>
-          <label style={{ display: 'block', marginBottom: '1rem', fontWeight: 'bold' }}>
-            Teleport Location
-          </label>
+        <Stack gap="md">
+          <Title order={4}>Teleport Location</Title>
 
-          {/* Quick paste */}
-          <div style={{ marginBottom: '1rem', padding: '1rem', backgroundColor: '#f5f5f5', borderRadius: '4px' }}>
-            <div style={{ fontSize: '0.875rem', marginBottom: '0.5rem', color: '#666' }}>
-              Quick paste location (format: "world x y z" or "x y z" or "x,y,z"):
-            </div>
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <input
-                type="text"
+          <Paper p="md" withBorder>
+            <Text size="sm" c="dimmed" mb="xs">
+              Quick paste location (format: &quot;world x y z&quot; or &quot;x y z&quot; or &quot;x,y,z&quot;):
+            </Text>
+            <Group gap="sm">
+              <TextInput
                 placeholder="world 0 64 0"
                 value={locationString}
-                onChange={(e) => setLocationString(e.target.value)}
+                onChange={(e) => setLocationString(e.currentTarget.value)}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
                     handlePasteLocation()
                   }
                 }}
-                style={{
-                  flex: 1,
-                  padding: '0.5rem',
-                  fontSize: '1rem',
-                  border: '1px solid #ddd',
-                  borderRadius: '4px',
-                }}
+                flex={1}
               />
-              <button
-                onClick={handlePasteLocation}
-                style={{
-                  padding: '0.5rem 1rem',
-                  fontSize: '1rem',
-                  backgroundColor: '#28a745',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                }}
-              >
+              <Button color="green" onClick={handlePasteLocation}>
                 Paste
-              </button>
-            </div>
-          </div>
+              </Button>
+            </Group>
+          </Paper>
 
-          {/* Manual entry */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '1rem' }}>
-            <div>
-              <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem' }}>
-                World
-              </label>
-              <input
-                type="text"
-                value={teleport.world}
-                onChange={(e) => setTeleport({ ...teleport, world: e.target.value })}
-                style={{
-                  width: '100%',
-                  padding: '0.5rem',
-                  fontSize: '1rem',
-                  border: '1px solid #ddd',
-                  borderRadius: '4px',
-                }}
-              />
-            </div>
-            <div>
-              <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem' }}>
-                X
-              </label>
-              <input
-                type="number"
-                value={teleport.x}
-                onChange={(e) => setTeleport({ ...teleport, x: parseFloat(e.target.value) || 0 })}
-                style={{
-                  width: '100%',
-                  padding: '0.5rem',
-                  fontSize: '1rem',
-                  border: '1px solid #ddd',
-                  borderRadius: '4px',
-                }}
-              />
-            </div>
-            <div>
-              <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem' }}>
-                Y
-              </label>
-              <input
-                type="number"
-                value={teleport.y ?? ''}
-                onChange={(e) => setTeleport({ ...teleport, y: e.target.value ? parseFloat(e.target.value) : undefined })}
-                placeholder="64"
-                style={{
-                  width: '100%',
-                  padding: '0.5rem',
-                  fontSize: '1rem',
-                  border: '1px solid #ddd',
-                  borderRadius: '4px',
-                }}
-              />
-            </div>
-            <div>
-              <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem' }}>
-                Z
-              </label>
-              <input
-                type="number"
-                value={teleport.z}
-                onChange={(e) => setTeleport({ ...teleport, z: parseFloat(e.target.value) || 0 })}
-                style={{
-                  width: '100%',
-                  padding: '0.5rem',
-                  fontSize: '1rem',
-                  border: '1px solid #ddd',
-                  borderRadius: '4px',
-                }}
-              />
-            </div>
-          </div>
+          <SimpleGrid cols={{ base: 2, sm: 4 }} spacing="md">
+            <TextInput
+              label="World"
+              value={teleport.world}
+              onChange={(e) => setTeleport({ ...teleport, world: e.currentTarget.value })}
+            />
+            <NumberInput
+              label="X"
+              value={teleport.x}
+              onChange={(v) => setTeleport({ ...teleport, x: (v as number) ?? 0 })}
+            />
+            <NumberInput
+              label="Y"
+              value={teleport.y ?? ''}
+              onChange={(v) => setTeleport({ ...teleport, y: (v as number) ?? undefined })}
+              placeholder="64"
+            />
+            <NumberInput
+              label="Z"
+              value={teleport.z}
+              onChange={(v) => setTeleport({ ...teleport, z: (v as number) ?? 0 })}
+            />
+          </SimpleGrid>
 
-          {/* Optional yaw/pitch */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '1rem' }}>
-            <div>
-              <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem' }}>
-                Yaw (optional)
-              </label>
-              <input
-                type="number"
-                value={teleport.yaw ?? ''}
-                onChange={(e) =>
-                  setTeleport({
-                    ...teleport,
-                    yaw: e.target.value ? parseFloat(e.target.value) : undefined,
-                  })
-                }
-                placeholder="0"
-                style={{
-                  width: '100%',
-                  padding: '0.5rem',
-                  fontSize: '1rem',
-                  border: '1px solid #ddd',
-                  borderRadius: '4px',
-                }}
-              />
-            </div>
-            <div>
-              <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem' }}>
-                Pitch (optional)
-              </label>
-              <input
-                type="number"
-                value={teleport.pitch ?? ''}
-                onChange={(e) =>
-                  setTeleport({
-                    ...teleport,
-                    pitch: e.target.value ? parseFloat(e.target.value) : undefined,
-                  })
-                }
-                placeholder="0"
-                style={{
-                  width: '100%',
-                  padding: '0.5rem',
-                  fontSize: '1rem',
-                  border: '1px solid #ddd',
-                  borderRadius: '4px',
-                }}
-              />
-            </div>
-          </div>
-        </div>
+          <SimpleGrid cols={2} spacing="md">
+            <NumberInput
+              label="Yaw (optional)"
+              value={teleport.yaw ?? ''}
+              onChange={(v) =>
+                setTeleport({
+                  ...teleport,
+                  yaw: (v as number) ?? undefined,
+                })
+              }
+              placeholder="0"
+            />
+            <NumberInput
+              label="Pitch (optional)"
+              value={teleport.pitch ?? ''}
+              onChange={(v) =>
+                setTeleport({
+                  ...teleport,
+                  pitch: (v as number) ?? undefined,
+                })
+              }
+              placeholder="0"
+            />
+          </SimpleGrid>
+        </Stack>
 
-        {/* Save Button */}
-        <div>
-          <button
-            onClick={handleSave}
-            disabled={isSaving}
-            style={{
-              padding: '0.75rem 2rem',
-              fontSize: '1rem',
-              backgroundColor: '#007acc',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: isSaving ? 'not-allowed' : 'pointer',
-              opacity: isSaving ? 0.6 : 1,
-            }}
-          >
-            {isSaving ? 'Saving...' : 'Save Onboarding Config'}
-          </button>
+        <Group gap="md" align="center">
+          <Button onClick={handleSave} loading={isSaving}>
+            Save Onboarding Config
+          </Button>
           {saveStatus === 'success' && (
-            <span style={{ marginLeft: '1rem', color: '#28a745' }}>✓ Saved successfully!</span>
+            <Text size="sm" c="green">
+              ✓ Saved successfully!
+            </Text>
           )}
           {saveStatus === 'error' && (
-            <span style={{ marginLeft: '1rem', color: '#d9534f' }}>✗ Failed to save</span>
+            <Text size="sm" c="red">
+              ✗ Failed to save
+            </Text>
           )}
-        </div>
-      </div>
-    </div>
+        </Group>
+      </Stack>
+    </Stack>
   )
 }

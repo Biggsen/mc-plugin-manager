@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Title, Text, Button, Group, Stack, Paper, Alert } from '@mantine/core'
 import type { ServerProfile, ImportResult } from '../types'
 
 interface ImportScreenProps {
@@ -83,127 +84,76 @@ export function ImportScreen({ server, onServerUpdate }: ImportScreenProps) {
   const hasImportedNether = !!netherSource
 
   return (
-    <div>
-      <h2>Import Region Files</h2>
-      <p style={{ color: '#666', marginBottom: '2rem' }}>
+    <Stack gap="lg">
+      <Title order={2}>Import Region Files</Title>
+      <Text size="sm" c="dimmed">
         Import regions-meta.yml from Region Forge to populate your server profile with region data, onboarding, spawn center, and LevelledMobs metadata.
-      </p>
+      </Text>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-        {/* Overworld Regions-meta Import */}
-        <div
-          style={{
-            padding: '1.5rem',
-            border: '1px solid #ddd',
-            borderRadius: '4px',
-            backgroundColor: '#fafafa',
-          }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-            <div>
-              <h3 style={{ margin: 0 }}>Overworld Regions Meta</h3>
+      <Stack gap="md">
+        <Paper p="lg" withBorder>
+          <Group justify="space-between" align="flex-start" wrap="nowrap">
+            <Stack gap={4}>
+              <Title order={3}>Overworld Regions Meta</Title>
               {hasImportedOverworld && overworldSource && (
-                <div style={{ fontSize: '0.875rem', color: '#666', marginTop: '0.25rem' }}>
+                <Text size="sm" c="dimmed">
                   Imported: {overworldSource.originalFilename}
                   <br />
-                  <span style={{ fontSize: '0.75rem' }}>
+                  <Text component="span" size="xs">
                     {new Date(overworldSource.importedAtIso || '').toLocaleString()}
-                  </span>
-                </div>
+                  </Text>
+                </Text>
               )}
-            </div>
-            <button
+            </Stack>
+            <Button
               onClick={handleImportOverworldRegionsMeta}
-              disabled={isImportingOverworld || isImportingNether}
-              style={{
-                padding: '0.75rem 1.5rem',
-                fontSize: '1rem',
-                backgroundColor: '#007acc',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: (isImportingOverworld || isImportingNether) ? 'not-allowed' : 'pointer',
-                opacity: (isImportingOverworld || isImportingNether) ? 0.6 : 1,
-              }}
+              loading={isImportingOverworld}
+              disabled={isImportingNether}
             >
-              {isImportingOverworld ? 'Importing...' : hasImportedOverworld ? 'Re-import' : 'Import overworld regions-meta'}
-            </button>
-          </div>
-        </div>
+              {hasImportedOverworld ? 'Re-import' : 'Import overworld regions-meta'}
+            </Button>
+          </Group>
+        </Paper>
 
-        {/* Nether Regions-meta Import */}
-        <div
-          style={{
-            padding: '1.5rem',
-            border: '1px solid #ddd',
-            borderRadius: '4px',
-            backgroundColor: '#fafafa',
-          }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-            <div>
-              <h3 style={{ margin: 0 }}>Nether Regions Meta</h3>
+        <Paper p="lg" withBorder>
+          <Group justify="space-between" align="flex-start" wrap="nowrap">
+            <Stack gap={4}>
+              <Title order={3}>Nether Regions Meta</Title>
               {hasImportedNether && netherSource && (
-                <div style={{ fontSize: '0.875rem', color: '#666', marginTop: '0.25rem' }}>
+                <Text size="sm" c="dimmed">
                   Imported: {netherSource.originalFilename}
                   <br />
-                  <span style={{ fontSize: '0.75rem' }}>
+                  <Text component="span" size="xs">
                     {new Date(netherSource.importedAtIso || '').toLocaleString()}
-                  </span>
-                </div>
+                  </Text>
+                </Text>
               )}
-            </div>
-            <button
+            </Stack>
+            <Button
               onClick={handleImportNetherRegionsMeta}
-              disabled={isImportingOverworld || isImportingNether}
-              style={{
-                padding: '0.75rem 1.5rem',
-                fontSize: '1rem',
-                backgroundColor: '#007acc',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: (isImportingOverworld || isImportingNether) ? 'not-allowed' : 'pointer',
-                opacity: (isImportingOverworld || isImportingNether) ? 0.6 : 1,
-              }}
+              loading={isImportingNether}
+              disabled={isImportingOverworld}
             >
-              {isImportingNether ? 'Importing...' : hasImportedNether ? 'Re-import' : 'Import nether regions-meta'}
-            </button>
-          </div>
-        </div>
-      </div>
+              {hasImportedNether ? 'Re-import' : 'Import nether regions-meta'}
+            </Button>
+          </Group>
+        </Paper>
+      </Stack>
 
-      {/* Import Result */}
       {importResult && (
-        <div
-          style={{
-            marginTop: '1.5rem',
-            padding: '1rem',
-            borderRadius: '4px',
-            backgroundColor: importResult.success ? '#d4edda' : '#f8d7da',
-            border: `1px solid ${importResult.success ? '#c3e6cb' : '#f5c6cb'}`,
-            color: importResult.success ? '#155724' : '#721c24',
-          }}
+        <Alert
+          color={importResult.success ? 'green' : 'red'}
+          title={importResult.success ? '✓ Import successful!' : '✗ Import failed'}
         >
           {importResult.success ? (
-            <div>
-              <strong>✓ Import successful!</strong>
-              {importResult.regionCount !== undefined && (
-                <div style={{ marginTop: '0.5rem' }}>
-                  Imported {importResult.regionCount} region(s).
-                </div>
-              )}
-            </div>
+            importResult.regionCount !== undefined && (
+              <Text size="sm">Imported {importResult.regionCount} region(s).</Text>
+            )
           ) : (
-            <div>
-              <strong>✗ Import failed</strong>
-              {importResult.error && (
-                <div style={{ marginTop: '0.5rem' }}>{importResult.error}</div>
-              )}
-            </div>
+            importResult.error && <Text size="sm">{importResult.error}</Text>
           )}
-        </div>
+        </Alert>
       )}
-    </div>
+    </Stack>
   )
 }

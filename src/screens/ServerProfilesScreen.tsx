@@ -1,4 +1,15 @@
 import { useState, useEffect } from 'react'
+import {
+  Title,
+  Text,
+  TextInput,
+  Button,
+  Group,
+  Stack,
+  Paper,
+  SimpleGrid,
+} from '@mantine/core'
+import { IconPlus, IconServer } from '@tabler/icons-react'
 import type { ServerProfile, ServerSummary } from '../types'
 
 interface ServerProfilesScreenProps {
@@ -56,74 +67,91 @@ export function ServerProfilesScreen({
   }
 
   return (
-    <div style={{ padding: '2rem', maxWidth: '800px', margin: '0 auto' }}>
-      <h1>MC Plugin Manager</h1>
-      <h2>Server Profiles</h2>
-
-      <div style={{ marginBottom: '2rem' }}>
-        <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
-          <input
-            type="text"
-            placeholder="Enter server name..."
-            value={newServerName}
-            onChange={(e) => setNewServerName(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                handleCreateServer()
-              }
-            }}
-            style={{
-              flex: 1,
-              padding: '0.5rem',
-              fontSize: '1rem',
-            }}
-          />
-          <button
-            onClick={handleCreateServer}
-            disabled={isCreating || !newServerName.trim()}
-            style={{
-              padding: '0.5rem 1rem',
-              fontSize: '1rem',
-              cursor: isCreating || !newServerName.trim() ? 'not-allowed' : 'pointer',
-            }}
-          >
-            {isCreating ? 'Creating...' : 'Create Server'}
-          </button>
-        </div>
+    <Stack gap="xl">
+      <div>
+        <Title order={1} mb={4}>
+          Server profiles
+        </Title>
+        <Text size="sm" c="dimmed">
+          Import regions, configure onboarding, and build plugin configs for each server.
+        </Text>
       </div>
+
+      <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
+        <Paper p="lg" withBorder bg="dark.6">
+          <Text size="xs" tt="uppercase" fw={600} c="dimmed" mb={4}>
+            Server profiles
+          </Text>
+          <Title order={2}>{servers.length}</Title>
+        </Paper>
+        <Paper p="lg" withBorder bg="dark.6">
+          <Text size="xs" tt="uppercase" fw={600} c="dimmed" mb={4}>
+            Status
+          </Text>
+          <Title order={2} size="h3">
+            Ready
+          </Title>
+        </Paper>
+      </SimpleGrid>
+
+      <Group gap="sm">
+        <TextInput
+          placeholder="Enter server name..."
+          value={newServerName}
+          onChange={(e) => setNewServerName(e.currentTarget.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              handleCreateServer()
+            }
+          }}
+          flex={1}
+          leftSection={<IconServer size={16} />}
+        />
+        <Button
+          leftSection={<IconPlus size={16} />}
+          onClick={handleCreateServer}
+          loading={isCreating}
+          disabled={!newServerName.trim()}
+        >
+          New server
+        </Button>
+      </Group>
 
       <div>
-        <h3>Existing Servers</h3>
+        <Group justify="space-between" mb="md">
+          <Title order={3}>Recent servers</Title>
+        </Group>
         {servers.length === 0 ? (
-          <p style={{ color: '#666' }}>No servers yet. Create one to get started!</p>
+          <Paper p="xl" withBorder>
+            <Text size="sm" c="dimmed" ta="center">
+              No servers yet. Create one to get started.
+            </Text>
+          </Paper>
         ) : (
-          <ul style={{ listStyle: 'none', padding: 0 }}>
+          <Stack gap="xs">
             {servers.map((server) => (
-              <li
+              <Paper
                 key={server.id}
-                style={{
-                  padding: '1rem',
-                  marginBottom: '0.5rem',
-                  border: '1px solid #ddd',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  backgroundColor: '#f9f9f9',
-                }}
+                className="server-card"
+                p="md"
+                withBorder
+                style={{ cursor: 'pointer' }}
                 onClick={() => handleSelectServer(server.id)}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = '#f0f0f0'
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = '#f9f9f9'
-                }}
+                bg="dark.6"
               >
-                <strong>{server.name}</strong>
-                <div style={{ fontSize: '0.875rem', color: '#666' }}>ID: {server.id}</div>
-              </li>
+                <Group justify="space-between">
+                  <div>
+                    <Text fw={600}>{server.name}</Text>
+                    <Text size="xs" c="dimmed">
+                      {server.id}
+                    </Text>
+                  </div>
+                </Group>
+              </Paper>
             ))}
-          </ul>
+          </Stack>
         )}
       </div>
-    </div>
+    </Stack>
   )
 }

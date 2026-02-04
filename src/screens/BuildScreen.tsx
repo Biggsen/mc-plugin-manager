@@ -1,4 +1,19 @@
 import { useState, useEffect } from 'react'
+import {
+  Title,
+  Text,
+  TextInput,
+  Button,
+  Checkbox,
+  Group,
+  Stack,
+  SimpleGrid,
+  Paper,
+  Alert,
+  Collapse,
+  UnstyledButton,
+  List,
+} from '@mantine/core'
 import type { ServerProfile, BuildResult, BuildReport } from '../types'
 
 const BUILD_PLUGINS = [
@@ -129,435 +144,261 @@ export function BuildScreen({ server }: BuildScreenProps) {
   }
 
   return (
-    <div>
-      <h2>Build Configuration Files</h2>
-      <p style={{ color: '#666', marginBottom: '2rem' }}>
+    <Stack gap="xl">
+      <Title order={2}>Build Configuration Files</Title>
+      <Text size="sm" c="dimmed">
         Generate or include config files for the selected plugins. Use bundled defaults or provide custom sources.
-      </p>
+      </Text>
 
-      {/* Plugin Selection Checkboxes */}
-      <div style={{ marginBottom: '2rem' }}>
-        <label style={{ display: 'block', marginBottom: '0.75rem', fontWeight: 'bold' }}>
+      <Stack gap="xs">
+        <Text size="sm" fw={600}>
           Select Plugins to Generate:
-        </label>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-          {BUILD_PLUGINS.map((p) => (
-            <label key={p.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-              <input
-                type="checkbox"
-                checked={pluginOptions[p.id].generate}
-                onChange={(e) =>
-                  setPluginOptions((prev) => ({
-                    ...prev,
-                    [p.id]: { ...prev[p.id], generate: e.target.checked },
-                  }))
-                }
-                style={{ width: '1.25rem', height: '1.25rem', cursor: 'pointer' }}
-              />
-              <span>{p.label}</span>
-            </label>
+        </Text>
+        <Stack gap="xs">
+            {BUILD_PLUGINS.map((p) => (
+            <Checkbox
+              key={p.id}
+              label={p.label}
+              checked={pluginOptions[p.id].generate}
+              onChange={() =>
+                setPluginOptions((prev) => ({
+                  ...prev,
+                  [p.id]: { ...prev[p.id], generate: !prev[p.id].generate },
+                }))
+              }
+            />
           ))}
-        </div>
-        <div style={{ fontSize: '0.875rem', color: '#666', marginTop: '0.5rem' }}>
+        </Stack>
+        <Text size="sm" c="dimmed">
           Checked plugins will be generated. Leave paths empty to use bundled defaults, or provide custom config files.
-        </div>
-      </div>
+        </Text>
+      </Stack>
 
-      {/* Path Overrides - Collapsible */}
       {BUILD_PLUGINS.some((p) => pluginOptions[p.id].generate) && (
-        <div style={{ marginBottom: '2rem' }}>
-          <button
+        <Stack gap="md">
+          <UnstyledButton
             onClick={() => setShowOverrides(!showOverrides)}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              padding: '0.5rem 0',
-              backgroundColor: 'transparent',
-              border: 'none',
-              color: '#007acc',
-              cursor: 'pointer',
-              fontSize: '0.875rem',
-              textDecoration: 'underline',
-            }}
+            style={{ color: 'var(--mantine-color-blue-6)', textDecoration: 'underline', fontSize: '0.875rem' }}
           >
-            <span>{showOverrides ? '▼' : '▶'}</span>
-            <span>Custom config file overrides (optional)</span>
-          </button>
+            {showOverrides ? '▼' : '▶'} Custom config file overrides (optional)
+          </UnstyledButton>
 
-          {showOverrides && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', marginTop: '1rem' }}>
+          <Collapse in={showOverrides}>
+            <Stack gap="lg">
               {BUILD_PLUGINS.filter((p) => pluginOptions[p.id].generate).map((p) => (
-                <div key={p.id}>
-                  <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
+                <Stack key={p.id} gap="xs">
+                  <Text size="sm" fw={600}>
                     {p.overrideLabel}
-                  </label>
-                  <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    <input
-                      type="text"
+                  </Text>
+                  <Group gap="sm">
+                    <TextInput
                       value={pluginOptions[p.id].path}
-                      onChange={(e) =>
-                        setPluginOptions((prev) => ({
-                          ...prev,
-                          [p.id]: { ...prev[p.id], path: e.target.value },
-                        }))
-                      }
                       placeholder="Leave empty to use bundled default, or select custom file..."
                       readOnly
-                      style={{
-                        flex: 1,
-                        padding: '0.5rem',
-                        fontSize: '1rem',
-                        border: '1px solid #ddd',
-                        borderRadius: '4px',
-                        backgroundColor: '#f9f9f9',
-                      }}
+                      flex={1}
                     />
-                    <button
-                      onClick={() => handleSelectPluginFile(p.id)}
-                      style={{
-                        padding: '0.5rem 1rem',
-                        fontSize: '1rem',
-                        backgroundColor: '#6c757d',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '4px',
-                        cursor: 'pointer',
-                      }}
-                    >
+                    <Button variant="default" onClick={() => handleSelectPluginFile(p.id)}>
                       Browse...
-                    </button>
-                  </div>
-                  <div style={{ fontSize: '0.875rem', color: '#666', marginTop: '0.25rem' }}>
+                    </Button>
+                  </Group>
+                  <Text size="xs" c="dimmed">
                     {pluginOptions[p.id].path ? 'Using custom file' : 'Will use bundled default template'}
-                  </div>
-                </div>
+                  </Text>
+                </Stack>
               ))}
-            </div>
-          )}
-        </div>
+            </Stack>
+          </Collapse>
+        </Stack>
       )}
 
-      {/* Output Directory */}
-      <div style={{ marginBottom: '2rem' }}>
-          <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
-            Output Directory <span style={{ color: '#d9534f' }}>*</span>
-          </label>
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <input
-              type="text"
-              value={outDir}
-              onChange={(e) => setOutDir(e.target.value)}
-              placeholder="Select output directory..."
-              readOnly
-              style={{
-                flex: 1,
-                padding: '0.5rem',
-                fontSize: '1rem',
-                border: '1px solid #ddd',
-                borderRadius: '4px',
-                backgroundColor: '#f9f9f9',
-              }}
-            />
-            <button
-              onClick={handleSelectOutputDir}
-              style={{
-                padding: '0.5rem 1rem',
-                fontSize: '1rem',
-                backgroundColor: '#6c757d',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-              }}
-            >
-              Browse...
-            </button>
-          </div>
-          <div style={{ fontSize: '0.875rem', color: '#666', marginTop: '0.25rem' }}>
-            Generated files will be written to this directory
-          </div>
-      </div>
+      <Stack gap="xs">
+        <Text size="sm" fw={600}>
+          Output Directory <Text component="span" c="red">*</Text>
+        </Text>
+        <Group gap="sm">
+          <TextInput
+            value={outDir}
+            onChange={(e) => setOutDir(e.currentTarget.value)}
+            placeholder="Select output directory..."
+            readOnly
+            flex={1}
+          />
+          <Button variant="default" onClick={handleSelectOutputDir}>
+            Browse...
+          </Button>
+        </Group>
+        <Text size="xs" c="dimmed">
+          Generated files will be written to this directory
+        </Text>
+      </Stack>
 
-      {/* Validation Error */}
       {validationError && (
-        <div
-          style={{
-            marginBottom: '1rem',
-            padding: '0.75rem',
-            borderRadius: '4px',
-            backgroundColor: '#f8d7da',
-            border: '1px solid #f5c6cb',
-            color: '#721c24',
-          }}
-        >
+        <Alert color="red" title="Validation Error">
           {validationError}
-        </div>
+        </Alert>
       )}
 
-      {/* Build Button */}
-      <div>
-        <button
-          onClick={handleBuild}
-          disabled={isBuilding}
-          style={{
-            padding: '0.75rem 2rem',
-            fontSize: '1rem',
-            backgroundColor: isBuilding ? '#ccc' : '#007acc',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: isBuilding ? 'not-allowed' : 'pointer',
-            opacity: isBuilding ? 0.6 : 1,
-          }}
-        >
-          {isBuilding ? 'Building...' : 'Build Configs'}
-        </button>
-      </div>
+      <Button onClick={handleBuild} loading={isBuilding}>
+        Build Configs
+      </Button>
 
-      {/* Build Result */}
       {buildResult && (
-        <div
-          style={{
-            marginTop: '1.5rem',
-            padding: '1rem',
-            borderRadius: '4px',
-            backgroundColor: buildResult.success ? '#d4edda' : '#f8d7da',
-            border: `1px solid ${buildResult.success ? '#c3e6cb' : '#f5c6cb'}`,
-            color: buildResult.success ? '#155724' : '#721c24',
-          }}
+        <Alert
+          color={buildResult.success ? 'green' : 'red'}
+          title={buildResult.success ? '✓ Build successful!' : '✗ Build failed'}
         >
           {buildResult.success ? (
-            <div>
-              <strong>✓ Build successful!</strong>
-              {buildResult.buildId && (
-                <div style={{ marginTop: '0.5rem' }}>
-                  Build ID: {buildResult.buildId}
-                  <br />
-                  Output directory: {outDir}
-                </div>
-              )}
-            </div>
+            buildResult.buildId && (
+              <Text size="sm">
+                Build ID: {buildResult.buildId}
+                <br />
+                Output directory: {outDir}
+              </Text>
+            )
           ) : (
-            <div>
-              <strong>✗ Build failed</strong>
+            <>
               {buildResult.error && (
-                <div style={{ marginTop: '0.5rem' }}>
-                  {buildResult.error}
+                <>
+                  <Text size="sm">{buildResult.error}</Text>
                   {buildResult.buildId && (
-                    <div style={{ marginTop: '0.5rem', fontSize: '0.875rem' }}>
+                    <Text size="xs" mt="xs">
                       Build ID: {buildResult.buildId}
-                    </div>
+                    </Text>
                   )}
-                </div>
+                </>
               )}
-            </div>
+            </>
           )}
-        </div>
+        </Alert>
       )}
 
-      {/* Build Report */}
       {buildReport && (
-        <div
-          style={{
-            marginTop: '1.5rem',
-            padding: '1.5rem',
-            border: '1px solid #ddd',
-            borderRadius: '4px',
-            backgroundColor: '#f9f9f9',
-          }}
-        >
-          <h3 style={{ marginTop: 0 }}>Build Report</h3>
-          
-          <div style={{ marginBottom: '1rem' }}>
-            <div style={{ fontSize: '0.875rem', color: '#666' }}>
-              Build ID: <strong>{buildReport.buildId}</strong>
-            </div>
-            <div style={{ fontSize: '0.875rem', color: '#666' }}>
+        <Paper p="lg" withBorder>
+          <Title order={3} mb="md">Build Report</Title>
+
+          <Stack gap="xs" mb="md">
+            <Text size="sm" c="dimmed">
+              Build ID: <Text component="span" fw={600} c="dark">{buildReport.buildId}</Text>
+            </Text>
+            <Text size="sm" c="dimmed">
               Timestamp: {new Date(buildReport.timestamp).toLocaleString()}
-            </div>
-          </div>
+            </Text>
+          </Stack>
 
-          <div style={{ marginBottom: '1rem' }}>
-            <div style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>Region Counts:</div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '1rem', marginBottom: '1rem' }}>
-              <div>
-                <div style={{ fontSize: '0.875rem', color: '#666' }}>Overworld</div>
-                <div style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>
-                  {buildReport.regionCounts.overworld}
-                </div>
-              </div>
-              <div>
-                <div style={{ fontSize: '0.875rem', color: '#666' }}>Nether</div>
-                <div style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>
-                  {buildReport.regionCounts.nether}
-                </div>
-              </div>
-              <div>
-                <div style={{ fontSize: '0.875rem', color: '#666' }}>Hearts</div>
-                <div style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>
-                  {buildReport.regionCounts.hearts}
-                </div>
-              </div>
-              <div>
-                <div style={{ fontSize: '0.875rem', color: '#666' }}>Villages</div>
-                <div style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>
-                  {buildReport.regionCounts.villages}
-                </div>
-              </div>
-              <div>
-                <div style={{ fontSize: '0.875rem', color: '#666' }}>Regions</div>
-                <div style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>
-                  {buildReport.regionCounts.regions}
-                </div>
-              </div>
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '1rem' }}>
-              <div>
-                <div style={{ fontSize: '0.875rem', color: '#666' }}>System</div>
-                <div style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>
-                  {buildReport.regionCounts.system}
-                </div>
-              </div>
-            </div>
-          </div>
+          <Stack gap="md" mb="md">
+            <Text size="sm" fw={600}>Region Counts:</Text>
+            <SimpleGrid cols={{ base: 3, sm: 5 }} spacing="md">
+              {[
+                { label: 'Overworld', value: buildReport.regionCounts.overworld },
+                { label: 'Nether', value: buildReport.regionCounts.nether },
+                { label: 'Hearts', value: buildReport.regionCounts.hearts },
+                { label: 'Villages', value: buildReport.regionCounts.villages },
+                { label: 'Regions', value: buildReport.regionCounts.regions },
+                { label: 'System', value: buildReport.regionCounts.system },
+              ].map(({ label, value }) => (
+                <Stack key={label} gap={4}>
+                  <Text size="sm" c="dimmed">{label}</Text>
+                  <Text size="lg" fw={700}>{value}</Text>
+                </Stack>
+              ))}
+            </SimpleGrid>
+          </Stack>
 
-          <div style={{ marginBottom: '1rem' }}>
-            <div style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>Generated:</div>
-            <div>
+          <Stack gap="xs" mb="md">
+            <Text size="sm" fw={600}>Generated:</Text>
+            <Text size="sm">
               {(() => {
                 const generated = BUILD_PLUGINS.filter((p) => buildReport.generated?.[p.id]).map((p) => '✓ ' + p.label)
                 return generated.length > 0 ? generated.join(' • ') : 'None'
               })()}
-            </div>
-          </div>
+            </Text>
+          </Stack>
 
           {buildReport.configSources && (
-            <div style={{ marginBottom: '1rem' }}>
-              <div style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>Config Sources:</div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.875rem' }}>
+            <Stack gap="xs" mb="md">
+              <Text size="sm" fw={600}>Config Sources:</Text>
+              <Stack gap={4}>
                 {BUILD_PLUGINS.map((p) => {
                   const src = buildReport.configSources?.[p.id]
                   if (!src) return null
                   return (
-                    <div key={p.id}>
-                      <strong>{p.label}:</strong>{' '}
+                    <Text key={p.id} size="sm">
+                      <Text component="span" fw={600}>{p.label}:</Text>{' '}
                       {src.isDefault ? (
-                        <span style={{ color: '#28a745' }}>Bundled default</span>
+                        <Text component="span" c="green">Bundled default</Text>
                       ) : (
-                        <span style={{ color: '#666' }}>{src.path}</span>
+                        <Text component="span" c="dimmed">{src.path}</Text>
                       )}
-                    </div>
+                    </Text>
                   )
                 })}
-              </div>
-            </div>
+              </Stack>
+            </Stack>
           )}
 
           {buildReport.computedCounts && (
-            <div style={{ marginBottom: '1rem' }}>
-              <div style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>Computed Counts (TAB):</div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem' }}>
-                <div>
-                  <div style={{ fontSize: '0.875rem', color: '#666' }}>Overworld Regions</div>
-                  <div style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>
-                    {buildReport.computedCounts.overworldRegions}
-                  </div>
-                </div>
-                <div>
-                  <div style={{ fontSize: '0.875rem', color: '#666' }}>Overworld Hearts</div>
-                  <div style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>
-                    {buildReport.computedCounts.overworldHearts}
-                  </div>
-                </div>
-                <div>
-                  <div style={{ fontSize: '0.875rem', color: '#666' }}>Nether Regions</div>
-                  <div style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>
-                    {buildReport.computedCounts.netherRegions}
-                  </div>
-                </div>
-                <div>
-                  <div style={{ fontSize: '0.875rem', color: '#666' }}>Nether Hearts</div>
-                  <div style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>
-                    {buildReport.computedCounts.netherHearts}
-                  </div>
-                </div>
-                <div>
-                  <div style={{ fontSize: '0.875rem', color: '#666' }}>Villages</div>
-                  <div style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>
-                    {buildReport.computedCounts.villages}
-                  </div>
-                </div>
-                <div>
-                  <div style={{ fontSize: '0.875rem', color: '#666' }}>Total</div>
-                  <div style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>
-                    {buildReport.computedCounts.total}
-                  </div>
-                </div>
-              </div>
-            </div>
+            <Stack gap="md" mb="md">
+              <Text size="sm" fw={600}>Computed Counts (TAB):</Text>
+              <SimpleGrid cols={{ base: 2, sm: 3 }} spacing="md">
+                {[
+                  { label: 'Overworld Regions', value: buildReport.computedCounts.overworldRegions },
+                  { label: 'Overworld Hearts', value: buildReport.computedCounts.overworldHearts },
+                  { label: 'Nether Regions', value: buildReport.computedCounts.netherRegions },
+                  { label: 'Nether Hearts', value: buildReport.computedCounts.netherHearts },
+                  { label: 'Villages', value: buildReport.computedCounts.villages },
+                  { label: 'Total', value: buildReport.computedCounts.total },
+                ].map(({ label, value }) => (
+                  <Stack key={label} gap={4}>
+                    <Text size="sm" c="dimmed">{label}</Text>
+                    <Text size="lg" fw={700}>{value}</Text>
+                  </Stack>
+                ))}
+              </SimpleGrid>
+            </Stack>
           )}
 
           {buildReport.warnings && buildReport.warnings.length > 0 && (
-            <div style={{ marginBottom: '1rem' }}>
-              <div style={{ fontWeight: 'bold', marginBottom: '0.5rem', color: '#856404' }}>
-                Warnings:
-              </div>
-              <ul style={{ margin: 0, paddingLeft: '1.5rem', color: '#856404' }}>
+            <Stack gap="xs" mb="md">
+              <Text size="sm" fw={600} c="yellow.7">Warnings:</Text>
+              <List size="sm" c="yellow.7">
                 {buildReport.warnings.map((warning, i) => (
-                  <li key={i}>{warning}</li>
+                  <List.Item key={i}>{warning}</List.Item>
                 ))}
-              </ul>
-            </div>
+              </List>
+            </Stack>
           )}
 
           {buildReport.errors && buildReport.errors.length > 0 && (
-            <div>
-              <div style={{ fontWeight: 'bold', marginBottom: '0.5rem', color: '#721c24' }}>
-                Errors:
-              </div>
-              <ul style={{ margin: 0, paddingLeft: '1.5rem', color: '#721c24' }}>
+            <Stack gap="xs">
+              <Text size="sm" fw={600} c="red">Errors:</Text>
+              <List size="sm" c="red">
                 {buildReport.errors.map((error, i) => (
-                  <li key={i}>{error}</li>
+                  <List.Item key={i}>{error}</List.Item>
                 ))}
-              </ul>
-            </div>
+              </List>
+            </Stack>
           )}
-        </div>
+        </Paper>
       )}
 
-      {/* Past Builds */}
       {pastBuilds.length > 0 && (
-        <div
-          style={{
-            marginTop: '1.5rem',
-            padding: '1rem',
-            border: '1px solid #ddd',
-            borderRadius: '4px',
-            backgroundColor: '#f9f9f9',
-          }}
-        >
-          <h3 style={{ marginTop: 0 }}>Past Builds</h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+        <Paper p="md" withBorder>
+          <Title order={3} mb="md">Past Builds</Title>
+          <Stack gap="xs">
             {pastBuilds.map((buildId) => (
-              <button
+              <Button
                 key={buildId}
+                variant={buildReport?.buildId === buildId ? 'light' : 'default'}
                 onClick={() => loadBuildReport(buildId)}
-                style={{
-                  padding: '0.5rem',
-                  textAlign: 'left',
-                  backgroundColor: buildReport?.buildId === buildId ? '#e7f3ff' : 'white',
-                  border: '1px solid #ddd',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                }}
+                fullWidth
+                justify="flex-start"
               >
                 {buildId}
-              </button>
+              </Button>
             ))}
-          </div>
-        </div>
+          </Stack>
+        </Paper>
       )}
-    </div>
+    </Stack>
   )
 }

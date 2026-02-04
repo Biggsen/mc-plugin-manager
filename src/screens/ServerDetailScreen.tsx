@@ -1,8 +1,23 @@
 import { useState, useEffect } from 'react'
+import {
+  Button,
+  Group,
+  Stack,
+  SimpleGrid,
+  Text,
+  Paper,
+  NavLink,
+  Box,
+  Title,
+  SegmentedControl,
+} from '@mantine/core'
+import { IconArrowLeft, IconFileImport, IconUser, IconHammer } from '@tabler/icons-react'
 import type { ServerProfile } from '../types'
 import { ImportScreen } from './ImportScreen'
 import { OnboardingScreen } from './OnboardingScreen'
 import { BuildScreen } from './BuildScreen'
+
+type SectionValue = 'import' | 'onboarding' | 'build'
 
 interface ServerDetailScreenProps {
   server: ServerProfile
@@ -11,10 +26,9 @@ interface ServerDetailScreenProps {
 
 export function ServerDetailScreen({ server: initialServer, onBack }: ServerDetailScreenProps) {
   const [server, setServer] = useState<ServerProfile>(initialServer)
-  const [activeTab, setActiveTab] = useState<'import' | 'onboarding' | 'build'>('import')
+  const [activeSection, setActiveSection] = useState<SectionValue>('import')
 
   useEffect(() => {
-    // Refresh server data when it changes
     loadServer()
   }, [initialServer.id])
 
@@ -40,114 +54,95 @@ export function ServerDetailScreen({ server: initialServer, onBack }: ServerDeta
   const villageCount = server.regions.filter((r) => r.kind === 'village').length
   const regularCount = server.regions.filter((r) => r.kind === 'region').length
 
+  const stats = [
+    { label: 'Overworld', value: overworldCount },
+    { label: 'Nether', value: netherCount },
+    { label: 'Hearts', value: heartCount },
+    { label: 'Villages', value: villageCount },
+    { label: 'Regions', value: regularCount },
+    { label: 'System', value: systemCount },
+  ]
+
+  const navItems: { value: SectionValue; label: string; icon: React.ReactNode }[] = [
+    { value: 'import', label: 'Import Regions', icon: <IconFileImport size={18} /> },
+    { value: 'onboarding', label: 'Onboarding', icon: <IconUser size={18} /> },
+    { value: 'build', label: 'Build', icon: <IconHammer size={18} /> },
+  ]
+
   return (
-    <div style={{ padding: '2rem', maxWidth: '1000px', margin: '0 auto' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem' }}>
-        <button
+    <Stack gap="md">
+      <Group justify="space-between" align="flex-start">
+        <Button
+          variant="subtle"
+          leftSection={<IconArrowLeft size={16} />}
           onClick={onBack}
-          style={{
-            padding: '0.5rem 1rem',
-            fontSize: '1rem',
-            cursor: 'pointer',
-          }}
+          size="sm"
         >
-          ← Back to Servers
-        </button>
-        <h1 style={{ margin: 0 }}>Server: {server.name}</h1>
-      </div>
+          Back to Servers
+        </Button>
+        <SegmentedControl
+          value={activeSection}
+          onChange={(v) => setActiveSection(v as SectionValue)}
+          data={navItems.map((i) => ({ value: i.value, label: i.label }))}
+          hiddenFrom="sm"
+        />
+      </Group>
 
-      {/* Statistics */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
-          gap: '1rem',
-          marginBottom: '2rem',
-          padding: '1rem',
-          backgroundColor: '#f5f5f5',
-          borderRadius: '4px',
-        }}
+    <Group align="flex-start" gap="xl" wrap="nowrap" style={{ minHeight: '100%' }}>
+      <Box
+        w={260}
+        style={{ flexShrink: 0 }}
+        visibleFrom="sm"
+        component="nav"
       >
-        <div>
-          <div style={{ fontSize: '0.875rem', color: '#666' }}>Overworld</div>
-          <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{overworldCount}</div>
-        </div>
-        <div>
-          <div style={{ fontSize: '0.875rem', color: '#666' }}>Nether</div>
-          <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{netherCount}</div>
-        </div>
-        <div>
-          <div style={{ fontSize: '0.875rem', color: '#666' }}>Hearts</div>
-          <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{heartCount}</div>
-        </div>
-        <div>
-          <div style={{ fontSize: '0.875rem', color: '#666' }}>Villages</div>
-          <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{villageCount}</div>
-        </div>
-        <div>
-          <div style={{ fontSize: '0.875rem', color: '#666' }}>Regions</div>
-          <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{regularCount}</div>
-        </div>
-        <div>
-          <div style={{ fontSize: '0.875rem', color: '#666' }}>System</div>
-          <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{systemCount}</div>
-        </div>
-      </div>
+        <Stack gap="xs">
+          <Text size="xs" tt="uppercase" fw={600} c="dimmed" px="sm">
+            Operations
+          </Text>
+          {navItems.map((item) => (
+            <NavLink
+              key={item.value}
+              active={activeSection === item.value}
+              leftSection={item.icon}
+              label={item.label}
+              onClick={() => setActiveSection(item.value)}
+            />
+          ))}
+        </Stack>
+      </Box>
 
-      {/* Tabs */}
-      <div style={{ borderBottom: '1px solid #ddd', marginBottom: '1rem' }}>
-        <button
-          onClick={() => setActiveTab('import')}
-          style={{
-            padding: '0.75rem 1.5rem',
-            fontSize: '1rem',
-            border: 'none',
-            borderBottom: activeTab === 'import' ? '2px solid #007acc' : '2px solid transparent',
-            backgroundColor: 'transparent',
-            cursor: 'pointer',
-            fontWeight: activeTab === 'import' ? 'bold' : 'normal',
-          }}
-        >
-          Import Regions
-        </button>
-        <button
-          onClick={() => setActiveTab('onboarding')}
-          style={{
-            padding: '0.75rem 1.5rem',
-            fontSize: '1rem',
-            border: 'none',
-            borderBottom: activeTab === 'onboarding' ? '2px solid #007acc' : '2px solid transparent',
-            backgroundColor: 'transparent',
-            cursor: 'pointer',
-            fontWeight: activeTab === 'onboarding' ? 'bold' : 'normal',
-          }}
-        >
-          Onboarding
-        </button>
-        <button
-          onClick={() => setActiveTab('build')}
-          style={{
-            padding: '0.75rem 1.5rem',
-            fontSize: '1rem',
-            border: 'none',
-            borderBottom: activeTab === 'build' ? '2px solid #007acc' : '2px solid transparent',
-            backgroundColor: 'transparent',
-            cursor: 'pointer',
-            fontWeight: activeTab === 'build' ? 'bold' : 'normal',
-          }}
-        >
-          Build
-        </button>
-      </div>
+      <Stack gap="xl" style={{ flex: 1, minWidth: 0 }} p="md" pt={0} px={0}>
+        <div>
+          <Title order={1} mb={4}>
+            {server.name}
+          </Title>
+          <Text size="sm" c="dimmed">
+            Import regions, configure onboarding, and build configs.
+          </Text>
+        </div>
 
-      {/* Tab Content */}
-      {activeTab === 'import' && (
-        <ImportScreen server={server} onServerUpdate={handleServerUpdate} />
-      )}
-      {activeTab === 'onboarding' && (
-        <OnboardingScreen server={server} onServerUpdate={handleServerUpdate} />
-      )}
-      {activeTab === 'build' && <BuildScreen server={server} />}
-    </div>
+        <SimpleGrid cols={{ base: 2, sm: 3, md: 6 }} spacing="md">
+          {stats.map(({ label, value }) => (
+            <Paper key={label} p="md" withBorder bg="dark.6">
+              <Text size="xs" c="dimmed" mb={2}>
+                {label}
+              </Text>
+              <Text size="xl" fw={700}>
+                {value}
+              </Text>
+            </Paper>
+          ))}
+        </SimpleGrid>
+
+        {activeSection === 'import' && (
+          <ImportScreen server={server} onServerUpdate={handleServerUpdate} />
+        )}
+        {activeSection === 'onboarding' && (
+          <OnboardingScreen server={server} onServerUpdate={handleServerUpdate} />
+        )}
+        {activeSection === 'build' && <BuildScreen server={server} />}
+      </Stack>
+    </Group>
+    </Stack>
   )
 }
