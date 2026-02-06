@@ -1947,19 +1947,18 @@ Custom:
           Execute:
             - ce call get_book_respiration_3 player:PLAYER
     30:
-      Message: You discovered half of all the villages!
+      Message: You discovered 30 villages!
       Name: villages_discovered_30
-      DisplayName: Village Trailblazer
+      DisplayName: Village Pioneer
       Type: normal
       Reward:
-        Experience: 200
+        Experience: 100
         Item:
-          - diamond 16
-          - emerald 32
-          - yellow_shulker_box 1
+          - diamond 10
+          - emerald 20
         Command:
           Execute:
-            - ce call get_book_fortune_3 player:PLAYER
+            - ce call get_book_blast_protection_4 player:PLAYER
     40:
       Message: You discovered 40 villages!
       Name: villages_discovered_40
@@ -2000,9 +1999,23 @@ Custom:
         Command:
           Execute:
             - ce call get_book_efficiency_5 player:PLAYER
-    67:
+    _half:
+      Message: You discovered half of all the villages!
+      Name: villages_discovered_half
+      DisplayName: Village Trailblazer
+      Type: normal
+      Reward:
+        Experience: 200
+        Item:
+          - diamond 16
+          - emerald 32
+          - yellow_shulker_box 1
+        Command:
+          Execute:
+            - ce call get_book_fortune_3 player:PLAYER
+    _all:
       Message: You discovered all the villages!
-      Name: villages_discovered_59
+      Name: villages_discovered_all
       DisplayName: Village Legend
       Type: rare
       Reward:
