@@ -47,20 +47,38 @@ export function ServerDetailScreen({ server: initialServer, onBack }: ServerDeta
     setServer(updated)
   }
 
-  const overworldCount = server.regions.filter((r) => r.world === 'overworld').length
-  const netherCount = server.regions.filter((r) => r.world === 'nether').length
-  const heartCount = server.regions.filter((r) => r.kind === 'heart').length
-  const systemCount = server.regions.filter((r) => r.kind === 'system').length
-  const villageCount = server.regions.filter((r) => r.kind === 'village').length
-  const regularCount = server.regions.filter((r) => r.kind === 'region').length
+  const overworldRegions = server.regions.filter((r) => r.world === 'overworld' && r.kind === 'region').length
+  const overworldVillages = server.regions.filter((r) => r.world === 'overworld' && r.kind === 'village').length
+  const overworldHearts = server.regions.filter((r) => r.world === 'overworld' && r.kind === 'heart').length
+  const netherRegions = server.regions.filter((r) => r.world === 'nether' && r.kind === 'region').length
+  const netherHearts = server.regions.filter((r) => r.world === 'nether' && r.kind === 'heart').length
+  const totalRegions = server.regions.filter((r) => r.kind !== 'system').length
+  const spawnConfigured = server.spawnCenter != null || (server.onboarding?.teleport != null) ? 1 : 0
 
-  const stats = [
-    { label: 'Overworld', value: overworldCount },
-    { label: 'Nether', value: netherCount },
-    { label: 'Hearts', value: heartCount },
-    { label: 'Villages', value: villageCount },
-    { label: 'Regions', value: regularCount },
-    { label: 'System', value: systemCount },
+  const statSections = [
+    {
+      title: 'Overworld',
+      stats: [
+        { label: 'Regions', value: overworldRegions },
+        { label: 'Villages', value: overworldVillages },
+        { label: 'Hearts', value: overworldHearts },
+      ],
+    },
+    {
+      title: 'Nether',
+      stats: [
+        { label: 'Regions', value: netherRegions },
+        { label: 'Hearts', value: netherHearts },
+      ],
+    },
+    {
+      title: 'Totals',
+      stats: [{ label: 'Region total', value: totalRegions }],
+    },
+    {
+      title: 'Spawn',
+      stats: [{ label: 'Configured', value: spawnConfigured }],
+    },
   ]
 
   const navItems: { value: SectionValue; label: string; icon: React.ReactNode }[] = [
@@ -121,15 +139,24 @@ export function ServerDetailScreen({ server: initialServer, onBack }: ServerDeta
           </Text>
         </div>
 
-        <SimpleGrid cols={{ base: 2, sm: 3, md: 6 }} spacing="md">
-          {stats.map(({ label, value }) => (
-            <Paper key={label} p="md" withBorder bg="dark.6">
-              <Text size="xs" c="dimmed" mb={2}>
-                {label}
+        <SimpleGrid cols={{ base: 1, sm: 2, md: 4 }} spacing="md">
+          {statSections.map(({ title, stats }) => (
+            <Paper key={title} p="md" withBorder bg="dark.6">
+              <Text size="xs" tt="uppercase" c="dimmed" fw={600} mb="sm">
+                {title}
               </Text>
-              <Text size="xl" fw={700}>
-                {value}
-              </Text>
+              <Stack gap="xs">
+                {stats.map(({ label, value }) => (
+                  <Group key={label} justify="space-between" wrap="nowrap">
+                    <Text size="sm" c="dimmed">
+                      {label}
+                    </Text>
+                    <Text size="md" fw={600}>
+                      {value}
+                    </Text>
+                  </Group>
+                ))}
+              </Stack>
             </Paper>
           ))}
         </SimpleGrid>
