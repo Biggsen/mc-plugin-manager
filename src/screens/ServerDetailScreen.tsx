@@ -109,7 +109,7 @@ export function ServerDetailScreen({ server: initialServer, onBack }: ServerDeta
     <Group align="flex-start" gap="xl" wrap="nowrap" style={{ minHeight: '100%' }}>
       <Box
         w={260}
-        style={{ flexShrink: 0 }}
+        style={{ flexShrink: 0, position: 'sticky', top: 70, alignSelf: 'flex-start' }}
         visibleFrom="sm"
         component="nav"
       >
