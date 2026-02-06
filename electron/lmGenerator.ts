@@ -94,54 +94,38 @@ export function generateOwnedLMRules(
     }
   }
 
-  // 2. Generate region-band rules
-  if (levelledMobs?.regionBands) {
-    const validDifficulties = ['easy', 'normal', 'hard', 'severe', 'deadly']
-    
-    // Create a map of region IDs for quick lookup
-    const regionMap = new Map<string, RegionRecord>()
-    for (const region of regions) {
-      regionMap.set(region.id, region)
-    }
+  // 2. Generate region-band rules for all regions/hearts in profile (overworld + nether)
+  const validDifficulties = ['easy', 'normal', 'hard', 'severe', 'deadly']
+  const defaultDifficulty = 'normal'
+  const regionBands = levelledMobs?.regionBands ?? {}
 
-    // Process each region in regionBands
-    for (const [regionId, difficulty] of Object.entries(levelledMobs.regionBands)) {
-      // Skip if difficulty is invalid
-      if (!validDifficulties.includes(difficulty.toLowerCase())) {
-        console.warn(`Invalid difficulty for region ${regionId}: ${difficulty}, skipping`)
-        continue
-      }
+  const bandRegions = regions.filter((r) => r.kind === 'region' || r.kind === 'heart')
+  for (const region of bandRegions) {
+    const difficultyRaw = regionBands[region.id] ?? defaultDifficulty
+    const difficulty = validDifficulties.includes(difficultyRaw.toLowerCase())
+      ? difficultyRaw.toLowerCase()
+      : defaultDifficulty
 
-      // Skip if region doesn't exist in profile.regions (intersection rule)
-      const region = regionMap.get(regionId)
-      if (!region) {
-        console.warn(`Region ${regionId} in regionBands not found in profile.regions, skipping`)
-        continue
-      }
+    const regionName = snakeToTitleCase(region.id)
+    const difficultyTitle = titleCase(difficulty)
+    const worldName = mapWorldForLM(region.world)
 
-      // Generate rule
-      const regionName = snakeToTitleCase(regionId)
-      const difficultyTitle = titleCase(difficulty)
-      const worldName = mapWorldForLM(region.world)
-
-      result.regionBandRules.push({
-        'custom-rule': `${regionName} - ${difficultyTitle}`,
-        'is-enabled': true,
-        'use-preset': `lvlstrategy-${difficulty.toLowerCase()}`,
-        conditions: {
-          worlds: worldName,
-          'worldguard-regions': regionId,
-        },
-      })
-    }
-
-    // Sort region-band rules by custom-rule name
-    result.regionBandRules.sort((a, b) => {
-      const nameA = a['custom-rule'] || ''
-      const nameB = b['custom-rule'] || ''
-      return nameA.localeCompare(nameB)
+    result.regionBandRules.push({
+      'custom-rule': `${regionName} - ${difficultyTitle}`,
+      'is-enabled': true,
+      'use-preset': `lvlstrategy-${difficulty}`,
+      conditions: {
+        worlds: worldName,
+        'worldguard-regions': region.id,
+      },
     })
   }
+
+  result.regionBandRules.sort((a, b) => {
+    const nameA = a['custom-rule'] || ''
+    const nameB = b['custom-rule'] || ''
+    return nameA.localeCompare(nameB)
+  })
 
   return result
 }
@@ -241,13 +225,13 @@ export function mergeLMConfig(
     }
   }
 
-  // Stringify with options that preserve formatting
+  // Stringify with double-quoted strings so apostrophes in names (e.g. Mor'gath) need no escaping
   return doc.toString({
     indent: 2,
     lineWidth: 0,
     simpleKeys: false,
     doubleQuotedAsJSON: false,
-    defaultStringType: 'QUOTE_SINGLE',
+    defaultStringType: 'QUOTE_DOUBLE',
     defaultKeyType: 'PLAIN',
   })
 }
