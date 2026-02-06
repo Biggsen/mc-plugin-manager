@@ -111,7 +111,7 @@ function generateRegionHeartDiscoverOnce(): CEEvent {
     actions: {
       default: [
         'message: &7Region hearts have an unbreakable lodestone',
-        "message: &dUse a compass on the lodestone to lock it to the region. Then you can always find this region again!",
+        'message: &dBind a compass to it to always find this region again',
       ],
     },
   }
