@@ -611,12 +611,7 @@ EffectsHeld:
 #======================================================================================================================#
 
 # Count player connections during the day; statistic increases at most once per day.
-Connections:
-  1:
-    Message: You connected to our server for the first time!
-    Name: connect_1
-    DisplayName: Good Choice
-    Type: normal
+Connections: {}
 
 # Count player deaths.
 Deaths:
