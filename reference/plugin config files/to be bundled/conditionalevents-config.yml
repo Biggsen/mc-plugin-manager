@@ -57,15 +57,18 @@ Events:
     one_time: true
     actions:
       default:
-        - 'message: First Join!'
-        - 'console_command: tp %player% 326.5 100 -291.5'
-        - 'console_command: aach give discoverWarriotos %player%'
+        - 'console_command: tp %player% 326 64 -291'
+        - 'wait: 1'
+        - 'title: 20;100;20;Welcome to {SERVER_NAME};Where the journey matters'
+        - 'wait: 15'
+        - 'console_command: aach give discoverHolarea %player%'
         - 'console_command: aach add 1 Custom.regions_discovered %player%'
+        - 'wait: 15'
         - 'console_command: aach add 1 Custom.total_discovered %player%'
+        - 'title: 20;100;20;Your first reward!;Open crates with /cc'
         - 'console_command: cc give virtual RegionCrate 1 %player%'
-        - 'message: &dTip: Use &b/cc &dto open your crates and get rewards!'
-        - 'message: &dFor help on how to play use &b/guides'
-      one-time:
+        - 'wait: 15'
+        - 'message: &bFor help on how to play use &e/guides'
   region_heart_discover_once:
     type: wgevents_region_enter
     conditions:

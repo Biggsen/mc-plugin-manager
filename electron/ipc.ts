@@ -459,7 +459,8 @@ ipcMain.handle(
           const usingDefaultCE = !inputs.cePath || inputs.cePath.trim().length === 0
 
           const ownedEvents = generateOwnedCEEvents(profile.regions, profile.onboarding)
-          const mergedCEContent = mergeCEConfig(ceConfigPath, ownedEvents)
+          let mergedCEContent = mergeCEConfig(ceConfigPath, ownedEvents)
+          mergedCEContent = mergedCEContent.replace(/\{SERVER_NAME\}/g, profile.name)
           
           // Validate diff (diff gate)
           const ceValidation = validateCEDiff(ceConfigPath, mergedCEContent)
