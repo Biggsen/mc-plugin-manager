@@ -2036,7 +2036,7 @@ Custom:
       DisplayName: Region Wanderer
       Type: normal
       Reward:
-        Experience: 100
+        Experience: 50
         Item: diamond 1
     15:
       Message: You discovered half of all the regions!
