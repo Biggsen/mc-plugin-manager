@@ -34,6 +34,7 @@ groups:
     - help
     - guides
     - guideintro
+    - guidediscovery
     - guideregions
     - guidedeath
     - guidemaps
