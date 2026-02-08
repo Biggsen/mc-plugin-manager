@@ -113,7 +113,10 @@ export function ServerDetailScreen({ server: initialServer, onBack }: ServerDeta
         visibleFrom="sm"
         component="nav"
       >
-        <Stack gap="xs">
+        <Stack gap="md">
+          <Title order={3} lineClamp={1} title={server.name}>
+            {server.name}
+          </Title>
           <Text size="xs" tt="uppercase" fw={600} c="dimmed" px="sm">
             Operations
           </Text>
@@ -132,37 +135,37 @@ export function ServerDetailScreen({ server: initialServer, onBack }: ServerDeta
       <Stack gap="xl" style={{ flex: 1, minWidth: 0 }} p="md" pt={0} px={0}>
         <div>
           <Title order={1} mb={4}>
-            {server.name}
+            {activeSection === 'import' && 'Import stats'}
+            {activeSection === 'onboarding' && 'Onboarding Config'}
+            {activeSection === 'build' && 'Build Config'}
           </Title>
-          <Text size="sm" c="dimmed">
-            Import regions, configure onboarding, and build configs.
-          </Text>
         </div>
 
-        <SimpleGrid cols={{ base: 1, sm: 2, md: 4 }} spacing="md">
-          {statSections.map(({ title, stats }) => (
-            <Paper key={title} p="md" withBorder bg="dark.6">
-              <Text size="xs" tt="uppercase" c="dimmed" fw={600} mb="sm">
-                {title}
-              </Text>
-              <Stack gap="xs">
-                {stats.map(({ label, value }) => (
-                  <Group key={label} justify="space-between" wrap="nowrap">
-                    <Text size="sm" c="dimmed">
-                      {label}
-                    </Text>
-                    <Text size="md" fw={600}>
-                      {value}
-                    </Text>
-                  </Group>
-                ))}
-              </Stack>
-            </Paper>
-          ))}
-        </SimpleGrid>
-
         {activeSection === 'import' && (
-          <ImportScreen server={server} onServerUpdate={handleServerUpdate} />
+          <>
+            <SimpleGrid cols={{ base: 1, sm: 2, md: 4 }} spacing="md">
+              {statSections.map(({ title, stats }) => (
+                <Paper key={title} p="md" withBorder bg="dark.6">
+                  <Text size="xs" tt="uppercase" c="dimmed" fw={600} mb="sm">
+                    {title}
+                  </Text>
+                  <Stack gap="xs">
+                    {stats.map(({ label, value }) => (
+                      <Group key={label} justify="space-between" wrap="nowrap">
+                        <Text size="sm" c="dimmed">
+                          {label}
+                        </Text>
+                        <Text size="md" fw={600}>
+                          {value}
+                        </Text>
+                      </Group>
+                    ))}
+                  </Stack>
+                </Paper>
+              ))}
+            </SimpleGrid>
+            <ImportScreen server={server} onServerUpdate={handleServerUpdate} />
+          </>
         )}
         {activeSection === 'onboarding' && (
           <OnboardingScreen server={server} onServerUpdate={handleServerUpdate} />

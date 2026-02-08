@@ -85,7 +85,6 @@ export function ImportScreen({ server, onServerUpdate }: ImportScreenProps) {
 
   return (
     <Stack gap="lg">
-      <Title order={2}>Import Region Files</Title>
       <Text size="sm" c="dimmed">
         Import regions-meta.yml from Region Forge to populate your server profile with region data, onboarding, spawn center, and LevelledMobs metadata.
       </Text>

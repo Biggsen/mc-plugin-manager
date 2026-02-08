@@ -117,9 +117,32 @@ function generateRegionHeartDiscoverOnce(): CEEvent {
   }
 }
 
+function generateFirstJoinEvent(onboarding: OnboardingConfig): CEEvent {
+  const tp = tpCommand(onboarding.teleport)
+  return {
+    type: 'player_join',
+    one_time: true,
+    actions: {
+      default: [
+        tp,
+        'wait: 1',
+        'title: 20;100;20;Welcome to {SERVER_NAME};Where the journey matters',
+        'wait: 15',
+        'console_command: aach give {START_REGION_AACH} %player%',
+        'console_command: aach add 1 Custom.regions_discovered %player%',
+        'wait: 15',
+        'console_command: aach add 1 Custom.total_discovered %player%',
+        'title: 20;100;20;Your first reward!;Open crates with /cc',
+        'console_command: cc give virtual RegionCrate 1 %player%',
+        'wait: 15',
+        'message: &bFor help on how to play use &e/guides',
+      ],
+    },
+  }
+}
+
 /**
  * Returns the AA command ID for the start region (used for first_join placeholder substitution).
- * Template uses {START_REGION_AACH}; first_join is preserved from template, not generated.
  */
 export function getStartRegionAachId(
   onboarding: OnboardingConfig,
@@ -138,6 +161,7 @@ export function generateOwnedCEEvents(
 ): CEEventsSection {
   const owned: CEEventsSection = {}
 
+  owned.first_join = generateFirstJoinEvent(onboarding)
   owned.region_heart_discover_once = generateRegionHeartDiscoverOnce()
 
   // on-enter discoveries (skip start region — it's discovered in first_join, not on enter)
@@ -157,7 +181,7 @@ export function generateOwnedCEEvents(
 }
 
 function isOwnedEventKey(key: string): boolean {
-  return key === 'region_heart_discover_once' || key.endsWith('_discover_once')
+  return key === 'first_join' || key === 'region_heart_discover_once' || key.endsWith('_discover_once')
 }
 
 export function mergeCEConfig(existingConfigPath: string, ownedEvents: CEEventsSection): string {

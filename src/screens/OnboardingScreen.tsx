@@ -122,7 +122,6 @@ export function OnboardingScreen({ server, onServerUpdate }: OnboardingScreenPro
 
   return (
     <Stack gap="xl">
-      <Title order={2}>Onboarding Configuration</Title>
       <Text size="sm" c="dimmed">
         Configure the teleport location and starting region for new players.
       </Text>

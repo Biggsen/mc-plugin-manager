@@ -145,7 +145,6 @@ export function BuildScreen({ server }: BuildScreenProps) {
 
   return (
     <Stack gap="xl">
-      <Title order={2}>Build Configuration Files</Title>
       <Text size="sm" c="dimmed">
         Generate or include config files for the selected plugins. Use bundled defaults or provide custom sources.
       </Text>
