@@ -61,7 +61,7 @@ Events:
         - 'wait: 1'
         - 'title: 20;100;20;Welcome to {SERVER_NAME};Where the journey matters'
         - 'wait: 15'
-        - 'console_command: aach give discoverHolarea %player%'
+        - 'console_command: aach give {START_REGION_AACH} %player%'
         - 'console_command: aach add 1 Custom.regions_discovered %player%'
         - 'wait: 15'
         - 'console_command: aach add 1 Custom.total_discovered %player%'

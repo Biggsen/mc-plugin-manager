@@ -117,36 +117,19 @@ function generateRegionHeartDiscoverOnce(): CEEvent {
   }
 }
 
-function generateFirstJoin(
+/**
+ * Returns the AA command ID for the start region (used for first_join placeholder substitution).
+ * Template uses {START_REGION_AACH}; first_join is preserved from template, not generated.
+ */
+export function getStartRegionAachId(
   onboarding: OnboardingConfig,
   regions: RegionRecord[]
-): CEEvent {
+): string {
   const startId = onboarding.startRegionId
   const startRegion =
     regions.find((r) => r.id === startId && r.world === 'overworld') ||
     regions.find((r) => r.id === startId)
-
-  const startCommandId = startRegion
-    ? getAACommandId(startRegion)
-    : generateCommandId(startId)
-
-  // Follow the existing server's first-join messaging style.
-  return {
-    type: 'player_join',
-    one_time: true,
-    actions: {
-      default: [
-        'message: First Join!',
-        tpCommand(onboarding.teleport),
-        `console_command: aach give ${startCommandId} %player%`,
-        'console_command: aach add 1 Custom.regions_discovered %player%',
-        'console_command: aach add 1 Custom.total_discovered %player%',
-        'console_command: cc give virtual RegionCrate 1 %player%',
-        "message: &dTip: Use &b/cc &dto open your crates and get rewards!",
-        'message: &dFor help on how to play use &b/guides',
-      ],
-    },
-  }
+  return startRegion ? getAACommandId(startRegion) : generateCommandId(startId)
 }
 
 export function generateOwnedCEEvents(
@@ -155,8 +138,6 @@ export function generateOwnedCEEvents(
 ): CEEventsSection {
   const owned: CEEventsSection = {}
 
-  // first_join and global heart hint
-  owned.first_join = generateFirstJoin(onboarding, regions)
   owned.region_heart_discover_once = generateRegionHeartDiscoverOnce()
 
   // on-enter discoveries (skip start region — it's discovered in first_join, not on enter)
@@ -176,7 +157,7 @@ export function generateOwnedCEEvents(
 }
 
 function isOwnedEventKey(key: string): boolean {
-  return key === 'first_join' || key === 'region_heart_discover_once' || key.endsWith('_discover_once')
+  return key === 'region_heart_discover_once' || key.endsWith('_discover_once')
 }
 
 export function mergeCEConfig(existingConfigPath: string, ownedEvents: CEEventsSection): string {
@@ -203,5 +184,5 @@ export function mergeCEConfig(existingConfigPath: string, ownedEvents: CEEventsS
   })
 }
 
-module.exports = { generateOwnedCEEvents, mergeCEConfig }
+module.exports = { generateOwnedCEEvents, mergeCEConfig, getStartRegionAachId }
 
