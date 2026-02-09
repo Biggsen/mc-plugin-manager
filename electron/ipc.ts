@@ -506,7 +506,11 @@ ipcMain.handle(
           const tabConfigPath = resolveConfigPath('tab', inputs.tabPath)
           const usingDefaultTAB = !inputs.tabPath || inputs.tabPath.trim().length === 0
 
-          const ownedTABSections = generateOwnedTABSections(profile.regions, profile.name)
+          const ownedTABSections = generateOwnedTABSections(
+            profile.regions,
+            profile.name,
+            profile.regionsMeta?.levelledMobs?.regionBands
+          )
           const mergedTABContent = mergeTABConfig(tabConfigPath, ownedTABSections)
           
           // Validate diff (diff gate)

@@ -12,6 +12,17 @@ interface RegionRecord {
   }
 }
 
+const DIFFICULTIES = ['easy', 'normal', 'hard', 'severe', 'deadly'] as const
+type Difficulty = (typeof DIFFICULTIES)[number]
+
+const DIFFICULTY_COLOURS: Record<Difficulty, string> = {
+  easy: '&a',
+  normal: '&e',
+  hard: '&6',
+  severe: '&c',
+  deadly: '&4',
+}
+
 interface RegionCounts {
   overworldRegions: number
   overworldHearts: number
@@ -63,6 +74,71 @@ export function computeRegionCounts(regions: RegionRecord[]): RegionCounts {
 }
 
 /**
+ * Build map of difficulty -> list of main region IDs (overworld + nether only).
+ * Only includes regions with kind === 'region' that appear in regionBands.
+ */
+function buildDifficultyRegionIds(
+  regions: RegionRecord[],
+  regionBands: Record<string, string> | undefined
+): Record<Difficulty, string[]> {
+  const result: Record<Difficulty, string[]> = {
+    easy: [],
+    normal: [],
+    hard: [],
+    severe: [],
+    deadly: [],
+  }
+  if (!regionBands || Object.keys(regionBands).length === 0) {
+    return result
+  }
+  const mainRegionIds = new Set(
+    regions
+      .filter((r) => r.kind === 'region' && (r.world === 'overworld' || r.world === 'nether'))
+      .map((r) => r.id)
+  )
+  for (const [regionId, difficulty] of Object.entries(regionBands)) {
+    const d = difficulty.toLowerCase() as Difficulty
+    if (DIFFICULTIES.includes(d) && mainRegionIds.has(regionId)) {
+      result[d].push(regionId)
+    }
+  }
+  return result
+}
+
+/**
+ * Generate TAB conditions for region name by difficulty (colour-coded).
+ * Only main regions (no villages/hearts) from regionBands.
+ */
+function generateRegionNameDifficultyConditions(
+  regions: RegionRecord[],
+  regionBands: Record<string, string> | undefined
+): Record<string, any> {
+  const byDifficulty = buildDifficultyRegionIds(regions, regionBands)
+  const conditions: Record<string, any> = {}
+  for (const difficulty of DIFFICULTIES) {
+    const ids = byDifficulty[difficulty]
+    const condList: string[] = []
+    for (const id of ids) {
+      condList.push(`%worldguard_region_name_2%=${id}`)
+      condList.push(`%worldguard_region_name_1%=${id}`)
+    }
+    conditions[`region-name-${difficulty}`] = {
+      conditions: condList.length > 0 ? condList : ['%worldguard_region_name_1%=__none__'],
+      type: 'OR',
+      yes: `${DIFFICULTY_COLOURS[difficulty]}%condition:region-name%`,
+      no: '',
+    }
+  }
+  return conditions
+}
+
+/**
+ * Placeholder line for "Current" region when difficulty conditions are used (concatenation).
+ */
+const REGION_CURRENT_LINE_WITH_DIFFICULTY =
+  '&eCurrent&7:||%condition:region-name-easy%%condition:region-name-normal%%condition:region-name-hard%%condition:region-name-severe%%condition:region-name-deadly%'
+
+/**
  * Generate header section with server name
  */
 function generateHeader(serverName: string): string[] {
@@ -95,14 +171,21 @@ function generateFooter(): string[] {
 /**
  * Generate overworld scoreboard section
  */
-function generateOverworldScoreboard(serverName: string, counts: RegionCounts): any {
+function generateOverworldScoreboard(
+  serverName: string,
+  counts: RegionCounts,
+  useDifficultyColour: boolean
+): any {
+  const currentRegionLine = useDifficultyColour
+    ? REGION_CURRENT_LINE_WITH_DIFFICULTY
+    : '&eCurrent&7:||%condition:region-name%'
   return {
     title: `<#E0B11E>${serverName}</#FF0000>`,
     'display-condition': '%player-version-id%>=765;%bedrock%=false;%world%=world',
     lines: [
       '%animation:MyAnimation1%',
       '&bRegions',
-      '&eCurrent&7:||%condition:region-name%',
+      currentRegionLine,
       `&eDiscovered&7:||%aach_custom_regions_discovered%/${counts.overworldRegions}`,
       '',
       '&bVillages',
@@ -120,14 +203,21 @@ function generateOverworldScoreboard(serverName: string, counts: RegionCounts): 
 /**
  * Generate nether scoreboard section
  */
-function generateNetherScoreboard(serverName: string, counts: RegionCounts): any {
+function generateNetherScoreboard(
+  serverName: string,
+  counts: RegionCounts,
+  useDifficultyColour: boolean
+): any {
+  const currentRegionLine = useDifficultyColour
+    ? REGION_CURRENT_LINE_WITH_DIFFICULTY
+    : '&eCurrent&7:||%condition:region-name%'
   return {
     title: `<#E0B11E>${serverName}</#FF0000>`,
     'display-condition': '%player-version-id%>=765;%bedrock%=false;%world%=world_nether',
     lines: [
       '%animation:MyAnimation1%',
       '&bNether Regions',
-      '&eCurrent&7:||%condition:region-name%',
+      currentRegionLine,
       `&eDiscovered&7:||%aach_custom_nether_regions_discovered%/${counts.netherRegions}`,
       '',
       '&bNether Region Hearts',
@@ -183,13 +273,19 @@ function generateTopExplorersConditions(totalCount: number): Record<string, any>
  */
 export function generateOwnedTABSections(
   regions: RegionRecord[],
-  serverName: string
+  serverName: string,
+  regionBands?: Record<string, string>
 ): {
   headerFooter: { header: string[]; footer: string[] }
   scoreboards: Record<string, any>
   topExplorersConditions: Record<string, any>
+  regionNameDifficultyConditions: Record<string, any>
 } {
   const counts = computeRegionCounts(regions)
+  const byDifficulty = buildDifficultyRegionIds(regions, regionBands)
+  const hasAnyDifficultyRegions =
+    DIFFICULTIES.some((d) => byDifficulty[d].length > 0)
+  const useDifficultyColour = Boolean(regionBands && hasAnyDifficultyRegions)
 
   // Generate header/footer
   const headerFooter = {
@@ -200,19 +296,33 @@ export function generateOwnedTABSections(
   // Generate scoreboards (conditional by world)
   const scoreboards: Record<string, any> = {}
   if (counts.overworldRegions > 0 || counts.overworldHearts > 0 || counts.villages > 0) {
-    scoreboards['scoreboard-overworld'] = generateOverworldScoreboard(serverName, counts)
+    scoreboards['scoreboard-overworld'] = generateOverworldScoreboard(
+      serverName,
+      counts,
+      useDifficultyColour
+    )
   }
   if (counts.netherRegions > 0 || counts.netherHearts > 0) {
-    scoreboards['scoreboard-nether'] = generateNetherScoreboard(serverName, counts)
+    scoreboards['scoreboard-nether'] = generateNetherScoreboard(
+      serverName,
+      counts,
+      useDifficultyColour
+    )
   }
 
   // Generate top explorers conditions
   const topExplorersConditions = generateTopExplorersConditions(counts.total)
 
+  // Generate region-name difficulty conditions (only when we have regionBands with main regions)
+  const regionNameDifficultyConditions = useDifficultyColour
+    ? generateRegionNameDifficultyConditions(regions, regionBands)
+    : {}
+
   return {
     headerFooter,
     scoreboards,
     topExplorersConditions,
+    regionNameDifficultyConditions,
   }
 }
 
@@ -226,7 +336,12 @@ function isOwnedConditionKey(key: string): boolean {
     key === 'top-explorer-2' ||
     key === 'top-explorer-3' ||
     key === 'top-explorer-4' ||
-    key === 'top-explorer-5'
+    key === 'top-explorer-5' ||
+    key === 'region-name-easy' ||
+    key === 'region-name-normal' ||
+    key === 'region-name-hard' ||
+    key === 'region-name-severe' ||
+    key === 'region-name-deadly'
   )
 }
 
@@ -246,6 +361,7 @@ export function mergeTABConfig(
     headerFooter: { header: string[]; footer: string[] }
     scoreboards: Record<string, any>
     topExplorersConditions: Record<string, any>
+    regionNameDifficultyConditions: Record<string, any>
   }
 ): string {
   const fs = require('fs')
@@ -337,6 +453,10 @@ export function mergeTABConfig(
   const ownedConditionKeys = Object.keys(ownedSections.topExplorersConditions).sort()
   for (const key of ownedConditionKeys) {
     mergedConditions[key] = ownedSections.topExplorersConditions[key]
+  }
+  const difficultyConditionKeys = Object.keys(ownedSections.regionNameDifficultyConditions).sort()
+  for (const key of difficultyConditionKeys) {
+    mergedConditions[key] = ownedSections.regionNameDifficultyConditions[key]
   }
   config.conditions = mergedConditions
 

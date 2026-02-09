@@ -91,15 +91,20 @@ function removeOwnedTABSections(config: any): any {
     const cleanedConditions: any = {}
     for (const [key, value] of Object.entries(cleaned.conditions)) {
       // Owned conditions:
-      // - top-explorers-title
-      // - top-explorer-1 through top-explorer-5
+      // - top-explorers-title, top-explorer-1 through top-explorer-5
+      // - region-name-easy, region-name-normal, region-name-hard, region-name-severe, region-name-deadly
       const isOwned =
         key === 'top-explorers-title' ||
         key === 'top-explorer-1' ||
         key === 'top-explorer-2' ||
         key === 'top-explorer-3' ||
         key === 'top-explorer-4' ||
-        key === 'top-explorer-5'
+        key === 'top-explorer-5' ||
+        key === 'region-name-easy' ||
+        key === 'region-name-normal' ||
+        key === 'region-name-hard' ||
+        key === 'region-name-severe' ||
+        key === 'region-name-deadly'
       
       if (!isOwned) {
         cleanedConditions[key] = value
