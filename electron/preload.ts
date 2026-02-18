@@ -47,6 +47,10 @@ export interface ElectronAPI {
   ) => Promise<BuildResult>
   showConfigFileDialog: (title: string, defaultPath?: string) => Promise<string | null>
   showOutputDialog: () => Promise<string | null>
+  exportLoreBooks: (
+    serverId: string,
+    inputs: { outDir: string; author?: string }
+  ) => Promise<{ success: boolean; count?: number; error?: string }>
   
   // Build reports
   readBuildReport: (serverId: string, buildId: string) => Promise<BuildReport | null>
@@ -220,6 +224,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   showConfigFileDialog: (title: string, defaultPath?: string) =>
     ipcRenderer.invoke('show-config-file-dialog', title, defaultPath),
   showOutputDialog: () => ipcRenderer.invoke('show-output-dialog'),
+  exportLoreBooks: (serverId: string, inputs: { outDir: string; author?: string }) =>
+    ipcRenderer.invoke('export-lore-books', serverId, inputs),
   readBuildReport: (serverId: string, buildId: string) =>
     ipcRenderer.invoke('read-build-report', serverId, buildId),
   listBuilds: (serverId: string) => ipcRenderer.invoke('list-builds', serverId),

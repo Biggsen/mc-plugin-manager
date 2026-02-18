@@ -11,14 +11,15 @@ import {
   Title,
   SegmentedControl,
 } from '@mantine/core'
-import { IconArrowLeft, IconFileImport, IconUser, IconHammer, IconMap2 } from '@tabler/icons-react'
+import { IconArrowLeft, IconFileImport, IconUser, IconHammer, IconMap2, IconBook } from '@tabler/icons-react'
 import type { ServerProfile } from '../types'
 import { ImportScreen } from './ImportScreen'
 import { OnboardingScreen } from './OnboardingScreen'
 import { BuildScreen } from './BuildScreen'
 import { RegionsScreen } from './RegionsScreen'
+import { LoreBooksScreen } from './LoreBooksScreen'
 
-type SectionValue = 'import' | 'regions' | 'onboarding' | 'build'
+type SectionValue = 'import' | 'regions' | 'onboarding' | 'build' | 'loreBooks'
 
 interface ServerDetailScreenProps {
   server: ServerProfile
@@ -87,6 +88,7 @@ export function ServerDetailScreen({ server: initialServer, onBack }: ServerDeta
     { value: 'regions', label: 'Regions', icon: <IconMap2 size={18} /> },
     { value: 'onboarding', label: 'Onboarding', icon: <IconUser size={18} /> },
     { value: 'build', label: 'Build', icon: <IconHammer size={18} /> },
+    { value: 'loreBooks', label: 'Lore Books', icon: <IconBook size={18} /> },
   ]
 
   return (
@@ -141,6 +143,7 @@ export function ServerDetailScreen({ server: initialServer, onBack }: ServerDeta
             {activeSection === 'regions' && 'Regions'}
             {activeSection === 'onboarding' && 'Onboarding Config'}
             {activeSection === 'build' && 'Build Config'}
+            {activeSection === 'loreBooks' && 'Export Lore Books'}
           </Title>
         </div>
 
@@ -177,6 +180,7 @@ export function ServerDetailScreen({ server: initialServer, onBack }: ServerDeta
           <OnboardingScreen server={server} onServerUpdate={handleServerUpdate} />
         )}
         {activeSection === 'build' && <BuildScreen server={server} />}
+        {activeSection === 'loreBooks' && <LoreBooksScreen server={server} />}
       </Stack>
     </Group>
     </Stack>

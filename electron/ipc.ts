@@ -21,6 +21,7 @@ const { generateOwnedTABSections, mergeTABConfig, computeRegionCounts } = requir
 const { generateOwnedLMRules, mergeLMConfig } = require('./lmGenerator')
 const { generateMCConfig } = require('./mcGenerator')
 const { validateAADiff, validateCEDiff, validateTABDiff, validateLMDiff } = require('./diffValidator')
+const { generateLoreBooks } = require('./loreBooksGenerator')
 
 type ServerProfile = any
 type ServerSummary = any
@@ -706,6 +707,47 @@ ipcMain.handle(
       return {
         success: false,
         error: error.message || 'Unknown error during build',
+      }
+    }
+  }
+)
+
+// Export lore books
+ipcMain.handle(
+  'export-lore-books',
+  async (
+    _event: any,
+    serverId: string,
+    inputs: { outDir: string; author?: string }
+  ): Promise<{ success: boolean; count?: number; error?: string }> => {
+    try {
+      const profile = loadServerProfile(serverId)
+      if (!profile) {
+        return { success: false, error: `Server profile not found: ${serverId}` }
+      }
+
+      if (!inputs.outDir || inputs.outDir.trim().length === 0) {
+        return { success: false, error: 'Output directory must be set' }
+      }
+
+      const fs = require('fs')
+      if (!existsSync(inputs.outDir)) {
+        fs.mkdirSync(inputs.outDir, { recursive: true })
+      }
+
+      const books = generateLoreBooks(profile.regions, inputs.author || 'Admin')
+
+      for (const [regionId, yamlContent] of books) {
+        const filename = `${regionId}.yml`
+        const outputPath = path.join(inputs.outDir, filename)
+        writeFileSync(outputPath, yamlContent, 'utf-8')
+      }
+
+      return { success: true, count: books.size }
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.message || 'Lore books export failed',
       }
     }
   }
