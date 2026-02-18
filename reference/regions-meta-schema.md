@@ -40,6 +40,11 @@ Each element describes one region. Order is preserved for display; mc-plugin-man
 | `world`  | string | **Yes**  | World name. Should match the root-level `world` field. Typically `overworld`, `nether`, or `end`; mc-plugin-manager accepts any string. |
 | `kind`   | string | **Yes**  | One of: `system`, `region`, `village`, `heart`. See §3.2. |
 | `discover` | object | **Yes**  | Discovery behaviour. See §3.3. |
+| `biomes` | array  | No       | Biome breakdown for this region (from map scan). See §3.6. Only present for `kind: region` when a biome map is available. |
+| `category` | string | No     | Minecraft item category (e.g. `ores`, `stone`, `wood`, `food`). Used for economy plugins or discovery rewards. VZ price guide categories. |
+| `items`  | array  | No       | Up to 3 Minecraft items for this region. See §3.7. Used for economy plugins or discovery rewards. VZ price guide item IDs. |
+| `theme`  | array  | No       | Up to 3 theme pairs (A + B) for narrative flavor. See §3.8. Storyteller's Automaton table. |
+| `description` | string | No   | Free-form description of the region. Used for display, quest hooks, or discovery text. mc-plugin-manager may use this for region lore or UI. |
 
 Unknown keys on a region object are ignored.
 
@@ -81,6 +86,35 @@ Unknown keys on a region object are ignored.
 | `village`      | Overworld village. (Note: Villages are overworld-only; there is no `nether_village`.) |
 
 `recipeId` should match `kind` and `world`. Mc-plugin-manager uses `kind` and `world` for CE reward logic; `recipeId` can be used for consistency checks or future features.
+
+### 3.6 `biomes` (array, optional)
+
+Biome breakdown for a region, derived from sampling the biome map within the region polygon. Region Forge populates this when a biome map is loaded and the map origin is set. Only present for `kind: region` (main regions). Omitted for spawn, hearts, and villages.
+
+| Field        | Type   | Required | Description |
+|-------------|--------|----------|-------------|
+| `biome`     | string | **Yes**  | Biome identifier (e.g. `plains`, `forest`, `oak_forest`). |
+| `percentage` | number | **Yes**  | Approximate percentage of the region covered by this biome (0–100). Percentages sum to 100 across all entries. |
+
+Entries are sorted by percentage descending. Mc-plugin-manager may use this for filtering, display, or plugin configuration. Unknown keys in a biome entry are ignored.
+
+### 3.7 `items` (array, optional)
+
+Up to 3 Minecraft items associated with this region. Region Forge populates these from the VZ price guide (random or manual assignment). Mc-plugin-manager may use them for economy plugins, discovery rewards, or CE crate configuration.
+
+| Field  | Type   | Required | Description |
+|--------|--------|----------|-------------|
+| `id`   | string | **Yes**  | Minecraft item ID (e.g. `diamond`, `acacia_planks`). |
+| `name` | string | **Yes**  | Display name (e.g. `diamond`, `acacia planks`). |
+
+### 3.8 `theme` (array, optional)
+
+Up to 3 theme pairs (A + B) from the Storyteller's Automaton table. Region Forge populates these for narrative flavor; mc-plugin-manager may use them for region descriptions, quest hooks, or discovery text.
+
+| Field  | Type   | Required | Description |
+|--------|--------|----------|-------------|
+| `a`    | string | **Yes**  | First word (e.g. `Return`, `Seek`, `Hidden`). |
+| `b`    | string | **Yes**  | Second word (e.g. `Death`, `Truth`, `Conquest`). |
 
 ---
 
@@ -210,6 +244,27 @@ regions:
     discover:
       method: on_enter
       recipeId: region
+    description: A rugged highland region rich in mineral deposits.
+    category: ores
+    items:
+      - id: diamond
+        name: diamond
+      - id: gold_ingot
+        name: gold ingot
+      - id: coal
+        name: coal
+    theme:
+      - a: Seek
+        b: Truth
+      - a: Hidden
+        b: Conquest
+    biomes:
+      - biome: plains
+        percentage: 45
+      - biome: forest
+        percentage: 30
+      - biome: oak_forest
+        percentage: 25
 
   - id: elfdonia
     world: overworld
@@ -279,6 +334,10 @@ regions:
 | Version | Notes |
 |--------|-------|
 | 1      | Initial schema: regions, onboarding, spawnCenter, levelledMobs. |
+| 1.1    | Added optional `biomes` array on region objects (§3.6): biome breakdown from map scan for `kind: region`. |
+| 1.2    | Added optional `category` and `items` on region objects (§3.7): Minecraft category and up to 3 items from VZ price guide. |
+| 1.3    | Added optional `theme` on region objects (§3.8): up to 3 theme pairs (A + B) from Storyteller's Automaton table. |
+| 1.4    | Added optional `description` on region objects: free-form text for display, quest hooks, or discovery. |
 
 ---
 

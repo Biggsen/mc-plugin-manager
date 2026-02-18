@@ -64,6 +64,16 @@ export interface RegionRecord {
     commandIdOverride?: string
     displayNameOverride?: string
   }
+  /** Biome breakdown from map scan. Only for kind: region. */
+  biomes?: Array<{ biome: string; percentage: number }>
+  /** Minecraft item category (e.g. ores, stone, wood). VZ price guide. */
+  category?: string
+  /** Up to 3 items for economy/discovery rewards. VZ price guide. */
+  items?: Array<{ id: string; name: string }>
+  /** Up to 3 theme pairs (A + B) from Storyteller's Automaton. */
+  theme?: Array<{ a: string; b: string }>
+  /** Free-form description for display, quest hooks, discovery. */
+  description?: string
 }
 
 export interface OnboardingConfig {

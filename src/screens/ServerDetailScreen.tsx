@@ -11,13 +11,14 @@ import {
   Title,
   SegmentedControl,
 } from '@mantine/core'
-import { IconArrowLeft, IconFileImport, IconUser, IconHammer } from '@tabler/icons-react'
+import { IconArrowLeft, IconFileImport, IconUser, IconHammer, IconMap2 } from '@tabler/icons-react'
 import type { ServerProfile } from '../types'
 import { ImportScreen } from './ImportScreen'
 import { OnboardingScreen } from './OnboardingScreen'
 import { BuildScreen } from './BuildScreen'
+import { RegionsScreen } from './RegionsScreen'
 
-type SectionValue = 'import' | 'onboarding' | 'build'
+type SectionValue = 'import' | 'regions' | 'onboarding' | 'build'
 
 interface ServerDetailScreenProps {
   server: ServerProfile
@@ -83,6 +84,7 @@ export function ServerDetailScreen({ server: initialServer, onBack }: ServerDeta
 
   const navItems: { value: SectionValue; label: string; icon: React.ReactNode }[] = [
     { value: 'import', label: 'Import Regions', icon: <IconFileImport size={18} /> },
+    { value: 'regions', label: 'Regions', icon: <IconMap2 size={18} /> },
     { value: 'onboarding', label: 'Onboarding', icon: <IconUser size={18} /> },
     { value: 'build', label: 'Build', icon: <IconHammer size={18} /> },
   ]
@@ -136,6 +138,7 @@ export function ServerDetailScreen({ server: initialServer, onBack }: ServerDeta
         <div>
           <Title order={1} mb={4}>
             {activeSection === 'import' && 'Import stats'}
+            {activeSection === 'regions' && 'Regions'}
             {activeSection === 'onboarding' && 'Onboarding Config'}
             {activeSection === 'build' && 'Build Config'}
           </Title>
@@ -166,6 +169,9 @@ export function ServerDetailScreen({ server: initialServer, onBack }: ServerDeta
             </SimpleGrid>
             <ImportScreen server={server} onServerUpdate={handleServerUpdate} />
           </>
+        )}
+        {activeSection === 'regions' && (
+          <RegionsScreen server={server} />
         )}
         {activeSection === 'onboarding' && (
           <OnboardingScreen server={server} onServerUpdate={handleServerUpdate} />

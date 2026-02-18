@@ -28,6 +28,11 @@ interface RegionRecord {
     commandIdOverride?: string
     displayNameOverride?: string
   }
+  biomes?: Array<{ biome: string; percentage: number }>
+  category?: string
+  items?: Array<{ id: string; name: string }>
+  theme?: Array<{ a: string; b: string }>
+  description?: string
 }
 
 interface ImportedSource {
@@ -67,6 +72,11 @@ type RegionsMetaExport = {
       commandIdOverride?: string
       displayNameOverride?: string
     }
+    biomes?: Array<{ biome: string; percentage: number }>
+    category?: string
+    items?: Array<{ id: string; name: string }>
+    theme?: Array<{ a: string; b: string }>
+    description?: string
   }>
   onboarding?: {
     startRegionId: string
@@ -372,7 +382,7 @@ export function importRegionsMeta(
     const canonicalId = canonicalizeId(region.id)
     const recipeId = validateRecipeId(region.discover.recipeId, mappedWorld)
 
-    regions.push({
+    const record: RegionRecord = {
       world: mappedWorld,
       id: canonicalId,
       kind: region.kind,
@@ -382,7 +392,14 @@ export function importRegionsMeta(
         commandIdOverride: region.discover.commandIdOverride,
         displayNameOverride: region.discover.displayNameOverride,
       },
-    })
+    }
+    if (region.biomes?.length) record.biomes = region.biomes
+    if (region.category) record.category = region.category
+    if (region.items?.length) record.items = region.items
+    if (region.theme?.length) record.theme = region.theme
+    if (region.description) record.description = region.description
+
+    regions.push(record)
   }
 
   // Build source

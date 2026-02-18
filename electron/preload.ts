@@ -109,6 +109,11 @@ interface RegionRecord {
     commandIdOverride?: string
     displayNameOverride?: string
   }
+  biomes?: Array<{ biome: string; percentage: number }>
+  category?: string
+  items?: Array<{ id: string; name: string }>
+  theme?: Array<{ a: string; b: string }>
+  description?: string
 }
 
 interface OnboardingConfig {
