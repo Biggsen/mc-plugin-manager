@@ -42,6 +42,8 @@ groups:
     - guideprotection
     - tab
     - sb
+    - lore
+    - bookgui
     subcommands:
     - aach reload
     - aach generate
