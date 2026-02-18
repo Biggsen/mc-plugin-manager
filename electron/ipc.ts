@@ -608,8 +608,8 @@ ipcMain.handle(
           const mcConfigPath = resolveConfigPath('mc', inputs.mcPath)
           const usingDefaultMC = !inputs.mcPath || inputs.mcPath.trim().length === 0
 
-          // Generate MC config with server name substitution
-          const generatedMCContent = generateMCConfig(mcConfigPath, profile.name)
+          // Generate MC config with server name substitution and region tab completers
+          const generatedMCContent = generateMCConfig(mcConfigPath, profile.name, profile.regions || [])
           
           // Generate filename with server name prefix
           const serverNameSanitized = profile.name.toLowerCase().replace(/[^a-z0-9]/g, '-')
