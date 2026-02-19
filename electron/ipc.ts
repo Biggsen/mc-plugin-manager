@@ -204,9 +204,24 @@ ipcMain.handle(
       // Import regions-meta
       const result = importRegionsMeta(filePath, world)
       
+      // Preserve loreBookAnchors from existing regions when merging
+      const existingByKey = new Map<string, any>()
+      for (const r of profile.regions) {
+        if (r.world === result.world) {
+          existingByKey.set(r.id, r)
+        }
+      }
+      
       // Update profile: Remove existing regions for this world, then add new ones
       profile.regions = profile.regions.filter((r: any) => r.world !== result.world)
-      profile.regions.push(...result.regions)
+      const mergedRegions = result.regions.map((r: any) => {
+        const existing = existingByKey.get(r.id)
+        const merged = { ...r }
+        if (existing?.loreBookAnchors) merged.loreBookAnchors = existing.loreBookAnchors
+        merged.loreBookDescription = undefined
+        return merged
+      })
+      profile.regions.push(...mergedRegions)
       
       // Update sources
       if (result.world === 'overworld') {
@@ -294,6 +309,30 @@ ipcMain.handle(
     }
     
     return result.filePaths[0]
+  }
+)
+
+// Update lore book anchors and/or description for a region
+ipcMain.handle(
+  'update-region-lore-book',
+  async (
+    _event: any,
+    serverId: string,
+    regionId: string,
+    updates: { anchors?: string[]; description?: string }
+  ): Promise<ServerProfile | null> => {
+    const profile = loadServerProfile(serverId)
+    if (!profile) return null
+    const region = profile.regions.find((r: any) => r.id === regionId)
+    if (!region) return null
+    if (updates.anchors !== undefined) {
+      region.loreBookAnchors = updates.anchors.length > 0 ? updates.anchors : undefined
+    }
+    if (updates.description !== undefined) {
+      region.loreBookDescription = updates.description.trim() || undefined
+    }
+    saveServerProfile(profile)
+    return profile
   }
 )
 
@@ -742,6 +781,10 @@ ipcMain.handle(
         const outputPath = path.join(inputs.outDir, filename)
         writeFileSync(outputPath, yamlContent, 'utf-8')
       }
+
+      profile.build = profile.build || {}
+      profile.build.loreBooksOutputDirectory = inputs.outDir
+      saveServerProfile(profile)
 
       return { success: true, count: books.size }
     } catch (error: any) {

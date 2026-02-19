@@ -25,6 +25,11 @@ export interface ElectronAPI {
     serverId: string,
     onboarding: OnboardingConfig
   ) => Promise<ServerProfile>
+  updateRegionLoreBook: (
+    serverId: string,
+    regionId: string,
+    updates: { anchors?: string[]; description?: string }
+  ) => Promise<ServerProfile | null>
   
   // Build
   buildConfigs: (
@@ -88,6 +93,7 @@ interface ServerProfile {
   build: {
     lastBuildId?: string
     outputDirectory?: string
+    loreBooksOutputDirectory?: string
   }
 }
 
@@ -203,6 +209,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   showImportDialog: () => ipcRenderer.invoke('show-import-dialog'),
   updateOnboarding: (serverId: string, onboarding: OnboardingConfig) =>
     ipcRenderer.invoke('update-onboarding', serverId, onboarding),
+  updateRegionLoreBook: (serverId: string, regionId: string, updates: { anchors?: string[]; description?: string }) =>
+    ipcRenderer.invoke('update-region-lore-book', serverId, regionId, updates),
   buildConfigs: (
     serverId: string,
     inputs: {

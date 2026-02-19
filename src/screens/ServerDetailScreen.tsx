@@ -180,7 +180,9 @@ export function ServerDetailScreen({ server: initialServer, onBack }: ServerDeta
           <OnboardingScreen server={server} onServerUpdate={handleServerUpdate} />
         )}
         {activeSection === 'build' && <BuildScreen server={server} />}
-        {activeSection === 'loreBooks' && <LoreBooksScreen server={server} />}
+        {activeSection === 'loreBooks' && (
+          <LoreBooksScreen server={server} onServerUpdate={handleServerUpdate} />
+        )}
       </Stack>
     </Group>
     </Stack>

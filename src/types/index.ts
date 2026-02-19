@@ -39,6 +39,7 @@ export interface ServerProfile {
   build: {
     lastBuildId?: string
     outputDirectory?: string
+    loreBooksOutputDirectory?: string
   }
 }
 
@@ -74,6 +75,10 @@ export interface RegionRecord {
   theme?: Array<{ a: string; b: string }>
   /** Free-form description for display, quest hooks, discovery. */
   description?: string
+  /** Lore book page break anchors: phrases (text before each break). Stored separately from imports; survives re-import when anchors still match. */
+  loreBookAnchors?: string[]
+  /** Lore book description override: editable text for lore books. When set, used instead of description for export. Cleared on re-import. */
+  loreBookDescription?: string
 }
 
 export interface OnboardingConfig {

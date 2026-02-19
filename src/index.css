@@ -1,3 +1,12 @@
+/* Minecraft book font for lore preview */
+@font-face {
+  font-family: 'Minecraft Book';
+  src: url('/fonts/MinecraftDefault-Regular.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 /* Mantine's withNormalizeCSS provides reset; keep only app-specific rules */
 body {
   -webkit-font-smoothing: antialiased;
@@ -16,4 +25,20 @@ body {
 .server-card:hover {
   background-color: var(--mantine-color-dark-5) !important;
   border-color: var(--mantine-color-red-6);
+}
+
+.pageBack {
+  position: relative;
+}
+
+.pageBack::before {
+  content: '';
+  position: absolute;
+  background: #888;
+  height: 348px;
+  width: 312px;
+  display: block;
+  z-index: 0;
+  opacity: 0.3;
+  pointer-events: none;
 }

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Text,
   TextInput,
@@ -6,26 +6,79 @@ import {
   Group,
   Stack,
   Alert,
+  Select,
+  Paper,
+  Divider,
 } from '@mantine/core'
-import type { ServerProfile } from '../types'
+import type { ServerProfile, RegionRecord } from '../types'
+import { LoreBookPreview } from '../components/LoreBookPreview'
+
+function formatRegionLabel(region: RegionRecord): string {
+  return region.discover.displayNameOverride
+    ?? region.id.split('_').map((s) => s.charAt(0).toUpperCase() + s.slice(1).toLowerCase()).join(' ')
+}
 
 interface LoreBooksScreenProps {
   server: ServerProfile
+  onServerUpdate?: (server: ServerProfile) => void
 }
 
-export function LoreBooksScreen({ server }: LoreBooksScreenProps) {
-  const [outDir, setOutDir] = useState('')
+export function LoreBooksScreen({ server, onServerUpdate }: LoreBooksScreenProps) {
+  const [outDir, setOutDir] = useState(server.build?.loreBooksOutputDirectory || '')
   const [author, setAuthor] = useState('Admin')
+  const [selectedRegionId, setSelectedRegionId] = useState<string | null>(null)
+  const [localAnchors, setLocalAnchors] = useState<string[]>([])
+  const [localDescription, setLocalDescription] = useState<string>('')
   const [isExporting, setIsExporting] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
   const [result, setResult] = useState<{ success: boolean; count?: number; error?: string } | null>(null)
 
-  const regionsWithDescription = server.regions.filter((r) => r.description?.trim())
+  useEffect(() => {
+    setOutDir(server.build?.loreBooksOutputDirectory || '')
+  }, [server.id, server.build?.loreBooksOutputDirectory])
+
+  const regionsWithDescription = server.regions.filter((r) =>
+    (r.loreBookDescription ?? r.description)?.trim()
+  )
   const hasRegions = regionsWithDescription.length > 0
+  const selectedRegion = selectedRegionId
+    ? regionsWithDescription.find((r) => r.id === selectedRegionId)
+    : null
+
+  useEffect(() => {
+    if (selectedRegion) {
+      setLocalAnchors(selectedRegion.loreBookAnchors ?? [])
+      setLocalDescription((selectedRegion.loreBookDescription ?? selectedRegion.description)?.trim() ?? '')
+    } else {
+      setLocalAnchors([])
+      setLocalDescription('')
+    }
+  }, [selectedRegion?.id, selectedRegion?.loreBookAnchors, selectedRegion?.loreBookDescription, selectedRegion?.description])
 
   async function handleSelectOutputDir() {
     const path = await window.electronAPI.showOutputDialog()
-    if (path) {
-      setOutDir(path)
+    if (path) setOutDir(path)
+  }
+
+  async function handleSave() {
+    if (!selectedRegionId || !server.id) return
+    setIsSaving(true)
+    try {
+      const updates: { anchors?: string[]; description?: string } = {}
+      if (JSON.stringify(localAnchors) !== JSON.stringify(selectedRegion?.loreBookAnchors ?? [])) {
+        updates.anchors = localAnchors
+      }
+      const baseDesc = (selectedRegion?.loreBookDescription ?? selectedRegion?.description)?.trim() ?? ''
+      if (localDescription !== baseDesc) updates.description = localDescription
+      if (Object.keys(updates).length === 0) return
+      const updated = await window.electronAPI.updateRegionLoreBook(
+        server.id,
+        selectedRegionId,
+        updates
+      )
+      if (updated && onServerUpdate) onServerUpdate(updated)
+    } finally {
+      setIsSaving(false)
     }
   }
 
@@ -35,7 +88,6 @@ export function LoreBooksScreen({ server }: LoreBooksScreenProps) {
       setResult({ success: false, error: 'Please select an output directory' })
       return
     }
-
     setIsExporting(true)
     try {
       const res = await window.electronAPI.exportLoreBooks(server.id, {
@@ -53,22 +105,85 @@ export function LoreBooksScreen({ server }: LoreBooksScreenProps) {
     }
   }
 
+  const hasChanges =
+    selectedRegion &&
+    (JSON.stringify(localAnchors) !== JSON.stringify(selectedRegion.loreBookAnchors ?? []) ||
+      localDescription !== ((selectedRegion.loreBookDescription ?? selectedRegion.description)?.trim() ?? ''))
+
   return (
     <Stack gap="xl">
       <Text size="sm" c="dimmed">
-        Export region descriptions as in-game lore book YAML files. Each region with a description becomes a{' '}
-        <Text component="code" fw={500}>[region].yml</Text> file.
+        Edit page breaks per region, then export. Page breaks use anchors that survive re-imports when the text still matches.
       </Text>
+
+      <Paper p="md" withBorder>
+        <Text size="sm" fw={600} mb="sm">
+          Edit Page Breaks
+        </Text>
+        <Group align="flex-start" gap="xl" wrap="wrap">
+          <Stack gap="xs" style={{ minWidth: 200 }}>
+            <Text size="xs" fw={600} c="dimmed">
+              Select region
+            </Text>
+            <Select
+              placeholder="Pick a region..."
+              data={regionsWithDescription.map((r) => ({
+                value: r.id,
+                label: formatRegionLabel(r),
+              }))}
+              value={selectedRegionId}
+              onChange={(v) => setSelectedRegionId(v)}
+              clearable
+            />
+            {selectedRegion && (
+              <>
+                <Button
+                  size="sm"
+                  variant="light"
+                  onClick={handleSave}
+                  loading={isSaving}
+                  disabled={!hasChanges}
+                >
+                  Save changes
+                </Button>
+                {hasChanges && (
+                  <Text size="xs" c="yellow.7">
+                    Unsaved changes
+                  </Text>
+                )}
+              </>
+            )}
+          </Stack>
+          {selectedRegion && (selectedRegion.loreBookDescription ?? selectedRegion.description)?.trim() && (
+            <LoreBookPreview
+              content={localDescription}
+              anchors={localAnchors}
+              onAnchorsChange={setLocalAnchors}
+              onDescriptionChange={setLocalDescription}
+              regionId={selectedRegion.id}
+              regionTitle={selectedRegion.discover.displayNameOverride}
+            />
+          )}
+        </Group>
+        {!hasRegions && (
+          <Alert color="yellow" title="No descriptions" mt="md">
+            No regions have descriptions. Add descriptions in the Regions tab, or import from a regions-meta file.
+          </Alert>
+        )}
+      </Paper>
+
+      <Divider />
 
       <Stack gap="xs">
         <Text size="sm" fw={600}>
-          Regions with descriptions: <Text component="span" fw={700}>{regionsWithDescription.length}</Text>
+          Export Lore Books
         </Text>
-        {!hasRegions && (
-          <Alert color="yellow" title="No descriptions">
-            No regions have descriptions. Add descriptions in the Regions tab, or import from a regions-meta file that includes them.
-          </Alert>
-        )}
+        <Text size="xs" c="dimmed">
+          Regions with descriptions: <Text component="span" fw={700}>{regionsWithDescription.length}</Text>
+          {regionsWithDescription.some((r) => r.loreBookAnchors?.length) && (
+            <> · {regionsWithDescription.filter((r) => r.loreBookAnchors?.length).length} with custom page breaks</>
+          )}
+        </Text>
       </Stack>
 
       <Stack gap="xs">
@@ -76,12 +191,7 @@ export function LoreBooksScreen({ server }: LoreBooksScreenProps) {
           Output Directory <Text component="span" c="red">*</Text>
         </Text>
         <Group gap="sm">
-          <TextInput
-            value={outDir}
-            placeholder="Select output directory..."
-            readOnly
-            flex={1}
-          />
+          <TextInput value={outDir} placeholder="Select output directory..." readOnly flex={1} />
           <Button variant="default" onClick={handleSelectOutputDir}>
             Browse...
           </Button>
@@ -89,17 +199,12 @@ export function LoreBooksScreen({ server }: LoreBooksScreenProps) {
       </Stack>
 
       <Stack gap="xs">
-        <Text size="sm" fw={600}>
-          Author
-        </Text>
+        <Text size="sm" fw={600}>Author</Text>
         <TextInput
           value={author}
           onChange={(e) => setAuthor(e.currentTarget.value)}
           placeholder="Admin"
         />
-        <Text size="xs" c="dimmed">
-          Default: Admin. Set the author field for all exported books.
-        </Text>
       </Stack>
 
       <Button

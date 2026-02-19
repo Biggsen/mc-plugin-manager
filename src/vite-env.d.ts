@@ -20,6 +20,11 @@ interface ElectronAPI {
     serverId: string,
     onboarding: OnboardingConfig
   ) => Promise<ServerProfile | null>
+  updateRegionLoreBook: (
+    serverId: string,
+    regionId: string,
+    updates: { anchors?: string[]; description?: string }
+  ) => Promise<ServerProfile | null>
   buildConfigs: (
     serverId: string,
     inputs: {
