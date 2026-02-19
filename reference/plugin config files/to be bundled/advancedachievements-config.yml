@@ -773,13 +773,7 @@ Beds:
     Type: normal
 
 # Count the maximum level reached.
-MaxLevel:
-  10:
-    Goal: Reach level 10.
-    Message: Level 10 reached!
-    Name: maxlevel_10
-    DisplayName: §4Rookie
-    Type: normal
+MaxLevel: {}
 
 # Count potions consumed.
 ConsumedPotions:
