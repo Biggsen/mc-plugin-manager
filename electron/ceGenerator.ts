@@ -7,6 +7,7 @@ interface RegionRecord {
   world: 'overworld' | 'nether' | 'end'
   id: string
   kind: 'system' | 'region' | 'village' | 'heart'
+  description?: string
   discover: {
     method: 'disabled' | 'on_enter' | 'first_join'
     recipeId: 'region' | 'heart' | 'nether_region' | 'nether_heart' | 'none' | 'village'
@@ -51,6 +52,14 @@ function getAACommandId(region: RegionRecord): string {
   return region.discover.commandIdOverride || generateCommandId(region.id)
 }
 
+function formatRegionDisplayName(region: RegionRecord): string {
+  if (region.discover.displayNameOverride) return region.discover.displayNameOverride
+  return region.id
+    .split('_')
+    .map((s) => s.charAt(0).toUpperCase() + s.slice(1).toLowerCase())
+    .join(' ')
+}
+
 function recipeForRegion(region: RegionRecord): { counters: string[]; crate?: string } {
   if (region.kind === 'village') {
     return {
@@ -90,6 +99,10 @@ function generateDiscoverOnceEvent(region: RegionRecord): CEEvent {
     ...recipe.counters.map((c) => `console_command: aach add 1 ${c} %player%`),
   ]
 
+  if (region.kind === 'region' && region.description?.trim()) {
+    actions.push(`console_command: lp user %player% permission set bookgui.book.${region.id} true`)
+  }
+
   if (recipe.crate) {
     actions.push(`console_command: cc give virtual ${recipe.crate} 1 %player%`)
   }
@@ -117,27 +130,50 @@ function generateRegionHeartDiscoverOnce(): CEEvent {
   }
 }
 
-function generateFirstJoinEvent(onboarding: OnboardingConfig): CEEvent {
+function generateFirstJoinEvent(
+  onboarding: OnboardingConfig,
+  regions: RegionRecord[]
+): CEEvent {
   const tp = tpCommand(onboarding.teleport)
+  const startRegion =
+    regions.find((r) => r.id === onboarding.startRegionId && r.world === 'overworld') ||
+    regions.find((r) => r.id === onboarding.startRegionId)
+  const hasStartRegionWithDescription =
+    startRegion?.description?.trim() && startRegion.kind !== 'village' && startRegion.kind !== 'heart'
+
+  const actions: string[] = [
+    tp,
+    'wait: 1',
+    'title: 20;100;20;Welcome to {SERVER_NAME};Where the journey matters',
+    'wait: 10',
+    'console_command: aach give {START_REGION_AACH} %player%',
+    'console_command: aach add 1 Custom.regions_discovered %player%',
+  ]
+
+  if (hasStartRegionWithDescription) {
+    actions.push(
+      `console_command: lp user %player% permission set bookgui.book.${startRegion!.id} true`
+    )
+  }
+
+  actions.push(
+    'wait: 10',
+    'console_command: aach add 1 Custom.total_discovered %player%',
+    'title: 20;100;20;Your first reward!;Open crates with /cc',
+    'console_command: cc give virtual RegionCrate 1 %player%',
+    'wait: 30',
+    'message: &bFor help on how to play use &e/guides'
+  )
+
+  if (hasStartRegionWithDescription) {
+    const displayName = formatRegionDisplayName(startRegion!)
+    actions.push('wait: 30', `message: &bCurious about ${displayName}? &e/lore ${startRegion!.id}`)
+  }
+
   return {
     type: 'player_join',
     one_time: true,
-    actions: {
-      default: [
-        tp,
-        'wait: 1',
-        'title: 20;100;20;Welcome to {SERVER_NAME};Where the journey matters',
-        'wait: 15',
-        'console_command: aach give {START_REGION_AACH} %player%',
-        'console_command: aach add 1 Custom.regions_discovered %player%',
-        'wait: 15',
-        'console_command: aach add 1 Custom.total_discovered %player%',
-        'title: 20;100;20;Your first reward!;Open crates with /cc',
-        'console_command: cc give virtual RegionCrate 1 %player%',
-        'wait: 15',
-        'message: &bFor help on how to play use &e/guides',
-      ],
-    },
+    actions: { default: actions },
   }
 }
 
@@ -161,7 +197,7 @@ export function generateOwnedCEEvents(
 ): CEEventsSection {
   const owned: CEEventsSection = {}
 
-  owned.first_join = generateFirstJoinEvent(onboarding)
+  owned.first_join = generateFirstJoinEvent(onboarding, regions)
   owned.region_heart_discover_once = generateRegionHeartDiscoverOnce()
 
   // on-enter discoveries (skip start region — it's discovered in first_join, not on enter)
