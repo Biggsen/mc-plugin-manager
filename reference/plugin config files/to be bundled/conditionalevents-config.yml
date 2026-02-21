@@ -76,6 +76,7 @@ Events:
     one_time: true
     actions:
       default:
+        - 'wait: 13'
         - 'message: &7Region hearts have an unbreakable lodestone'
         - 'message: &dBind a compass to it to always find this region again'
   heart_of_warriotos_discover_once:
@@ -96,11 +97,13 @@ Events:
     one_time: true
     actions:
       default:
-        - 'wait: 5'
+        - 'wait: 3'
         - 'console_command: aach give discoverCherrybrook %player%'
-        - 'console_command: aach add 1 Custom.villages_discovered %player%'
-        - 'console_command: aach add 1 Custom.total_discovered %player%'
         - 'console_command: cc give virtual VillageCrate 1 %player%'
+        - 'wait: 6'
+        - 'console_command: aach add 1 Custom.villages_discovered %player%'
+        - 'wait: 6'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
   monkvos_discover_once:
     type: wgevents_region_enter
     conditions:
@@ -131,11 +134,13 @@ Events:
     one_time: true
     actions:
       default:
-        - 'wait: 5'
+        - 'wait: 3'
         - 'console_command: aach give discoverCeacorn %player%'
-        - 'console_command: aach add 1 Custom.villages_discovered %player%'
-        - 'console_command: aach add 1 Custom.total_discovered %player%'
         - 'console_command: cc give virtual VillageCrate 1 %player%'
+        - 'wait: 6'
+        - 'console_command: aach add 1 Custom.villages_discovered %player%'
+        - 'wait: 6'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
   ridgewick_discover_once:
     type: wgevents_region_enter
     conditions:
@@ -143,11 +148,13 @@ Events:
     one_time: true
     actions:
       default:
-        - 'wait: 5'
+        - 'wait: 3'
         - 'console_command: aach give discoverRidgewick %player%'
-        - 'console_command: aach add 1 Custom.villages_discovered %player%'
-        - 'console_command: aach add 1 Custom.total_discovered %player%'
         - 'console_command: cc give virtual VillageCrate 1 %player%'
+        - 'wait: 6'
+        - 'console_command: aach add 1 Custom.villages_discovered %player%'
+        - 'wait: 6'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
   auchendinny_discover_once:
     type: wgevents_region_enter
     conditions:
@@ -155,11 +162,13 @@ Events:
     one_time: true
     actions:
       default:
-        - 'wait: 5'
+        - 'wait: 3'
         - 'console_command: aach give discoverAuchendinny %player%'
-        - 'console_command: aach add 1 Custom.villages_discovered %player%'
-        - 'console_command: aach add 1 Custom.total_discovered %player%'
         - 'console_command: cc give virtual VillageCrate 1 %player%'
+        - 'wait: 6'
+        - 'console_command: aach add 1 Custom.villages_discovered %player%'
+        - 'wait: 6'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
   thornhill_discover_once:
     type: wgevents_region_enter
     conditions:
@@ -167,11 +176,13 @@ Events:
     one_time: true
     actions:
       default:
-        - 'wait: 5'
+        - 'wait: 3'
         - 'console_command: aach give discoverThornhill %player%'
-        - 'console_command: aach add 1 Custom.villages_discovered %player%'
-        - 'console_command: aach add 1 Custom.total_discovered %player%'
         - 'console_command: cc give virtual VillageCrate 1 %player%'
+        - 'wait: 6'
+        - 'console_command: aach add 1 Custom.villages_discovered %player%'
+        - 'wait: 6'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
   holyania_discover_once:
     type: wgevents_region_enter
     conditions:
@@ -225,11 +236,13 @@ Events:
     one_time: true
     actions:
       default:
-        - 'wait: 5'
+        - 'wait: 3'
         - 'console_command: aach give discoverCliffheath %player%'
-        - 'console_command: aach add 1 Custom.villages_discovered %player%'
-        - 'console_command: aach add 1 Custom.total_discovered %player%'
         - 'console_command: cc give virtual VillageCrate 1 %player%'
+        - 'wait: 6'
+        - 'console_command: aach add 1 Custom.villages_discovered %player%'
+        - 'wait: 6'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
   dirtyford_discover_once:
     type: wgevents_region_enter
     conditions:
@@ -237,11 +250,13 @@ Events:
     one_time: true
     actions:
       default:
-        - 'wait: 5'
+        - 'wait: 3'
         - 'console_command: aach give discoverDirtyford %player%'
-        - 'console_command: aach add 1 Custom.villages_discovered %player%'
-        - 'console_command: aach add 1 Custom.total_discovered %player%'
         - 'console_command: cc give virtual VillageCrate 1 %player%'
+        - 'wait: 6'
+        - 'console_command: aach add 1 Custom.villages_discovered %player%'
+        - 'wait: 6'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
   ottcherry_discover_once:
     type: wgevents_region_enter
     conditions:
@@ -249,11 +264,13 @@ Events:
     one_time: true
     actions:
       default:
-        - 'wait: 5'
+        - 'wait: 3'
         - 'console_command: aach give discoverOttcherry %player%'
-        - 'console_command: aach add 1 Custom.villages_discovered %player%'
-        - 'console_command: aach add 1 Custom.total_discovered %player%'
         - 'console_command: cc give virtual VillageCrate 1 %player%'
+        - 'wait: 6'
+        - 'console_command: aach add 1 Custom.villages_discovered %player%'
+        - 'wait: 6'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
   badin_discover_once:
     type: wgevents_region_enter
     conditions:
@@ -261,11 +278,13 @@ Events:
     one_time: true
     actions:
       default:
-        - 'wait: 5'
+        - 'wait: 3'
         - 'console_command: aach give discoverBadin %player%'
-        - 'console_command: aach add 1 Custom.villages_discovered %player%'
-        - 'console_command: aach add 1 Custom.total_discovered %player%'
         - 'console_command: cc give virtual VillageCrate 1 %player%'
+        - 'wait: 6'
+        - 'console_command: aach add 1 Custom.villages_discovered %player%'
+        - 'wait: 6'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
   muirozo_discover_once:
     type: wgevents_region_enter
     conditions:
@@ -296,11 +315,13 @@ Events:
     one_time: true
     actions:
       default:
-        - 'wait: 5'
+        - 'wait: 3'
         - 'console_command: aach give discoverTrefoilgate %player%'
-        - 'console_command: aach add 1 Custom.villages_discovered %player%'
-        - 'console_command: aach add 1 Custom.total_discovered %player%'
         - 'console_command: cc give virtual VillageCrate 1 %player%'
+        - 'wait: 6'
+        - 'console_command: aach add 1 Custom.villages_discovered %player%'
+        - 'wait: 6'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
   plantainbrook_discover_once:
     type: wgevents_region_enter
     conditions:
@@ -308,11 +329,13 @@ Events:
     one_time: true
     actions:
       default:
-        - 'wait: 5'
+        - 'wait: 3'
         - 'console_command: aach give discoverPlantainbrook %player%'
-        - 'console_command: aach add 1 Custom.villages_discovered %player%'
-        - 'console_command: aach add 1 Custom.total_discovered %player%'
         - 'console_command: cc give virtual VillageCrate 1 %player%'
+        - 'wait: 6'
+        - 'console_command: aach add 1 Custom.villages_discovered %player%'
+        - 'wait: 6'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
   northwich_discover_once:
     type: wgevents_region_enter
     conditions:
@@ -320,11 +343,13 @@ Events:
     one_time: true
     actions:
       default:
-        - 'wait: 5'
+        - 'wait: 3'
         - 'console_command: aach give discoverNorthwich %player%'
-        - 'console_command: aach add 1 Custom.villages_discovered %player%'
-        - 'console_command: aach add 1 Custom.total_discovered %player%'
         - 'console_command: cc give virtual VillageCrate 1 %player%'
+        - 'wait: 6'
+        - 'console_command: aach add 1 Custom.villages_discovered %player%'
+        - 'wait: 6'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
   lowernickel_discover_once:
     type: wgevents_region_enter
     conditions:
@@ -332,11 +357,13 @@ Events:
     one_time: true
     actions:
       default:
-        - 'wait: 5'
+        - 'wait: 3'
         - 'console_command: aach give discoverLowernickel %player%'
-        - 'console_command: aach add 1 Custom.villages_discovered %player%'
-        - 'console_command: aach add 1 Custom.total_discovered %player%'
         - 'console_command: cc give virtual VillageCrate 1 %player%'
+        - 'wait: 6'
+        - 'console_command: aach add 1 Custom.villages_discovered %player%'
+        - 'wait: 6'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
   zoreria_discover_once:
     type: wgevents_region_enter
     conditions:
@@ -367,11 +394,13 @@ Events:
     one_time: true
     actions:
       default:
-        - 'wait: 5'
+        - 'wait: 3'
         - 'console_command: aach give discoverIvwel %player%'
-        - 'console_command: aach add 1 Custom.villages_discovered %player%'
-        - 'console_command: aach add 1 Custom.total_discovered %player%'
         - 'console_command: cc give virtual VillageCrate 1 %player%'
+        - 'wait: 6'
+        - 'console_command: aach add 1 Custom.villages_discovered %player%'
+        - 'wait: 6'
+        - 'console_command: aach add 1 Custom.total_discovered %player%'
   shaancrub_discover_once:
     type: wgevents_region_enter
     conditions:

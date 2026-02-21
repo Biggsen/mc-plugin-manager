@@ -93,18 +93,40 @@ function generateDiscoverOnceEvent(region: RegionRecord): CEEvent {
   const cmd = getAACommandId(region)
   const recipe = recipeForRegion(region)
 
-  const actions: string[] = [
-    'wait: 5',
-    `console_command: aach give ${cmd} %player%`,
-    ...recipe.counters.map((c) => `console_command: aach add 1 ${c} %player%`),
-  ]
+  let actions: string[]
 
-  if (region.kind === 'region' && region.description?.trim()) {
-    actions.push(`console_command: lp user %player% permission set bookgui.book.${region.id} true`)
-  }
-
-  if (recipe.crate) {
-    actions.push(`console_command: cc give virtual ${recipe.crate} 1 %player%`)
+  if (region.kind === 'village') {
+    actions = [
+      'wait: 3',
+      `console_command: aach give ${cmd} %player%`,
+      `console_command: cc give virtual ${recipe.crate} 1 %player%`,
+      'wait: 6',
+      'console_command: aach add 1 Custom.villages_discovered %player%',
+      'wait: 6',
+      'console_command: aach add 1 Custom.total_discovered %player%',
+    ]
+  } else if (region.kind === 'region') {
+    actions = [
+      'wait: 3',
+      `console_command: aach give ${cmd} %player%`,
+      `console_command: cc give virtual ${recipe.crate} 1 %player%`,
+    ]
+    if (region.description?.trim()) {
+      actions.push(`console_command: lp user %player% permission set bookgui.book.${region.id} true`)
+    }
+    actions.push(
+      'wait: 6',
+      `console_command: aach add 1 ${recipe.counters[0]} %player%`,
+      'wait: 6',
+      `console_command: aach add 1 ${recipe.counters[1]} %player%`
+    )
+  } else {
+    actions = [
+      `console_command: aach give ${cmd} %player%`,
+      `console_command: cc give virtual ${recipe.crate} 1 %player%`,
+      'wait: 8',
+      `console_command: aach add 1 ${recipe.counters[0]} %player%`,
+    ]
   }
 
   return {
@@ -123,6 +145,7 @@ function generateRegionHeartDiscoverOnce(): CEEvent {
     conditions: ['%region% startsWith heart'],
     actions: {
       default: [
+        'wait: 13',
         'message: &7Region hearts have an unbreakable lodestone',
         'message: &dBind a compass to it to always find this region again',
       ],
