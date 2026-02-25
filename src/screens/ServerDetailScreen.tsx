@@ -110,10 +110,10 @@ export function ServerDetailScreen({ server: initialServer, onBack }: ServerDeta
         />
       </Group>
 
-    <Group align="flex-start" gap="xl" wrap="nowrap" style={{ minHeight: '100%' }}>
+    <Group align="flex-start" gap="xl" wrap="nowrap" mih="100%">
       <Box
         w={260}
-        style={{ flexShrink: 0, position: 'sticky', top: 70, alignSelf: 'flex-start' }}
+        className="server-detail-nav"
         visibleFrom="sm"
         component="nav"
       >
@@ -136,7 +136,7 @@ export function ServerDetailScreen({ server: initialServer, onBack }: ServerDeta
         </Stack>
       </Box>
 
-      <Stack gap="xl" style={{ flex: 1, minWidth: 0 }} p="md" pt={0} px={0}>
+      <Stack gap="xl" flex={1} miw={0} p="md" pt={0} px={0}>
         <div>
           <Title order={1} mb={4}>
             {activeSection === 'import' && 'Import stats'}

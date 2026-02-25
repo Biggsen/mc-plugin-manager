@@ -177,7 +177,9 @@ export function BuildScreen({ server }: BuildScreenProps) {
         <Stack gap="md">
           <UnstyledButton
             onClick={() => setShowOverrides(!showOverrides)}
-            style={{ color: 'var(--mantine-color-blue-6)', textDecoration: 'underline', fontSize: '0.875rem' }}
+            c="blue.6"
+            td="underline"
+            size="sm"
           >
             {showOverrides ? '▼' : '▶'} Custom config file overrides (optional)
           </UnstyledButton>

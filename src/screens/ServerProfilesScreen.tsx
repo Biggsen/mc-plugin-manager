@@ -135,7 +135,6 @@ export function ServerProfilesScreen({
                 className="server-card"
                 p="md"
                 withBorder
-                style={{ cursor: 'pointer' }}
                 onClick={() => handleSelectServer(server.id)}
                 bg="dark.6"
               >

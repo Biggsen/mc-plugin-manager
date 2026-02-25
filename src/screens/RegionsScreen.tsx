@@ -115,7 +115,7 @@ function RegionPanel({ region }: { region: RegionRecord }) {
           <Text size="xs" tt="uppercase" fw={600} c="dimmed" mb={4}>
             Description
           </Text>
-          <Text size="sm" style={{ whiteSpace: 'pre-wrap' }}>{region.description}</Text>
+          <Text size="sm" className="pre-wrap">{region.description}</Text>
         </div>
       )}
 

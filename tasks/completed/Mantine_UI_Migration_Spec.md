@@ -1,5 +1,7 @@
 # Mantine UI Migration — Specification
 
+**Status: Completed** (Feb 2026)
+
 ## Purpose
 
 Migrate the MC Plugin Manager frontend from ad-hoc inline styles and raw HTML form elements to **Mantine** (v7) so that:
@@ -142,19 +144,21 @@ Execute in order so the app always runs and the diff stays reviewable.
 7. **Phase 7 – BuildScreen**
    - Replace plugin checkboxes, collapsible overrides, output dir row, validation alert, build button, result banner, build report (grids and lists), and past builds list. This is the largest screen; consider extracting subcomponents (e.g. `BuildReportCard`) during the migration to keep files readable.
 
-8. **Phase 8 – Cleanup**
+8. **Phase 8 – Cleanup** ✅
    - Remove unused inline style objects and any dead CSS from `index.css`. Optionally introduce a small set of shared constants or theme overrides if anything still needs to be centralized.
+
+**Note:** Migration completed with Mantine v8. Additional screens (RegionsScreen, LoreBooksScreen) added post-spec also use Mantine.
 
 ---
 
 ## Acceptance Criteria
 
-- [ ] App runs under Electron and in browser (Vite dev) with no console errors from Mantine.
-- [ ] All existing user flows work: create server, select server, import overworld/nether, edit onboarding, run build, view result and report, switch past builds.
-- [ ] No visual regressions that would block a release (layout and hierarchy preserved or improved; colors/spacing consistent).
-- [ ] No remaining raw `<button>`/`<input>` for form-like UI except where Mantine doesn’t provide a substitute (e.g. file input may remain native if Mantine is not used for it).
-- [ ] Global styles live in `index.css` or Mantine theme only; no one-off inline style objects for layout/spacing/colors that duplicate theme values.
-- [ ] Documentation: README or a short “UI” note updated to mention Mantine and how to run the app.
+- [x] App runs under Electron and in browser (Vite dev) with no console errors from Mantine.
+- [x] All existing user flows work: create server, select server, import overworld/nether, edit onboarding, run build, view result and report, switch past builds.
+- [x] No visual regressions that would block a release (layout and hierarchy preserved or improved; colors/spacing consistent).
+- [x] No remaining raw `<button>`/`<input>` for form-like UI except where Mantine doesn’t provide a substitute (e.g. file input may remain native if Mantine is not used for it).
+- [x] Global styles live in `index.css` or Mantine theme only; no one-off inline style objects for layout/spacing/colors that duplicate theme values.
+- [x] Documentation: README or a short “UI” note updated to mention Mantine and how to run the app.
 
 ---
 

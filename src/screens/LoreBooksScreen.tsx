@@ -121,7 +121,7 @@ export function LoreBooksScreen({ server, onServerUpdate }: LoreBooksScreenProps
           Edit Page Breaks
         </Text>
         <Group align="flex-start" gap="xl" wrap="wrap">
-          <Stack gap="xs" style={{ minWidth: 200 }}>
+          <Stack gap="xs" miw={200}>
             <Text size="xs" fw={600} c="dimmed">
               Select region
             </Text>

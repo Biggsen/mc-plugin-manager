@@ -128,27 +128,18 @@ export function LoreBookPreview({
         </Box>
       ) : (
         <Box style={bookStyle}>
-          <Text size="xs" c="dimmed" ta="right" mb="xs" style={{ fontFamily: 'inherit', color: '#555' }}>
+          <Text size="xs" c="dimmed" ta="right" mb="xs" className="lore-book-inherit">
             {regionTitle || (regionId ? formatRegionTitle(regionId) : '')}
           </Text>
-          <Text size="xs" c="yellow.7" mb="xs" style={{ fontFamily: 'inherit' }}>
+          <Text size="xs" c="yellow.7" mb="xs" className="lore-book-inherit">
             Click a word to insert a page break after it
           </Text>
-          <Stack className="pageBack" gap={0} style={{ fontFamily: 'inherit', overflow: 'hidden' }}>
+          <Stack className="pageBack lore-book-inherit lore-book-overflow-hidden" gap={0}>
             {segments.map((seg, i) =>
               seg.isBreak ? (
-                <Box
-                  key={`break-${i}`}
-                  py="xs"
-                  mt="xs"
-                  mb="xs"
-                  style={{
-                    borderTop: '1px dashed #c4a052',
-                    borderBottom: '1px dashed #c4a052',
-                  }}
-                >
+                <Box key={`break-${i}`} py="xs" mt="xs" mb="xs" className="lore-book-break">
                   <Group justify="center" gap="xs">
-                    <Text size="xs" c="dark.4" style={{ fontFamily: 'inherit' }}>
+                    <Text size="xs" c="dark.4" className="lore-book-inherit">
                       Page break
                     </Text>
                     <Button
@@ -195,7 +186,7 @@ function ClickableTextBlock({
   const startIdx = expanded.indexOf(text)
   if (startIdx === -1) {
     return (
-      <Text style={{ ...bookStyle, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+      <Text style={bookStyle} className="pre-wrap">
         {text}
       </Text>
     )
@@ -204,33 +195,13 @@ function ClickableTextBlock({
   const relevantTokens = tokens.filter((t) => t.offsetEnd > startIdx && t.offsetEnd <= endIdx)
 
   return (
-    <Box
-      component="span"
-      className="pageBack"
-      style={{
-        fontFamily: "inherit",
-        fontSize: 31,
-        lineHeight: 0.8,
-        whiteSpace: 'pre-wrap',
-        wordBreak: 'break-word',
-      }}
-    >
+    <Box component="span" className="pageBack lore-book-text">
       {relevantTokens.map((t, i) => (
         <span
           key={i}
+          className="lore-book-word"
           onClick={() => onAddBreak(t.offsetEnd)}
-          style={{
-            cursor: 'pointer',
-            padding: '0 1px',
-            borderRadius: 2,
-          }}
           title="Click to insert page break after this word"
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = 'rgba(139, 69, 19, 0.2)'
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = 'transparent'
-          }}
         >
           {t.text}
         </span>

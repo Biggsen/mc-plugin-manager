@@ -19,12 +19,25 @@ body {
 }
 
 .server-card {
+  cursor: pointer;
   transition: background-color 0.15s ease, border-color 0.15s ease;
 }
 
 .server-card:hover {
   background-color: var(--mantine-color-dark-5) !important;
   border-color: var(--mantine-color-red-6);
+}
+
+.pre-wrap {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.server-detail-nav {
+  flex-shrink: 0;
+  position: sticky;
+  top: 70px;
+  align-self: flex-start;
 }
 
 .pageBack {
@@ -34,11 +47,43 @@ body {
 .pageBack::before {
   content: '';
   position: absolute;
-  background: #888;
+  background: var(--mantine-color-dark-4);
   height: 348px;
   width: 312px;
   display: block;
   z-index: 0;
   opacity: 0.3;
   pointer-events: none;
+}
+
+/* Lore book preview – Minecraft-style aesthetic */
+.lore-book-inherit {
+  font-family: inherit;
+}
+
+.lore-book-overflow-hidden {
+  overflow: hidden;
+}
+
+.lore-book-break {
+  border-top: 1px dashed var(--lore-book-accent, #c4a052);
+  border-bottom: 1px dashed var(--lore-book-accent, #c4a052);
+}
+
+.lore-book-word {
+  cursor: pointer;
+  padding: 0 1px;
+  border-radius: 2px;
+}
+
+.lore-book-word:hover {
+  background-color: rgba(139, 69, 19, 0.2);
+}
+
+.lore-book-text {
+  font-family: inherit;
+  font-size: 31px;
+  line-height: 0.8;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
