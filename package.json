@@ -4,6 +4,8 @@
   "description": "Exploration Server Config Tool for Minecraft Plugin Configuration Management",
   "main": "dist-electron/main.js",
   "scripts": {
+    "test": "vitest",
+    "test:run": "vitest run",
     "dev": "vite",
     "build": "tsc && vite build",
     "prebuild:electron": "node scripts/copy-templates.js",
@@ -29,7 +31,8 @@
     "electron-builder": "^24.9.1",
     "electron-packager": "^17.1.2",
     "typescript": "^5.3.3",
-    "vite": "^5.0.8"
+    "vite": "^5.0.8",
+    "vitest": "^2.1.9"
   },
   "dependencies": {
     "@mantine/core": "^8.3.14",

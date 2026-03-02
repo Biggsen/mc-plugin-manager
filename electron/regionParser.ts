@@ -135,8 +135,9 @@ function parseRegionFile(filePath: string): RegionForgeExport {
 
 /**
  * Classify a single region based on the classification rules
+ * Exported for unit testing.
  */
-function classifyRegion(
+export function classifyRegion(
   regionId: string,
   regionData: RegionForgeExport['regions'][string],
   world: 'overworld' | 'nether',
@@ -454,4 +455,4 @@ export function importRegionsMeta(
   return result
 }
 
-module.exports = { importRegions, importRegionsMeta }
+module.exports = { importRegions, importRegionsMeta, classifyRegion }

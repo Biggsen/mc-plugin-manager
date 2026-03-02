@@ -1,6 +1,6 @@
 # Unit Tests — Specification
 
-**Status: Pending**
+**Status: In Progress**
 
 ## Purpose
 
@@ -171,28 +171,28 @@ Create `tests/fixtures/`:
 ## Implementation Checklist
 
 ### Phase 1: Setup
-- [ ] Add `vitest` to devDependencies
-- [ ] Create `vitest.config.ts`
-- [ ] Add `test` and `test:run` scripts to `package.json`
-- [ ] Export `calculateTiers` from `aaGenerator.ts` (or move to testable module)
+- [x] Add `vitest` to devDependencies
+- [x] Create `vitest.config.ts`
+- [x] Add `test` and `test:run` scripts to `package.json`
+- [x] Export `calculateTiers` from `aaGenerator.ts` (or move to testable module)
 
 ### Phase 2: Tier Calculation
-- [ ] Create `electron/aaGenerator.test.ts`
-- [ ] Implement all tier calculation test cases from Phase 1 table
-- [ ] Verify `test:run` passes
+- [x] Create `electron/aaGenerator.test.ts`
+- [x] Implement all tier calculation test cases from Phase 1 table
+- [x] Verify `test:run` passes
 
 ### Phase 3: Region Classification
-- [ ] Export `classifyRegion` from `regionParser.ts` (or extract to `regionClassifier.ts`)
-- [ ] Create `electron/regionParser.test.ts` (or `regionClassifier.test.ts`)
-- [ ] Implement classification test cases
+- [x] Export `classifyRegion` from `regionParser.ts` (or extract to `regionClassifier.ts`)
+- [x] Create `electron/regionParser.test.ts` (or `regionClassifier.test.ts`)
+- [x] Implement classification test cases
 
 ### Phase 4: String Formatters
 - [ ] After Refactor spec extracts utilities, add `stringFormatters.test.ts`
 - [ ] Or add inline tests in generator test files as interim measure
 
 ### Phase 5: Region Counts
-- [ ] Create `electron/tabGenerator.test.ts`
-- [ ] Implement `computeRegionCounts` test cases
+- [x] Create `electron/tabGenerator.test.ts`
+- [x] Implement `computeRegionCounts` test cases
 
 ### Phase 6: Config Generators (Optional)
 - [ ] Create `tests/fixtures/regions-minimal.json`

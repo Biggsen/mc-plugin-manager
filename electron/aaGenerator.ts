@@ -96,10 +96,14 @@ function calculateTiers(template: TierTemplate, total: number): number[] {
     }
   }
 
-  const values = [...new Set(filtered.map(t => t.value))].sort((a, b) => a - b)
+  let values = [...new Set(filtered.map(t => t.value))].sort((a, b) => a - b)
 
   if (half === total && values.includes(half)) {
-    return values.filter(v => v === total || v < half)
+    values = values.filter(v => v === total || v < half)
+  }
+
+  if (total >= 1 && values.includes(0)) {
+    values = values.filter(v => v > 0)
   }
 
   return values
