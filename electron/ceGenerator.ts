@@ -70,9 +70,15 @@ function recipeForRegion(region: RegionRecord): { counters: string[]; crate?: st
 
   if (region.kind === 'heart') {
     if (region.world === 'nether') {
-      return { counters: ['Custom.nether_hearts_discovered'], crate: 'HeartCrate' }
+      return {
+        counters: ['Custom.nether_hearts_discovered', 'Custom.total_discovered'],
+        crate: 'HeartCrate',
+      }
     }
-    return { counters: ['Custom.hearts_discovered'], crate: 'HeartCrate' }
+    return {
+      counters: ['Custom.hearts_discovered', 'Custom.total_discovered'],
+      crate: 'HeartCrate',
+    }
   }
 
   // regular regions
@@ -124,8 +130,10 @@ function generateDiscoverOnceEvent(region: RegionRecord): CEEvent {
     actions = [
       `console_command: aach give ${cmd} %player%`,
       `console_command: cc give virtual ${recipe.crate} 1 %player%`,
-      'wait: 8',
+      'wait: 6',
       `console_command: aach add 1 ${recipe.counters[0]} %player%`,
+      'wait: 6',
+      `console_command: aach add 1 ${recipe.counters[1]} %player%`,
     ]
   }
 
