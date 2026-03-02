@@ -122,13 +122,13 @@ function generateDiscoverOnceEvent(
     actions = [
       'wait: 3',
       `console_command: aach give ${cmd} %player%`,
-      `console_message: [EXPMETRIC] type=discovery entity=village player=%player% uuid=%player_uuid% region=${displayName} diff=0`,
+      `console_message: [EXPMETRIC] server={SERVER_NAME} type=discovery entity=village player=%player% uuid=%player_uuid% region=${displayName} diff=0`,
       `console_command: cc give virtual ${recipe.crate} 1 %player%`,
       'wait: 6',
       'console_command: aach add 1 Custom.villages_discovered %player%',
       'wait: 6',
       'console_command: aach add 1 Custom.total_discovered %player%',
-      'console_message: [EXPMETRIC] type=state entity=village player=%player% uuid=%player_uuid% total=%aach_custom_total_discovered% villages=%aach_custom_villages_discovered%',
+      'console_message: [EXPMETRIC] server={SERVER_NAME} type=state entity=village player=%player% uuid=%player_uuid% total=%aach_custom_total_discovered% villages=%aach_custom_villages_discovered%',
     ]
   } else if (region.kind === 'region') {
     const diff = difficultyToDiff(regionBands?.[region.id])
@@ -136,7 +136,7 @@ function generateDiscoverOnceEvent(
     actions = [
       'wait: 3',
       `console_command: aach give ${cmd} %player%`,
-      `console_message: [EXPMETRIC] type=discovery entity=region player=%player% uuid=%player_uuid% region=${displayName} diff=${diff}`,
+      `console_message: [EXPMETRIC] server={SERVER_NAME} type=discovery entity=region player=%player% uuid=%player_uuid% region=${displayName} diff=${diff}`,
       `console_command: cc give virtual ${recipe.crate} 1 %player%`,
     ]
     if (region.description?.trim()) {
@@ -147,7 +147,7 @@ function generateDiscoverOnceEvent(
       `console_command: aach add 1 ${recipe.counters[0]} %player%`,
       'wait: 6',
       `console_command: aach add 1 ${recipe.counters[1]} %player%`,
-      'console_message: [EXPMETRIC] type=state entity=region player=%player% uuid=%player_uuid% total=%aach_custom_total_discovered% regions=%aach_custom_regions_discovered%'
+      'console_message: [EXPMETRIC] server={SERVER_NAME} type=state entity=region player=%player% uuid=%player_uuid% total=%aach_custom_total_discovered% regions=%aach_custom_regions_discovered%'
     )
   } else {
     const parentRegionId = region.id.startsWith('heart_of_') ? region.id.slice(9) : region.id
@@ -157,13 +157,13 @@ function generateDiscoverOnceEvent(
       .join(' ')
     actions = [
       `console_command: aach give ${cmd} %player%`,
-      `console_message: [EXPMETRIC] type=discovery entity=heart player=%player% uuid=%player_uuid% region=${parentDisplayName} diff=0`,
+      `console_message: [EXPMETRIC] server={SERVER_NAME} type=discovery entity=heart player=%player% uuid=%player_uuid% region=${parentDisplayName} diff=0`,
       `console_command: cc give virtual ${recipe.crate} 1 %player%`,
       'wait: 6',
       `console_command: aach add 1 ${recipe.counters[0]} %player%`,
       'wait: 6',
       `console_command: aach add 1 ${recipe.counters[1]} %player%`,
-      'console_message: [EXPMETRIC] type=state entity=heart player=%player% uuid=%player_uuid% total=%aach_custom_total_discovered% hearts=%aach_custom_hearts_discovered%',
+      'console_message: [EXPMETRIC] server={SERVER_NAME} type=state entity=heart player=%player% uuid=%player_uuid% total=%aach_custom_total_discovered% hearts=%aach_custom_hearts_discovered%',
     ]
   }
 
@@ -180,7 +180,7 @@ function generateJoinLogEvent(): CEEvent {
     type: 'player_join',
     one_time: false,
     actions: {
-      default: ['console_message: [EXPMETRIC] type=join player=%player% uuid=%player_uuid%'],
+      default: ['console_message: [EXPMETRIC] server={SERVER_NAME} type=join player=%player% uuid=%player_uuid%'],
     },
   }
 }
@@ -190,7 +190,7 @@ function generateLeaveLogEvent(): CEEvent {
     type: 'player_leave',
     one_time: false,
     actions: {
-      default: ['console_message: [EXPMETRIC] type=leave player=%player% uuid=%player_uuid%'],
+      default: ['console_message: [EXPMETRIC] server={SERVER_NAME} type=leave player=%player% uuid=%player_uuid%'],
     },
   }
 }
@@ -232,7 +232,7 @@ function generateFirstJoinEvent(
     'title: 20;100;20;Welcome to {SERVER_NAME};Where the journey matters',
     'wait: 10',
     'console_command: aach give {START_REGION_AACH} %player%',
-    `console_message: [EXPMETRIC] type=discovery entity=region player=%player% uuid=%player_uuid% region=${startDisplayName} diff=${startDiff}`,
+    `console_message: [EXPMETRIC] server={SERVER_NAME} type=discovery entity=region player=%player% uuid=%player_uuid% region=${startDisplayName} diff=${startDiff}`,
     'console_command: aach add 1 Custom.regions_discovered %player%',
   ]
 
@@ -257,7 +257,7 @@ function generateFirstJoinEvent(
   }
 
   actions.push(
-    'console_message: [EXPMETRIC] type=state entity=region player=%player% uuid=%player_uuid% total=%aach_custom_total_discovered% regions=%aach_custom_regions_discovered%'
+    'console_message: [EXPMETRIC] server={SERVER_NAME} type=state entity=region player=%player% uuid=%player_uuid% total=%aach_custom_total_discovered% regions=%aach_custom_regions_discovered%'
   )
 
   return {
