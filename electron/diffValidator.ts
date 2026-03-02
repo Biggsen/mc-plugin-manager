@@ -41,10 +41,14 @@ function removeOwnedCESections(config: any): any {
       // - *_discover_once
       // - region_heart_discover_once
       // - first_join
+      // - join_log
+      // - leave_log
       const isOwned =
         key.endsWith('_discover_once') ||
         key === 'region_heart_discover_once' ||
-        key === 'first_join'
+        key === 'first_join' ||
+        key === 'join_log' ||
+        key === 'leave_log'
       
       if (!isOwned) {
         cleanedEvents[key] = value

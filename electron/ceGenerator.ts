@@ -60,6 +60,19 @@ function formatRegionDisplayName(region: RegionRecord): string {
     .join(' ')
 }
 
+const DIFFICULTY_TO_DIFF: Record<string, number> = {
+  easy: 1,
+  normal: 2,
+  hard: 3,
+  severe: 4,
+  deadly: 5,
+}
+
+function difficultyToDiff(difficulty: string | undefined): number {
+  if (!difficulty) return 0
+  return DIFFICULTY_TO_DIFF[difficulty.toLowerCase()] ?? 0
+}
+
 function recipeForRegion(region: RegionRecord): { counters: string[]; crate?: string } {
   if (region.kind === 'village') {
     return {
@@ -95,26 +108,35 @@ function recipeForRegion(region: RegionRecord): { counters: string[]; crate?: st
   }
 }
 
-function generateDiscoverOnceEvent(region: RegionRecord): CEEvent {
+function generateDiscoverOnceEvent(
+  region: RegionRecord,
+  regionBands?: Record<string, string>
+): CEEvent {
   const cmd = getAACommandId(region)
   const recipe = recipeForRegion(region)
 
   let actions: string[]
 
   if (region.kind === 'village') {
+    const displayName = formatRegionDisplayName(region)
     actions = [
       'wait: 3',
       `console_command: aach give ${cmd} %player%`,
+      `console_message: [EXPMETRIC] type=discovery entity=village player=%player% uuid=%player_uuid% region=${displayName} diff=0`,
       `console_command: cc give virtual ${recipe.crate} 1 %player%`,
       'wait: 6',
       'console_command: aach add 1 Custom.villages_discovered %player%',
       'wait: 6',
       'console_command: aach add 1 Custom.total_discovered %player%',
+      'console_message: [EXPMETRIC] type=state entity=village player=%player% uuid=%player_uuid% total=%aach_custom_total_discovered% villages=%aach_custom_villages_discovered%',
     ]
   } else if (region.kind === 'region') {
+    const diff = difficultyToDiff(regionBands?.[region.id])
+    const displayName = formatRegionDisplayName(region)
     actions = [
       'wait: 3',
       `console_command: aach give ${cmd} %player%`,
+      `console_message: [EXPMETRIC] type=discovery entity=region player=%player% uuid=%player_uuid% region=${displayName} diff=${diff}`,
       `console_command: cc give virtual ${recipe.crate} 1 %player%`,
     ]
     if (region.description?.trim()) {
@@ -124,16 +146,24 @@ function generateDiscoverOnceEvent(region: RegionRecord): CEEvent {
       'wait: 6',
       `console_command: aach add 1 ${recipe.counters[0]} %player%`,
       'wait: 6',
-      `console_command: aach add 1 ${recipe.counters[1]} %player%`
+      `console_command: aach add 1 ${recipe.counters[1]} %player%`,
+      'console_message: [EXPMETRIC] type=state entity=region player=%player% uuid=%player_uuid% total=%aach_custom_total_discovered% regions=%aach_custom_regions_discovered%'
     )
   } else {
+    const parentRegionId = region.id.startsWith('heart_of_') ? region.id.slice(9) : region.id
+    const parentDisplayName = parentRegionId
+      .split('_')
+      .map((s) => s.charAt(0).toUpperCase() + s.slice(1).toLowerCase())
+      .join(' ')
     actions = [
       `console_command: aach give ${cmd} %player%`,
+      `console_message: [EXPMETRIC] type=discovery entity=heart player=%player% uuid=%player_uuid% region=${parentDisplayName} diff=0`,
       `console_command: cc give virtual ${recipe.crate} 1 %player%`,
       'wait: 6',
       `console_command: aach add 1 ${recipe.counters[0]} %player%`,
       'wait: 6',
       `console_command: aach add 1 ${recipe.counters[1]} %player%`,
+      'console_message: [EXPMETRIC] type=state entity=heart player=%player% uuid=%player_uuid% total=%aach_custom_total_discovered% hearts=%aach_custom_hearts_discovered%',
     ]
   }
 
@@ -142,6 +172,26 @@ function generateDiscoverOnceEvent(region: RegionRecord): CEEvent {
     one_time: true,
     conditions: [`%region% == ${region.id}`],
     actions: { default: actions },
+  }
+}
+
+function generateJoinLogEvent(): CEEvent {
+  return {
+    type: 'player_join',
+    one_time: false,
+    actions: {
+      default: ['console_message: [EXPMETRIC] type=join player=%player% uuid=%player_uuid%'],
+    },
+  }
+}
+
+function generateLeaveLogEvent(): CEEvent {
+  return {
+    type: 'player_leave',
+    one_time: false,
+    actions: {
+      default: ['console_message: [EXPMETRIC] type=leave player=%player% uuid=%player_uuid%'],
+    },
   }
 }
 
@@ -163,7 +213,8 @@ function generateRegionHeartDiscoverOnce(): CEEvent {
 
 function generateFirstJoinEvent(
   onboarding: OnboardingConfig,
-  regions: RegionRecord[]
+  regions: RegionRecord[],
+  regionBands?: Record<string, string>
 ): CEEvent {
   const tp = tpCommand(onboarding.teleport)
   const startRegion =
@@ -172,12 +223,16 @@ function generateFirstJoinEvent(
   const hasStartRegionWithDescription =
     startRegion?.description?.trim() && startRegion.kind !== 'village' && startRegion.kind !== 'heart'
 
+  const startRegionId = startRegion?.id ?? onboarding.startRegionId
+  const startDisplayName = startRegion ? formatRegionDisplayName(startRegion) : startRegionId
+  const startDiff = difficultyToDiff(regionBands?.[startRegionId])
   const actions: string[] = [
     tp,
     'wait: 1',
     'title: 20;100;20;Welcome to {SERVER_NAME};Where the journey matters',
     'wait: 10',
     'console_command: aach give {START_REGION_AACH} %player%',
+    `console_message: [EXPMETRIC] type=discovery entity=region player=%player% uuid=%player_uuid% region=${startDisplayName} diff=${startDiff}`,
     'console_command: aach add 1 Custom.regions_discovered %player%',
   ]
 
@@ -200,6 +255,10 @@ function generateFirstJoinEvent(
     const displayName = formatRegionDisplayName(startRegion!)
     actions.push('wait: 30', `message: &bCurious about ${displayName}? &e/lore ${startRegion!.id}`)
   }
+
+  actions.push(
+    'console_message: [EXPMETRIC] type=state entity=region player=%player% uuid=%player_uuid% total=%aach_custom_total_discovered% regions=%aach_custom_regions_discovered%'
+  )
 
   return {
     type: 'player_join',
@@ -224,11 +283,14 @@ export function getStartRegionAachId(
 
 export function generateOwnedCEEvents(
   regions: RegionRecord[],
-  onboarding: OnboardingConfig
+  onboarding: OnboardingConfig,
+  regionBands?: Record<string, string>
 ): CEEventsSection {
   const owned: CEEventsSection = {}
 
-  owned.first_join = generateFirstJoinEvent(onboarding, regions)
+  owned.first_join = generateFirstJoinEvent(onboarding, regions, regionBands)
+  owned.join_log = generateJoinLogEvent()
+  owned.leave_log = generateLeaveLogEvent()
   owned.region_heart_discover_once = generateRegionHeartDiscoverOnce()
 
   // on-enter discoveries (skip start region — it's discovered in first_join, not on enter)
@@ -241,14 +303,14 @@ export function generateOwnedCEEvents(
     .sort((a, b) => a.key.localeCompare(b.key))
 
   for (const { key, region } of keys) {
-    owned[key] = generateDiscoverOnceEvent(region)
+    owned[key] = generateDiscoverOnceEvent(region, regionBands)
   }
 
   return owned
 }
 
 function isOwnedEventKey(key: string): boolean {
-  return key === 'first_join' || key === 'region_heart_discover_once' || key.endsWith('_discover_once')
+  return key === 'first_join' || key === 'join_log' || key === 'leave_log' || key === 'region_heart_discover_once' || key.endsWith('_discover_once')
 }
 
 export function mergeCEConfig(existingConfigPath: string, ownedEvents: CEEventsSection): string {

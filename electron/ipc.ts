@@ -498,7 +498,11 @@ ipcMain.handle(
           const ceConfigPath = resolveConfigPath('ce', inputs.cePath)
           const usingDefaultCE = !inputs.cePath || inputs.cePath.trim().length === 0
 
-          const ownedEvents = generateOwnedCEEvents(profile.regions, profile.onboarding)
+          const ownedEvents = generateOwnedCEEvents(
+            profile.regions,
+            profile.onboarding,
+            profile.regionsMeta?.levelledMobs?.regionBands
+          )
           let mergedCEContent = mergeCEConfig(ceConfigPath, ownedEvents)
           mergedCEContent = mergedCEContent.replace(/\{SERVER_NAME\}/g, profile.name)
           mergedCEContent = mergedCEContent.replace(/\{START_REGION_AACH\}/g, getStartRegionAachId(profile.onboarding, profile.regions))
