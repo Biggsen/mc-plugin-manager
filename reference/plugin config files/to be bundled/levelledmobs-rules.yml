@@ -121,8 +121,8 @@ presets:
 #    Section 01 - C  |  Presets / Challenge Difficulties
 #   ---------------  -  ------------------------------
 #
-  challenge-teledosi:
-    name: 'Teledosi Global Curve (late steep)'
+  challenge-default:
+    name: 'Default Global Curve (late steep)'
     settings:
       attribute-modifier:
         merge: false
@@ -214,7 +214,7 @@ biome-groups:
 #        Section 03  |  Set the Default Rule
 default-rule:
   use-preset:
-    - challenge-teledosi   # your single global curve
+    - challenge-default   # your single global curve
     - nametag-using-numbers
     - lvlstrategy-easy
 
