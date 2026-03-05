@@ -82,6 +82,7 @@ interface ServerProfile {
   spawnCenter?: {
     world: string
     x: number
+    y?: number
     z: number
   }
   regionsMeta?: {
@@ -105,6 +106,7 @@ interface ImportedSource {
   spawnCenter?: {
     world: string
     x: number
+    y?: number
     z: number
   }
 }

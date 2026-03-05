@@ -62,7 +62,7 @@ Unknown keys on a region object are ignored.
 | Field               | Type   | Required | Description |
 |---------------------|--------|----------|-------------|
 | `method`            | string | **Yes**  | One of: `disabled`, `on_enter`, `first_join`. See §3.4. |
-| `recipeId`         | string | **Yes**  | One of: `none`, `region`, `nether_region`, `heart`, `nether_heart`, `village`. See §3.5. |
+| `recipeId`         | string | **Yes**  | One of: `none`, `region`, `nether_region`, `end_region`, `heart`, `nether_heart`, `end_heart`, `village`. See §3.5. |
 | `commandIdOverride` | string | No       | Override for AA command ID. If omitted, mc-plugin-manager derives from `id`. |
 | `displayNameOverride` | string | No     | Override for AA display name. If omitted, derived from `id`. |
 
@@ -81,15 +81,17 @@ Unknown keys on a region object are ignored.
 | `none`         | `kind: system`, `method: disabled`. |
 | `region`       | Overworld region. |
 | `nether_region`| Nether region. |
+| `end_region`   | End region. |
 | `heart`        | Overworld heart. |
 | `nether_heart` | Nether heart. |
-| `village`      | Overworld village. (Note: Villages are overworld-only; there is no `nether_village`.) |
+| `end_heart`    | End heart. |
+| `village`      | Overworld village. (Note: Villages are overworld-only; there is no `nether_village` or `end_village`.) |
 
 `recipeId` should match `kind` and `world`. Mc-plugin-manager uses `kind` and `world` for CE reward logic; `recipeId` can be used for consistency checks or future features.
 
 ### 3.6 `biomes` (array, optional)
 
-Biome breakdown for a region, derived from sampling the biome map within the region polygon. Region Forge populates this when a biome map is loaded and the map origin is set. Only present for `kind: region` (main regions). Omitted for spawn, hearts, and villages.
+Biome breakdown for a region, derived from sampling the biome map within the region polygon. Region Forge populates this when a biome map is loaded and the map origin is set. Only present for `kind: region` (main regions) in overworld and nether exports. Omitted for spawn, hearts, villages, and for End dimension (End has no biome map support).
 
 | Field        | Type   | Required | Description |
 |-------------|--------|----------|-------------|
@@ -133,7 +135,7 @@ First-join spawn and discovery. If absent, mc-plugin-manager leaves `profile.onb
 |---------|--------|----------|-------------|
 | `world` | string | **Yes**  | World name. |
 | `x`     | number | **Yes**  | X coordinate. |
-| `y`     | number | No       | Y coordinate. Region Forge does not export this; it is set manually in mc-plugin-manager after checking in-game. |
+| `y`     | number | No       | Y coordinate. Region Forge exports this when set (manual; default 0). Mc-plugin-manager may override after checking in-game. |
 | `z`     | number | **Yes**  | Z coordinate. |
 | `yaw`   | number | No       | Yaw (degrees). |
 | `pitch` | number | No       | Pitch (degrees). |
@@ -148,9 +150,8 @@ Center of the spawn region. Used for distance-from-origin logic in some plugins.
 |--------|--------|----------|-------------|
 | `world`| string | **Yes**  | World name. |
 | `x`    | number | **Yes**  | X coordinate. |
+| `y`    | number | No       | Y coordinate. Region Forge exports when set (manual; default 0). |
 | `z`    | number | **Yes**  | Z coordinate. |
-
-`y` is not required; mc-plugin-manager only needs x/z for 2D distance.
 
 ---
 
@@ -207,6 +208,7 @@ onboarding:
 spawnCenter:
   world: world
   x: 0
+  y: 0
   z: 0
 
 regions:
@@ -338,6 +340,8 @@ regions:
 | 1.2    | Added optional `category` and `items` on region objects (§3.7): Minecraft category and up to 3 items from VZ price guide. |
 | 1.3    | Added optional `theme` on region objects (§3.8): up to 3 theme pairs (A + B) from Storyteller's Automaton table. |
 | 1.4    | Added optional `description` on region objects: free-form text for display, quest hooks, or discovery. |
+| 1.5    | Added `end_region` and `end_heart` recipeIds for End dimension. End exports omit `biomes` (no biome map support). |
+| 1.6    | Region Forge exports optional `y` in `spawnCenter` and `onboarding.teleport` (manual value; default 0). |
 
 ---
 

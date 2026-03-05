@@ -43,6 +43,7 @@ interface ImportedSource {
   spawnCenter?: {
     world: string
     x: number
+    y?: number
     z: number
   }
 }
@@ -92,6 +93,7 @@ type RegionsMetaExport = {
   spawnCenter?: {
     world: string
     x: number
+    y?: number
     z: number
   }
   levelledMobs?: {
@@ -323,7 +325,7 @@ export function importRegionsMeta(
   world: 'overworld' | 'nether' | 'end'
   source: ImportedSource
   onboarding?: OnboardingConfig
-  spawnCenter?: { world: string; x: number; z: number }
+  spawnCenter?: { world: string; x: number; y?: number; z: number }
   levelledMobs?: { villageBandStrategy?: string; regionBands?: Record<string, string> }
 } {
   // Read and parse YAML
@@ -422,7 +424,7 @@ export function importRegionsMeta(
     world: 'overworld' | 'nether' | 'end'
     source: ImportedSource
     onboarding?: OnboardingConfig
-    spawnCenter?: { world: string; x: number; z: number }
+    spawnCenter?: { world: string; x: number; y?: number; z: number }
     levelledMobs?: { villageBandStrategy?: string; regionBands?: Record<string, string> }
   } = {
     regions,

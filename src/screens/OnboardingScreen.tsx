@@ -9,7 +9,6 @@ import {
   Group,
   Stack,
   SimpleGrid,
-  Paper,
 } from '@mantine/core'
 import type { ServerProfile, OnboardingConfig } from '../types'
 
@@ -21,7 +20,6 @@ interface OnboardingScreenProps {
 export function OnboardingScreen({ server, onServerUpdate }: OnboardingScreenProps) {
   const [startRegionId, setStartRegionId] = useState(server.onboarding.startRegionId)
   const [teleport, setTeleport] = useState(server.onboarding.teleport)
-  const [locationString, setLocationString] = useState('')
   const [isSaving, setIsSaving] = useState(false)
   const [saveStatus, setSaveStatus] = useState<'success' | 'error' | null>(null)
 
@@ -48,49 +46,11 @@ export function OnboardingScreen({ server, onServerUpdate }: OnboardingScreenPro
           world: spawnCenter.world,
           x: spawnCenter.x,
           z: spawnCenter.z,
-          // Don't set y from spawnCenter (it has no y); use existing y or leave undefined
-          y: server.onboarding.teleport.y,
+          y: spawnCenter.y ?? server.onboarding.teleport.y,
         })
       }
     }
   }, [server])
-
-  function handlePasteLocation() {
-    // Try to parse common location formats
-    // Format: "world x y z" or "x y z" or "x,y,z"
-    const text = locationString.trim()
-    
-    // Try space-separated: "world x y z" or "x y z"
-    const spaceParts = text.split(/\s+/)
-    if (spaceParts.length === 4) {
-      setTeleport({
-        world: spaceParts[0],
-        x: parseFloat(spaceParts[1]) || 0,
-        y: parseFloat(spaceParts[2]) || 0,
-        z: parseFloat(spaceParts[3]) || 0,
-      })
-    } else if (spaceParts.length === 3) {
-      setTeleport({
-        ...teleport,
-        x: parseFloat(spaceParts[0]) || 0,
-        y: parseFloat(spaceParts[1]) || undefined,
-        z: parseFloat(spaceParts[2]) || 0,
-      })
-    } else {
-      // Try comma-separated: "x,y,z"
-      const commaParts = text.split(',')
-      if (commaParts.length === 3) {
-        setTeleport({
-          ...teleport,
-          x: parseFloat(commaParts[0]) || 0,
-          y: parseFloat(commaParts[1]) || undefined,
-          z: parseFloat(commaParts[2]) || 0,
-        })
-      }
-    }
-    
-    setLocationString('')
-  }
 
   async function handleSave() {
     setIsSaving(true)
@@ -147,28 +107,6 @@ export function OnboardingScreen({ server, onServerUpdate }: OnboardingScreenPro
 
         <Stack gap="md">
           <Title order={4}>Teleport Location</Title>
-
-          <Paper p="md" withBorder>
-            <Text size="sm" c="dimmed" mb="xs">
-              Quick paste location (format: &quot;world x y z&quot; or &quot;x y z&quot; or &quot;x,y,z&quot;):
-            </Text>
-            <Group gap="sm">
-              <TextInput
-                placeholder="world 0 64 0"
-                value={locationString}
-                onChange={(e) => setLocationString(e.currentTarget.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    handlePasteLocation()
-                  }
-                }}
-                flex={1}
-              />
-              <Button color="green" onClick={handlePasteLocation}>
-                Paste
-              </Button>
-            </Group>
-          </Paper>
 
           <SimpleGrid cols={{ base: 2, sm: 4 }} spacing="md">
             <TextInput

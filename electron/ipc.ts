@@ -239,17 +239,12 @@ ipcMain.handle(
         result.source.spawnCenter = result.spawnCenter
       }
       
-      // Merge onboarding (only from overworld imports)
+      // Merge onboarding (only from overworld imports). Import always overrides profile values.
       if (result.onboarding && result.world === 'overworld') {
         profile.onboarding = {
           ...profile.onboarding,
           ...result.onboarding,
-          teleport: {
-            ...profile.onboarding.teleport,
-            ...result.onboarding.teleport,
-            // Preserve y if file omits it
-            y: result.onboarding.teleport.y ?? profile.onboarding.teleport.y,
-          },
+          teleport: { ...result.onboarding.teleport },
         }
       }
       
