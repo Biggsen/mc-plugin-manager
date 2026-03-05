@@ -44,6 +44,12 @@ interface BuildScreenProps {
 export function BuildScreen({ server }: BuildScreenProps) {
   const [pluginOptions, setPluginOptions] = useState(getInitialPluginOptions)
   const [outDir, setOutDir] = useState(server.build.outputDirectory || '')
+  const [propagateToPluginFolders, setPropagateToPluginFolders] = useState(
+    Boolean(server.build?.propagateToPluginFolders)
+  )
+  const [myCommandDiscordInvite, setMyCommandDiscordInvite] = useState(
+    server.myCommand?.discordInvite ?? ''
+  )
   const [isBuilding, setIsBuilding] = useState(false)
   const [buildResult, setBuildResult] = useState<BuildResult | null>(null)
   const [buildReport, setBuildReport] = useState<BuildReport | null>(null)
@@ -87,16 +93,27 @@ export function BuildScreen({ server }: BuildScreenProps) {
       return
     }
 
+    if (pluginOptions.mc.generate && !myCommandDiscordInvite.trim()) {
+      setValidationError('Discord invite is required when generating MyCommand')
+      return
+    }
+
     setIsBuilding(true)
     setBuildResult(null)
 
     try {
-      const payload: Record<string, boolean | string> = { outDir }
+      const payload: Record<string, boolean | string> = {
+        outDir,
+        propagateToPluginFolders,
+      }
       for (const p of BUILD_PLUGINS) {
         payload[p.generateKey] = pluginOptions[p.id].generate
         if (pluginOptions[p.id].generate && pluginOptions[p.id].path) {
           payload[p.pathKey] = pluginOptions[p.id].path
         }
+      }
+      if (pluginOptions.mc.generate) {
+        payload.myCommandDiscordInvite = myCommandDiscordInvite
       }
       const result = await window.electronAPI.buildConfigs(
         server.id,
@@ -120,6 +137,12 @@ export function BuildScreen({ server }: BuildScreenProps) {
       setIsBuilding(false)
     }
   }
+
+  useEffect(() => {
+    setOutDir(server.build?.outputDirectory || '')
+    setPropagateToPluginFolders(Boolean(server.build?.propagateToPluginFolders))
+    setMyCommandDiscordInvite(server.myCommand?.discordInvite ?? '')
+  }, [server.id, server.build?.outputDirectory, server.build?.propagateToPluginFolders, server.myCommand?.discordInvite])
 
   useEffect(() => {
     loadPastBuilds()
@@ -171,6 +194,24 @@ export function BuildScreen({ server }: BuildScreenProps) {
         <Text size="sm" c="dimmed">
           Checked plugins will be generated. Leave paths empty to use bundled defaults, or provide custom config files.
         </Text>
+        {pluginOptions.mc.generate && (
+          <Stack gap="xs" mt="sm">
+            <Text size="sm" fw={600}>
+              MyCommand Discord invite <Text component="span" c="red">*</Text>
+            </Text>
+            <TextInput
+              value={myCommandDiscordInvite}
+              onChange={(e) => setMyCommandDiscordInvite(e.currentTarget.value)}
+              onBlur={() =>
+                window.electronAPI.setMyCommandDiscordInvite(server.id, myCommandDiscordInvite)
+              }
+              placeholder="https://discord.gg/..."
+            />
+            <Text size="xs" c="dimmed">
+              Required for MyCommand. The /discord command is only added to the generated config when an invite is provided.
+            </Text>
+          </Stack>
+        )}
       </Stack>
 
       {BUILD_PLUGINS.some((p) => pluginOptions[p.id].generate) && (
@@ -228,8 +269,15 @@ export function BuildScreen({ server }: BuildScreenProps) {
             Browse...
           </Button>
         </Group>
+        <Checkbox
+          label="Propagate to plugin folders"
+          checked={propagateToPluginFolders}
+          onChange={(e) => setPropagateToPluginFolders(e.currentTarget.checked)}
+        />
         <Text size="xs" c="dimmed">
-          Generated files will be written to this directory
+          {propagateToPluginFolders
+            ? 'Files will be written to plugin subfolders under the output directory (e.g. output/AdvancedAchievements/config.yml).'
+            : 'Generated files will be written to this directory with server-prefixed names.'}
         </Text>
       </Stack>
 

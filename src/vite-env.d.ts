@@ -5,6 +5,7 @@ interface ElectronAPI {
   listServers: () => Promise<ServerSummary[]>
   createServer: (name: string) => Promise<ServerProfile>
   getServer: (serverId: string) => Promise<ServerProfile | null>
+  setMyCommandDiscordInvite: (serverId: string, value: string) => Promise<void>
   importRegions: (
     serverId: string,
     world: 'overworld' | 'nether',
@@ -32,11 +33,17 @@ interface ElectronAPI {
       generateCE?: boolean
       generateTAB?: boolean
       generateLM?: boolean
+      generateMC?: boolean
+      generateCW?: boolean
       aaPath?: string
       cePath?: string
       tabPath?: string
       lmPath?: string
+      mcPath?: string
+      cwPath?: string
       outDir: string
+      propagateToPluginFolders?: boolean
+      myCommandDiscordInvite?: string
     }
   ) => Promise<BuildResult>
   showConfigFileDialog: (title: string, defaultPath?: string) => Promise<string | null>

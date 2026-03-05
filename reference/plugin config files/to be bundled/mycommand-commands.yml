@@ -1,5 +1,13 @@
 # Exploration Server Commands
 
+discord:
+  command: /discord
+  type: RAW_TEXT
+  permission-required: false
+  register: true
+  text:
+  - '$OPEN_URL$&7Discord: &n&6[{DISCORD_INVITE}];&7Open Discord invite;{DISCORD_INVITE}'
+
 server_help:
   command: /help
   type: TEXT

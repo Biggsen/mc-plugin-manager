@@ -41,6 +41,11 @@ export interface ServerProfile {
     lastBuildId?: string
     outputDirectory?: string
     loreBooksOutputDirectory?: string
+    propagateToPluginFolders?: boolean
+  }
+  /** MyCommand plugin settings (e.g. Discord invite for /discord command). */
+  myCommand?: {
+    discordInvite?: string
   }
 }
 

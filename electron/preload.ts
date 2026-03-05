@@ -6,6 +6,7 @@ export interface ElectronAPI {
   listServers: () => Promise<ServerSummary[]>
   createServer: (name: string) => Promise<ServerProfile>
   getServer: (serverId: string) => Promise<ServerProfile>
+  setMyCommandDiscordInvite: (serverId: string, value: string) => Promise<void>
   
   // Region import
   importRegions: (
@@ -95,6 +96,7 @@ interface ServerProfile {
     lastBuildId?: string
     outputDirectory?: string
     loreBooksOutputDirectory?: string
+    propagateToPluginFolders?: boolean
   }
 }
 
@@ -204,6 +206,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   listServers: () => ipcRenderer.invoke('list-servers'),
   createServer: (name: string) => ipcRenderer.invoke('create-server', name),
   getServer: (serverId: string) => ipcRenderer.invoke('get-server', serverId),
+  setMyCommandDiscordInvite: (serverId: string, value: string) =>
+    ipcRenderer.invoke('set-mycommand-discord-invite', serverId, value),
   importRegions: (serverId: string, world: 'overworld' | 'nether', filePath: string) =>
     ipcRenderer.invoke('import-regions', serverId, world, filePath),
   importRegionsMeta: (serverId: string, world: 'overworld' | 'nether' | 'end', filePath: string) =>
@@ -229,6 +233,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
       mcPath?: string
       cwPath?: string
       outDir: string
+      propagateToPluginFolders?: boolean
+      myCommandDiscordInvite?: string
     }
   ) => ipcRenderer.invoke('build-configs', serverId, inputs),
   showConfigFileDialog: (title: string, defaultPath?: string) =>

@@ -65,6 +65,40 @@ function resolveConfigPath(type: 'aa' | 'ce' | 'tab' | 'lm' | 'mc' | 'cw', userP
   return defaultPath
 }
 
+// When "propagate to plugin folders" is on: relative path from plugins root (folder + filename)
+const PLUGIN_OUTPUT_RELATIVE: Record<string, string> = {
+  aa: 'AdvancedAchievements/config.yml',
+  ce: 'ConditionalEvents/config.yml',
+  tab: 'TAB/config.yml',
+  lm: 'LevelledMobs/rules.yml',
+  mc: 'MyCommand/commands/commands.yml',
+  cw: 'CommandWhitelist/config.yml',
+}
+
+const PLUGIN_FLAT_FILENAMES: Record<string, string> = {
+  aa: 'advancedachievements-config.yml',
+  ce: 'conditionalevents-config.yml',
+  tab: 'tab-config.yml',
+  lm: 'levelledmobs-rules.yml',
+  mc: 'mycommand-commands.yml',
+  cw: 'commandwhitelist-config.yml',
+}
+
+function getPluginOutputPaths(
+  pluginId: keyof typeof PLUGIN_OUTPUT_RELATIVE,
+  outDir: string,
+  buildDir: string,
+  serverNameSanitized: string,
+  propagateToPluginFolders: boolean
+): { outputPath: string; buildPath: string } {
+  const flatName = `${serverNameSanitized}-${PLUGIN_FLAT_FILENAMES[pluginId]}`
+  const buildPath = path.join(buildDir, flatName)
+  const outputPath = propagateToPluginFolders
+    ? path.join(outDir, PLUGIN_OUTPUT_RELATIVE[pluginId])
+    : path.join(outDir, flatName)
+  return { outputPath, buildPath }
+}
+
 // List all server profiles
 ipcMain.handle('list-servers', async (_event: any): Promise<ServerSummary[]> => {
   const serverIds = listServerIds()
@@ -117,6 +151,17 @@ ipcMain.handle(
   'get-server',
   async (_event: any, serverId: string): Promise<ServerProfile | null> => {
     return loadServerProfile(serverId)
+  }
+)
+
+ipcMain.handle(
+  'set-mycommand-discord-invite',
+  async (_event: any, serverId: string, value: string): Promise<void> => {
+    const profile = loadServerProfile(serverId)
+    if (!profile) return
+    profile.myCommand = profile.myCommand ?? {}
+    profile.myCommand.discordInvite = value
+    saveServerProfile(profile)
   }
 )
 
@@ -370,6 +415,8 @@ ipcMain.handle(
       mcPath?: string
       cwPath?: string
       outDir: string
+      propagateToPluginFolders?: boolean
+      myCommandDiscordInvite?: string
     }
   ): Promise<BuildResult> => {
     try {
@@ -402,6 +449,9 @@ ipcMain.handle(
       if (!existsSync(inputs.outDir)) {
         fs.mkdirSync(inputs.outDir, { recursive: true })
       }
+
+      const propagate = Boolean(inputs.propagateToPluginFolders)
+      const serverNameSanitized = profile.name.toLowerCase().replace(/[^a-z0-9]/g, '-')
 
       // Generate build ID
       const buildId = `build-${Date.now()}`
@@ -460,17 +510,14 @@ ipcMain.handle(
             }
           }
           
-          // Generate filename with server name prefix
-          const serverNameSanitized = profile.name.toLowerCase().replace(/[^a-z0-9]/g, '-')
-          const aaFilename = `${serverNameSanitized}-advancedachievements-config.yml`
-          
-          // Write to output directory
-          const aaOutputPath = path.join(inputs.outDir, aaFilename)
-          writeFileSync(aaOutputPath, mergedAAContent, 'utf-8')
-          
-          // Copy to build directory
           const buildDir = ensureBuildDirectory(serverId, buildId)
-          const aaBuildPath = path.join(buildDir, aaFilename)
+          const { outputPath: aaOutputPath, buildPath: aaBuildPath } = getPluginOutputPaths(
+            'aa', inputs.outDir, buildDir, serverNameSanitized, propagate
+          )
+          if (propagate) {
+            fs.mkdirSync(path.dirname(aaOutputPath), { recursive: true })
+          }
+          writeFileSync(aaOutputPath, mergedAAContent, 'utf-8')
           writeFileSync(aaBuildPath, mergedAAContent, 'utf-8')
           
           aaGenerated = true
@@ -512,17 +559,14 @@ ipcMain.handle(
             }
           }
           
-          // Generate filename with server name prefix
-          const serverNameSanitized = profile.name.toLowerCase().replace(/[^a-z0-9]/g, '-')
-          const ceFilename = `${serverNameSanitized}-conditionalevents-config.yml`
-          
-          // Write to output directory
-          const ceOutputPath = path.join(inputs.outDir, ceFilename)
-          writeFileSync(ceOutputPath, mergedCEContent, 'utf-8')
-          
-          // Copy to build directory
           const buildDir = ensureBuildDirectory(serverId, buildId)
-          const ceBuildPath = path.join(buildDir, ceFilename)
+          const { outputPath: ceOutputPath, buildPath: ceBuildPath } = getPluginOutputPaths(
+            'ce', inputs.outDir, buildDir, serverNameSanitized, propagate
+          )
+          if (propagate) {
+            fs.mkdirSync(path.dirname(ceOutputPath), { recursive: true })
+          }
+          writeFileSync(ceOutputPath, mergedCEContent, 'utf-8')
           writeFileSync(ceBuildPath, mergedCEContent, 'utf-8')
           
           ceGenerated = true
@@ -562,17 +606,14 @@ ipcMain.handle(
             }
           }
           
-          // Generate filename with server name prefix
-          const serverNameSanitized = profile.name.toLowerCase().replace(/[^a-z0-9]/g, '-')
-          const tabFilename = `${serverNameSanitized}-tab-config.yml`
-          
-          // Write to output directory
-          const tabOutputPath = path.join(inputs.outDir, tabFilename)
-          writeFileSync(tabOutputPath, mergedTABContent, 'utf-8')
-          
-          // Copy to build directory
           const buildDir = ensureBuildDirectory(serverId, buildId)
-          const tabBuildPath = path.join(buildDir, tabFilename)
+          const { outputPath: tabOutputPath, buildPath: tabBuildPath } = getPluginOutputPaths(
+            'tab', inputs.outDir, buildDir, serverNameSanitized, propagate
+          )
+          if (propagate) {
+            fs.mkdirSync(path.dirname(tabOutputPath), { recursive: true })
+          }
+          writeFileSync(tabOutputPath, mergedTABContent, 'utf-8')
           writeFileSync(tabBuildPath, mergedTABContent, 'utf-8')
           
           tabGenerated = true
@@ -614,17 +655,14 @@ ipcMain.handle(
             }
           }
           
-          // Generate filename with server name prefix
-          const serverNameSanitized = profile.name.toLowerCase().replace(/[^a-z0-9]/g, '-')
-          const lmFilename = `${serverNameSanitized}-levelledmobs-rules.yml`
-          
-          // Write to output directory
-          const lmOutputPath = path.join(inputs.outDir, lmFilename)
-          writeFileSync(lmOutputPath, mergedLMContent, 'utf-8')
-          
-          // Copy to build directory
           const buildDir = ensureBuildDirectory(serverId, buildId)
-          const lmBuildPath = path.join(buildDir, lmFilename)
+          const { outputPath: lmOutputPath, buildPath: lmBuildPath } = getPluginOutputPaths(
+            'lm', inputs.outDir, buildDir, serverNameSanitized, propagate
+          )
+          if (propagate) {
+            fs.mkdirSync(path.dirname(lmOutputPath), { recursive: true })
+          }
+          writeFileSync(lmOutputPath, mergedLMContent, 'utf-8')
           writeFileSync(lmBuildPath, mergedLMContent, 'utf-8')
           
           lmGenerated = true
@@ -647,20 +685,18 @@ ipcMain.handle(
           const mcConfigPath = resolveConfigPath('mc', inputs.mcPath)
           const usingDefaultMC = !inputs.mcPath || inputs.mcPath.trim().length === 0
 
-          // Generate MC config with server name substitution and region tab completers
-          const generatedMCContent = generateMCConfig(mcConfigPath, profile.name, profile.regions || [])
+          // Generate MC config with server name, region tab completers, and Discord invite
+          const discordInvite = inputs.myCommandDiscordInvite ?? profile.myCommand?.discordInvite ?? ''
+          const generatedMCContent = generateMCConfig(mcConfigPath, profile.name, profile.regions || [], discordInvite)
           
-          // Generate filename with server name prefix
-          const serverNameSanitized = profile.name.toLowerCase().replace(/[^a-z0-9]/g, '-')
-          const mcFilename = `${serverNameSanitized}-mycommand-commands.yml`
-          
-          // Write to output directory
-          const mcOutputPath = path.join(inputs.outDir, mcFilename)
-          writeFileSync(mcOutputPath, generatedMCContent, 'utf-8')
-          
-          // Copy to build directory
           const buildDir = ensureBuildDirectory(serverId, buildId)
-          const mcBuildPath = path.join(buildDir, mcFilename)
+          const { outputPath: mcOutputPath, buildPath: mcBuildPath } = getPluginOutputPaths(
+            'mc', inputs.outDir, buildDir, serverNameSanitized, propagate
+          )
+          if (propagate) {
+            fs.mkdirSync(path.dirname(mcOutputPath), { recursive: true })
+          }
+          writeFileSync(mcOutputPath, generatedMCContent, 'utf-8')
           writeFileSync(mcBuildPath, generatedMCContent, 'utf-8')
           
           mcGenerated = true
@@ -685,14 +721,14 @@ ipcMain.handle(
           const fs = require('fs')
           const cwContent = fs.readFileSync(cwConfigPath, 'utf-8')
 
-          const serverNameSanitized = profile.name.toLowerCase().replace(/[^a-z0-9]/g, '-')
-          const cwFilename = `${serverNameSanitized}-commandwhitelist-config.yml`
-
-          const cwOutputPath = path.join(inputs.outDir, cwFilename)
-          writeFileSync(cwOutputPath, cwContent, 'utf-8')
-
           const buildDir = ensureBuildDirectory(serverId, buildId)
-          const cwBuildPath = path.join(buildDir, cwFilename)
+          const { outputPath: cwOutputPath, buildPath: cwBuildPath } = getPluginOutputPaths(
+            'cw', inputs.outDir, buildDir, serverNameSanitized, propagate
+          )
+          if (propagate) {
+            fs.mkdirSync(path.dirname(cwOutputPath), { recursive: true })
+          }
+          writeFileSync(cwOutputPath, cwContent, 'utf-8')
           writeFileSync(cwBuildPath, cwContent, 'utf-8')
 
           cwGenerated = true
@@ -734,6 +770,13 @@ ipcMain.handle(
       // Update profile with build info
       profile.build.lastBuildId = buildId
       profile.build.outputDirectory = inputs.outDir
+      if (typeof inputs.propagateToPluginFolders === 'boolean') {
+        profile.build.propagateToPluginFolders = inputs.propagateToPluginFolders
+      }
+      if (inputs.myCommandDiscordInvite !== undefined) {
+        profile.myCommand = profile.myCommand ?? {}
+        profile.myCommand.discordInvite = inputs.myCommandDiscordInvite
+      }
       saveServerProfile(profile)
       
       return {
