@@ -685,9 +685,19 @@ ipcMain.handle(
           const mcConfigPath = resolveConfigPath('mc', inputs.mcPath)
           const usingDefaultMC = !inputs.mcPath || inputs.mcPath.trim().length === 0
 
-          // Generate MC config with server name, region tab completers, and Discord invite
+          // Generate MC config with server name, region tab completers, Discord invite, and conditional lore
           const discordInvite = inputs.myCommandDiscordInvite ?? profile.myCommand?.discordInvite ?? ''
-          const generatedMCContent = generateMCConfig(mcConfigPath, profile.name, profile.regions || [], discordInvite)
+          const hasLore = (profile.regions || []).some(
+            (r: { loreBookDescription?: string; description?: string }) =>
+              Boolean((r.loreBookDescription ?? r.description)?.trim())
+          )
+          const generatedMCContent = generateMCConfig(
+            mcConfigPath,
+            profile.name,
+            profile.regions || [],
+            discordInvite,
+            hasLore
+          )
           
           const buildDir = ensureBuildDirectory(serverId, buildId)
           const { outputPath: mcOutputPath, buildPath: mcBuildPath } = getPluginOutputPaths(

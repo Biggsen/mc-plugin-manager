@@ -9,6 +9,8 @@ interface RegionRecord {
 
 const yamlOptions = { indent: 2, lineWidth: 0, singleQuote: true }
 
+const LORE_GUIDES_LINE = '&e> Lore; &d/guidelore;/guidelore'
+
 /**
  * Generate MyCommand commands.yml by substituting placeholders in the template
  *
@@ -16,14 +18,16 @@ const yamlOptions = { indent: 2, lineWidth: 0, singleQuote: true }
  * - {SERVER_NAME} -> profile.name
  * - {DISCORD_INVITE} -> only substituted when discordInvite is provided; otherwise the discord command is omitted
  *
- * When regions are provided, the lore command's tab_completer is replaced with
+ * When hasLore is true and regions are provided, the lore command's tab_completer is replaced with
  * main region IDs (overworld, kind: region), sorted alphabetically.
+ * When hasLore is false, the lore command, server_guide_lore, and the Lore line in server_guides are omitted.
  */
 export function generateMCConfig(
   templatePath: string,
   serverName: string,
   regions: RegionRecord[] = [],
-  discordInvite: string = ''
+  discordInvite: string = '',
+  hasLore: boolean = false
 ): string {
   let content = readFileSync(templatePath, 'utf-8')
   content = content.replace(/\{SERVER_NAME\}/g, serverName)
@@ -44,7 +48,15 @@ export function generateMCConfig(
     }
   }
 
-  if (regions.length > 0 && config?.lore?.tab_completer) {
+  if (!hasLore) {
+    delete config.lore
+    delete config.server_guide_lore
+    if (Array.isArray(config?.server_guides?.text)) {
+      config.server_guides.text = config.server_guides.text.filter(
+        (line: string) => String(line).trim() !== LORE_GUIDES_LINE
+      )
+    }
+  } else if (regions.length > 0 && config?.lore?.tab_completer) {
     const mainRegionIds = regions
       .filter((r) => r.world === 'overworld' && r.kind === 'region')
       .map((r) => r.id)
