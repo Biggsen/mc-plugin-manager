@@ -99,6 +99,18 @@ function getPluginOutputPaths(
   return { outputPath, buildPath }
 }
 
+function getGuideBooksSourceDir(): string {
+  const isPackaged = electron.app.isPackaged
+  const basePath = isPackaged ? electron.app.getAppPath() : __dirname
+  const guideBooksDir = isPackaged
+    ? path.join(basePath, 'dist-electron', 'assets', 'templates', 'guide-books')
+    : path.join(basePath, 'assets', 'templates', 'guide-books')
+  if (!existsSync(guideBooksDir)) {
+    throw new Error(`Bundled BookGUI guide books not found at: ${guideBooksDir}. Run "npm run build:electron" to copy templates.`)
+  }
+  return guideBooksDir
+}
+
 // List all server profiles
 ipcMain.handle('list-servers', async (_event: any): Promise<ServerSummary[]> => {
   const serverIds = listServerIds()
@@ -403,6 +415,7 @@ ipcMain.handle(
     serverId: string,
     inputs: {
       generateAA?: boolean
+      generateBookGUI?: boolean
       generateCE?: boolean
       generateTAB?: boolean
       generateLM?: boolean
@@ -429,10 +442,10 @@ ipcMain.handle(
       }
       
       // Validate at least one plugin is checked
-      if (!inputs.generateAA && !inputs.generateCE && !inputs.generateTAB && !inputs.generateLM && !inputs.generateMC && !inputs.generateCW) {
+      if (!inputs.generateAA && !inputs.generateBookGUI && !inputs.generateCE && !inputs.generateTAB && !inputs.generateLM && !inputs.generateMC && !inputs.generateCW) {
         return {
           success: false,
-          error: 'At least one plugin (AA, CE, TAB, LM, MC, or CommandWhitelist) must be selected',
+          error: 'At least one plugin (AA, BookGUI, CE, TAB, LM, MC, or CommandWhitelist) must be selected',
         }
       }
       
@@ -470,6 +483,7 @@ ipcMain.handle(
       }
       
       let aaGenerated = false
+      let bookGuiGenerated = false
       let ceGenerated = false
       let tabGenerated = false
       let lmGenerated = false
@@ -754,6 +768,40 @@ ipcMain.handle(
           }
         }
       }
+
+      // BookGUI: copy guide books from bundle, substitute {SERVER_NAME}, skip guide_lore.yml if !hasLore
+      if (inputs.generateBookGUI) {
+        try {
+          const hasLore = (profile.regions || []).some(
+            (r: { loreBookDescription?: string; description?: string }) =>
+              Boolean((r.loreBookDescription ?? r.description)?.trim())
+          )
+          const guideBooksDir = getGuideBooksSourceDir()
+          const bookFiles = fs.readdirSync(guideBooksDir).filter((f: string) => f.endsWith('.yml'))
+          const booksToWrite = hasLore
+            ? bookFiles
+            : bookFiles.filter((f: string) => f !== 'guide_lore.yml')
+          const bookGuiOutputDir = path.join(inputs.outDir, 'BookGUI', 'books')
+          fs.mkdirSync(bookGuiOutputDir, { recursive: true })
+          const serverName = profile.name
+          for (const filename of booksToWrite) {
+            const content = fs.readFileSync(path.join(guideBooksDir, filename), 'utf-8')
+            const substituted = content.replace(/\{SERVER_NAME\}/g, serverName)
+            writeFileSync(path.join(bookGuiOutputDir, filename), substituted, 'utf-8')
+          }
+          bookGuiGenerated = true
+          configSources.bookgui = {
+            path: 'Bundled guide books',
+            isDefault: true,
+          }
+        } catch (error: any) {
+          return {
+            success: false,
+            error: error.message || 'BookGUI guide books generation failed',
+            buildId,
+          }
+        }
+      }
       
       // Create build report
       const report = {
@@ -763,6 +811,7 @@ ipcMain.handle(
         computedCounts: regionCountsForTAB,
         generated: {
           aa: aaGenerated,
+          bookgui: bookGuiGenerated,
           ce: ceGenerated,
           tab: tabGenerated,
           lm: lmGenerated,

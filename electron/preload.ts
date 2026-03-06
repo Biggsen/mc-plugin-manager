@@ -37,6 +37,7 @@ export interface ElectronAPI {
     serverId: string,
     inputs: {
       generateAA?: boolean
+      generateBookGUI?: boolean
       generateCE?: boolean
       generateTAB?: boolean
       generateLM?: boolean
@@ -221,6 +222,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     serverId: string,
     inputs: {
       generateAA?: boolean
+      generateBookGUI?: boolean
       generateCE?: boolean
       generateTAB?: boolean
       generateLM?: boolean

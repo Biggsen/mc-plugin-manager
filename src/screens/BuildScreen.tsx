@@ -18,6 +18,7 @@ import type { ServerProfile, BuildResult, BuildReport } from '../types'
 
 const BUILD_PLUGINS = [
   { id: 'aa', label: 'AdvancedAchievements', overrideLabel: 'AdvancedAchievements config.yml (optional override)', dialogTitle: 'Select AdvancedAchievements config.yml', generateKey: 'generateAA', pathKey: 'aaPath' },
+  { id: 'bookgui', label: 'BookGUI', generateKey: 'generateBookGUI' },
   { id: 'cw', label: 'CommandWhitelist', overrideLabel: 'CommandWhitelist config.yml (optional override)', dialogTitle: 'Select CommandWhitelist config.yml', generateKey: 'generateCW', pathKey: 'cwPath' },
   { id: 'ce', label: 'ConditionalEvents', overrideLabel: 'ConditionalEvents config.yml (optional override)', dialogTitle: 'Select ConditionalEvents config.yml', generateKey: 'generateCE', pathKey: 'cePath' },
   { id: 'lm', label: 'LevelledMobs', overrideLabel: 'LevelledMobs rules.yml (optional override)', dialogTitle: 'Select LevelledMobs rules.yml', generateKey: 'generateLM', pathKey: 'lmPath' },
@@ -59,7 +60,7 @@ export function BuildScreen({ server }: BuildScreenProps) {
 
   async function handleSelectPluginFile(id: BuildPluginId) {
     const plugin = BUILD_PLUGINS.find((p) => p.id === id)
-    if (!plugin) return
+    if (!plugin || !('dialogTitle' in plugin)) return
     const path = await window.electronAPI.showConfigFileDialog(
       plugin.dialogTitle,
       pluginOptions[id].path || undefined
@@ -108,7 +109,7 @@ export function BuildScreen({ server }: BuildScreenProps) {
       }
       for (const p of BUILD_PLUGINS) {
         payload[p.generateKey] = pluginOptions[p.id].generate
-        if (pluginOptions[p.id].generate && pluginOptions[p.id].path) {
+        if (pluginOptions[p.id].generate && 'pathKey' in p && p.pathKey && pluginOptions[p.id].path) {
           payload[p.pathKey] = pluginOptions[p.id].path
         }
       }
@@ -227,7 +228,7 @@ export function BuildScreen({ server }: BuildScreenProps) {
 
           <Collapse in={showOverrides}>
             <Stack gap="lg">
-              {BUILD_PLUGINS.filter((p) => pluginOptions[p.id].generate).map((p) => (
+              {BUILD_PLUGINS.filter((p) => pluginOptions[p.id].generate && 'pathKey' in p && p.pathKey).map((p) => (
                 <Stack key={p.id} gap="xs">
                   <Text size="sm" fw={600}>
                     {p.overrideLabel}

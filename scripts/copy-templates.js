@@ -95,4 +95,20 @@ for (const template of templates) {
   }
 }
 
+// Copy guide books (BookGUI) to dist-electron/assets/templates/guide-books
+const guideBooksSourceDir = path.join(__dirname, '..', 'reference', 'plugin config files', 'guide books')
+const guideBooksTargetDir = path.join(targetDir, 'guide-books')
+if (fs.existsSync(guideBooksSourceDir)) {
+  if (!fs.existsSync(guideBooksTargetDir)) {
+    fs.mkdirSync(guideBooksTargetDir, { recursive: true })
+  }
+  const guideBookFiles = fs.readdirSync(guideBooksSourceDir).filter((f) => f.endsWith('.yml'))
+  for (const file of guideBookFiles) {
+    const src = path.join(guideBooksSourceDir, file)
+    const dest = path.join(guideBooksTargetDir, file)
+    fs.copyFileSync(src, dest)
+    console.log(`Copied guide book: ${file}`)
+  }
+}
+
 console.log(`Successfully copied ${copiedCount} template files to ${targetDir}`)

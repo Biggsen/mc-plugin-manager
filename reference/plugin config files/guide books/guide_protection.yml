@@ -1,0 +1,14 @@
+title: Guide Protection
+author: Admin
+pages:
+- "<bold>Protection</bold>
+
+
+When you place chests, they are private and protected by default.
+
+
+You can lock and unlock containers with <dark_green>/lock</dark_green> and <dark_green>/unlock</dark_green>.
+
+
+Give friends access using <dark_green>/bolt trust add <player></dark_green>."
+

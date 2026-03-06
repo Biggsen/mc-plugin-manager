@@ -30,6 +30,7 @@ interface ElectronAPI {
     serverId: string,
     inputs: {
       generateAA?: boolean
+      generateBookGUI?: boolean
       generateCE?: boolean
       generateTAB?: boolean
       generateLM?: boolean
