@@ -1,6 +1,7 @@
 # Refactor — Code Quality & Maintainability Specification
 
-**Status: Pending**
+**Status: Pending**  
+*Last reviewed against codebase: 2025-03-07 (line numbers and locations verified).*
 
 ## Purpose
 
@@ -19,15 +20,15 @@ Improve code quality, reduce duplication, and increase maintainability through t
 
 ### 1. Shared String Utilities (High Priority)
 
-**Problem**: `snakeToTitleCase`, `formatRegionTitle`, and `formatRegionLabel` are duplicated across 5+ files. Server name sanitization appears 7 times in `ipc.ts`.
+**Problem**: `snakeToTitleCase`, `formatRegionTitle`, and `formatRegionLabel` are duplicated across 5+ files. Server name sanitization (same pattern for server IDs / build output) appears in `ipc.ts` in two places.
 
 **Current locations**:
 | Function | Files |
 |----------|-------|
-| `snakeToTitleCase` | `electron/lmGenerator.ts:32`, `electron/aaGenerator.ts:129` |
+| `snakeToTitleCase` | `electron/lmGenerator.ts:32`, `electron/aaGenerator.ts:133` |
 | `formatRegionTitle` | `electron/loreBooksGenerator.ts:19`, `src/components/LoreBookPreview.tsx:15` |
 | `formatRegionLabel` | `src/screens/LoreBooksScreen.tsx:16` |
-| `profile.name.toLowerCase().replace(/[^a-z0-9]/g, '-')` | `electron/ipc.ts` (lines 90, 469, 517, 567, 619, 655, 689) |
+| Server name sanitization (`*.toLowerCase().replace(/[^a-z0-9]/g, '-')`) | `electron/ipc.ts` (line 155 `create-server` id; line 502 `build-configs` `serverNameSanitized`) |
 
 **Solution**:
 - Create `electron/utils/stringFormatters.ts`:
@@ -38,13 +39,13 @@ Improve code quality, reduce duplication, and increase maintainability through t
   - `formatRegionTitle`, `formatRegionLabel` (latter uses `displayNameOverride ?? formatRegionTitle(id)`)
 - Replace all usages; remove duplicated implementations.
 
-**Acceptance**: No duplicated string formatting logic; all 7 sanitization calls use `sanitizeServerName`.
+**Acceptance**: No duplicated string formatting logic; both sanitization sites use `sanitizeServerName`.
 
 ---
 
 ### 2. Type Consolidation (High Priority)
 
-**Problem**: `RegionRecord` is redefined in 8 places. `ipc.ts` uses `type X = any` for `ServerProfile`, `BuildResult`, etc., despite proper types existing in `src/types/index.ts`.
+**Problem**: `RegionRecord` is redefined in 8 places. `ipc.ts` and `storage.ts` use `type X = any` for `ServerProfile`, `BuildResult`, etc., despite proper types already existing in `src/types/index.ts` (e.g. `ServerProfile`, `BuildResult`, `BuildReport`, `ImportResult`, `OnboardingConfig`, `ServerSummary`).
 
 **Current locations**:
 - Canonical: `src/types/index.ts`
@@ -62,7 +63,7 @@ Improve code quality, reduce duplication, and increase maintainability through t
 
 ### 3. Extract `resolveConfigPath` (Medium Priority)
 
-**Problem**: `resolveConfigPath` in `ipc.ts` (lines 34–65) is 30+ lines with nested ternaries. Config filename mapping is verbose.
+**Problem**: `resolveConfigPath` in `ipc.ts` (lines 35–66) is 30+ lines with nested ternaries. Config filename mapping is verbose. (Note: `ipc.ts` already has `PLUGIN_FLAT_FILENAMES` at lines 78–85 for build output; the new module can share or align with that mapping.)
 
 **Solution**:
 - Create `electron/utils/configPathResolver.ts`.
@@ -86,7 +87,7 @@ Improve code quality, reduce duplication, and increase maintainability through t
 
 ### 4. Extract Build Plugin Helper (High Priority)
 
-**Problem**: The `build-configs` handler in `ipc.ts` (~400 lines) repeats the same pattern for each plugin: resolve path → generate → validate diff → write output → write build dir → track sources. Each block is 60–80 lines.
+**Problem**: The `build-configs` handler in `ipc.ts` (~500+ lines for the handler) repeats the same pattern for each plugin (AA, CE, TAB, LM, MC, CW), plus a BookGUI block: resolve path → generate/copy → validate diff (where applicable) → write output → write build dir → track sources. Each plugin block is ~50–60 lines.
 
 **Solution**:
 - Create `electron/build/buildPluginConfig.ts` (or similar).
@@ -109,7 +110,7 @@ Improve code quality, reduce duplication, and increase maintainability through t
 
 ### 5. Split `electron/ipc.ts` (Medium Priority)
 
-**Problem**: `ipc.ts` is 856 lines. Handlers are grouped by concern but all live in one file.
+**Problem**: `ipc.ts` is ~990 lines. Handlers are grouped by concern but all live in one file.
 
 **Solution**:
 - Create `electron/ipc/` directory:
@@ -128,7 +129,7 @@ Improve code quality, reduce duplication, and increase maintainability through t
 
 ### 6. Shared Region Stats (Medium Priority)
 
-**Problem**: Region counting/filtering logic is duplicated in `ipc.ts`, `ServerDetailScreen.tsx`, and `tabGenerator.ts`.
+**Problem**: Region counting/filtering logic is duplicated in `ipc.ts` (build handler builds `regionCounts` inline with `profile.regions.filter((r: any) => ...)` at ~511–517), `ServerDetailScreen.tsx` (lines 52–56: overworld/nether region/village/heart counts), and `tabGenerator.ts` (exports `computeRegionCounts`).
 
 **Solution**:
 - Create `electron/utils/regionStats.ts` (or `src/utils/regionStats.ts` if used by renderer):
@@ -174,7 +175,7 @@ Improve code quality, reduce duplication, and increase maintainability through t
 
 ### 9. Standardize YAML Formatting (Low Priority)
 
-**Problem**: AA, CE, and LM generators use different YAML stringify options.
+**Problem**: AA, CE, LM, and MC generators use YAML stringify in different ways: AA/CE/LM use inline `{ indent: 2, lineWidth: 0 }`; MC uses a local `yamlOptions` with `singleQuote: true` as well. No shared options object.
 
 **Solution**:
 - Create `electron/utils/yamlOptions.ts` with shared `YAML_STRINGIFY_OPTIONS`.
@@ -243,5 +244,5 @@ Recommended sequence (dependencies first):
 
 ## Related Specs
 
-- **Unit_Tests_Spec.md**: Run tests after each refactor phase to catch regressions. String formatter tests depend on Phase 1 extraction.
+- **tasks/completed/Unit_Tests_Spec.md**: Run tests after each refactor phase to catch regressions. String formatter tests depend on Phase 1 extraction.
 - **Existing specs**: Refactor preserves behavior specified in AA_Custom_Achievements, Bundle_Default_Config_Files, TAB_Plugin_Integration, LevelledMobs_Generator, etc.
