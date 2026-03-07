@@ -1,6 +1,6 @@
 const { app } = require('electron')
 const { join } = require('path')
-const { existsSync, mkdirSync, readFileSync, writeFileSync, readdirSync } = require('fs')
+const { existsSync, mkdirSync, readFileSync, writeFileSync, readdirSync, rmSync } = require('fs')
 
 type ServerProfile = any // Will be properly typed after build
 
@@ -59,6 +59,14 @@ export function saveServerProfile(profile: ServerProfile): void {
 
   const profilePath = getServerProfilePath(profile.id)
   writeFileSync(profilePath, JSON.stringify(profile, null, 2), 'utf-8')
+}
+
+export function deleteServer(serverId: string): void {
+  const serverDir = getServerDirectory(serverId)
+  if (!existsSync(serverDir)) {
+    return
+  }
+  rmSync(serverDir, { recursive: true })
 }
 
 export function listServerIds(): string[] {
@@ -141,6 +149,7 @@ module.exports = {
   initDataDirectory,
   loadServerProfile,
   saveServerProfile,
+  deleteServer,
   listServerIds,
   getBuildsDirectory,
   getBuildDirectory,

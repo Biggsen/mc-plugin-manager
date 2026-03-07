@@ -105,6 +105,16 @@ export interface ServerSummary {
   name: string
 }
 
+export interface ServerSummaryWithStats {
+  id: string
+  name: string
+  regionCount: number
+  villageCount: number
+  heartCount: number
+  netherRegionCount: number
+  lastImportIso: string | null
+}
+
 export interface ImportResult {
   success: boolean
   regionCount?: number
@@ -117,6 +127,7 @@ export interface BuildResult {
   error?: string
   configSources?: {
     aa?: { path: string; isDefault: boolean }
+    bookgui?: { path: string; isDefault: boolean }
     ce?: { path: string; isDefault: boolean }
     tab?: { path: string; isDefault: boolean }
     lm?: { path: string; isDefault: boolean }
@@ -146,6 +157,7 @@ export interface BuildReport {
   }
   generated: {
     aa: boolean
+    bookgui: boolean
     ce: boolean
     tab: boolean
     lm: boolean
@@ -154,6 +166,7 @@ export interface BuildReport {
   }
   configSources?: {
     aa?: { path: string; isDefault: boolean }
+    bookgui?: { path: string; isDefault: boolean }
     ce?: { path: string; isDefault: boolean }
     tab?: { path: string; isDefault: boolean }
     lm?: { path: string; isDefault: boolean }

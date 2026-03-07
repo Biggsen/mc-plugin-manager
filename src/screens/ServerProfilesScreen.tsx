@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import {
   Title,
   Text,
@@ -8,9 +8,13 @@ import {
   Stack,
   Paper,
   SimpleGrid,
+  Modal,
+  ActionIcon,
+  Center,
 } from '@mantine/core'
-import { IconPlus, IconServer } from '@tabler/icons-react'
-import type { ServerProfile, ServerSummary } from '../types'
+import { IconPlus, IconSearch, IconServer, IconTrash, IconMap2, IconBuildingCommunity, IconHeart, IconFlame, IconStack } from '@tabler/icons-react'
+import type { ServerProfile, ServerSummaryWithStats } from '../types'
+import classes from './ServerProfilesScreen.module.css'
 
 interface ServerProfilesScreenProps {
   onSelectServer: (server: ServerProfile) => void
@@ -19,33 +23,60 @@ interface ServerProfilesScreenProps {
 export function ServerProfilesScreen({
   onSelectServer,
 }: ServerProfilesScreenProps) {
-  const [servers, setServers] = useState<ServerSummary[]>([])
+  const [servers, setServers] = useState<ServerSummaryWithStats[]>([])
   const [newServerName, setNewServerName] = useState('')
+  const [searchQuery, setSearchQuery] = useState('')
   const [isCreating, setIsCreating] = useState(false)
+  const [addServerModalOpen, setAddServerModalOpen] = useState(false)
+  const [serverToDelete, setServerToDelete] = useState<ServerSummaryWithStats | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   useEffect(() => {
     loadServers()
   }, [])
 
+  const filteredServers = useMemo(() => {
+    if (!searchQuery.trim()) return servers
+    const q = searchQuery.trim().toLowerCase()
+    return servers.filter((s) => s.name.toLowerCase().includes(q))
+  }, [servers, searchQuery])
+
+  const summary = useMemo(() => {
+    const n = filteredServers.length
+    const regions = filteredServers.reduce((a, s) => a + (s.regionCount ?? 0), 0)
+    const villages = filteredServers.reduce((a, s) => a + (s.villageCount ?? 0), 0)
+    return { n, regions, villages }
+  }, [filteredServers])
+
+  function normalizeServer(s: Partial<ServerSummaryWithStats> & { id: string; name: string }): ServerSummaryWithStats {
+    return {
+      id: s.id,
+      name: s.name,
+      regionCount: typeof s.regionCount === 'number' ? s.regionCount : 0,
+      villageCount: typeof s.villageCount === 'number' ? s.villageCount : 0,
+      heartCount: typeof s.heartCount === 'number' ? s.heartCount : 0,
+      netherRegionCount: typeof s.netherRegionCount === 'number' ? s.netherRegionCount : 0,
+      lastImportIso: s.lastImportIso ?? null,
+    }
+  }
+
   async function loadServers() {
     try {
       const serverList = await window.electronAPI.listServers()
-      setServers(serverList)
+      setServers(serverList.map(normalizeServer))
     } catch (error) {
       console.error('Failed to load servers:', error)
     }
   }
 
   async function handleCreateServer() {
-    if (!newServerName.trim()) {
-      return
-    }
-
+    if (!newServerName.trim()) return
     setIsCreating(true)
     try {
       const newServer = await window.electronAPI.createServer(newServerName.trim())
       await loadServers()
       setNewServerName('')
+      setAddServerModalOpen(false)
       onSelectServer(newServer)
     } catch (error) {
       console.error('Failed to create server:', error)
@@ -55,102 +86,255 @@ export function ServerProfilesScreen({
     }
   }
 
-  async function handleSelectServer(serverId: string) {
+  async function handleOpenServer(serverId: string) {
     try {
       const server = await window.electronAPI.getServer(serverId)
-      if (server) {
-        onSelectServer(server)
-      }
+      if (server) onSelectServer(server)
     } catch (error) {
       console.error('Failed to load server:', error)
     }
   }
 
+  function openDeleteConfirm(server: ServerSummaryWithStats) {
+    setServerToDelete(server)
+  }
+
+  async function confirmDeleteServer() {
+    if (!serverToDelete) return
+    setIsDeleting(true)
+    try {
+      const result = await window.electronAPI.deleteServer(serverToDelete.id)
+      if (result.success) {
+        setServerToDelete(null)
+        await loadServers()
+      } else {
+        alert(result.error ?? 'Failed to delete server')
+      }
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
   return (
     <Stack gap="xl">
-      <div>
-        <Title order={1} mb={4}>
-          Server profiles
-        </Title>
-        <Text size="sm" c="dimmed">
-          Import regions, configure onboarding, and build plugin configs for each server.
-        </Text>
-      </div>
-
-      <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
-        <Paper p="lg" withBorder bg="dark.6">
-          <Text size="xs" tt="uppercase" fw={600} c="dimmed" mb={4}>
-            Server profiles
-          </Text>
-          <Title order={2}>{servers.length}</Title>
-        </Paper>
-        <Paper p="lg" withBorder bg="dark.6">
-          <Text size="xs" tt="uppercase" fw={600} c="dimmed" mb={4}>
-            Status
-          </Text>
-          <Title order={2} size="h3">
-            Ready
+      <Group justify="space-between" align="flex-start">
+        <div>
+          <Title order={1} mb={4}>
+            MC Plugin Manager
           </Title>
-        </Paper>
-      </SimpleGrid>
-
-      <Group gap="sm">
-        <TextInput
-          placeholder="Enter server name..."
-          value={newServerName}
-          onChange={(e) => setNewServerName(e.currentTarget.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              handleCreateServer()
-            }
-          }}
-          flex={1}
-          leftSection={<IconServer size={16} />}
-        />
+          <Text size="sm" c="dimmed">
+            Import regions, configure onboarding, and build plugin configs for each server.
+          </Text>
+        </div>
         <Button
           leftSection={<IconPlus size={16} />}
-          onClick={handleCreateServer}
-          loading={isCreating}
-          disabled={!newServerName.trim()}
+          onClick={() => setAddServerModalOpen(true)}
         >
-          New server
+          Add Server
         </Button>
       </Group>
 
-      <div>
-        <Group justify="space-between" mb="md">
-          <Title order={3}>Recent servers</Title>
-        </Group>
-        {servers.length === 0 ? (
-          <Paper p="xl" withBorder>
-            <Text size="sm" c="dimmed" ta="center">
-              No servers yet. Create one to get started.
+      <Modal
+        title="Add Server"
+        opened={addServerModalOpen}
+        onClose={() => {
+          setAddServerModalOpen(false)
+          setNewServerName('')
+        }}
+      >
+        <Stack gap="md">
+          <TextInput
+            placeholder="Enter server name..."
+            value={newServerName}
+            onChange={(e) => setNewServerName(e.currentTarget.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') handleCreateServer()
+            }}
+            leftSection={<IconServer size={16} />}
+            label="Server name"
+          />
+          <Group justify="flex-end" gap="sm">
+            <Button
+              variant="default"
+              onClick={() => {
+                setAddServerModalOpen(false)
+                setNewServerName('')
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              leftSection={<IconPlus size={16} />}
+              onClick={handleCreateServer}
+              loading={isCreating}
+              disabled={!newServerName.trim()}
+            >
+              Add
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
+
+      <Modal
+        title="Delete server"
+        opened={serverToDelete !== null}
+        onClose={() => !isDeleting && setServerToDelete(null)}
+      >
+        {serverToDelete && (
+          <Stack gap="md">
+            <Text size="sm">
+              Delete server &quot;{serverToDelete.name}&quot;? This cannot be undone.
             </Text>
-          </Paper>
-        ) : (
-          <Stack gap="xs">
-            {servers.map((server) => (
-              <Paper
-                key={server.id}
-                className="server-card"
-                p="md"
-                withBorder
-                onClick={() => handleSelectServer(server.id)}
-                bg="dark.6"
+            <Group justify="flex-end" gap="sm">
+              <Button
+                variant="default"
+                onClick={() => setServerToDelete(null)}
+                disabled={isDeleting}
               >
-                <Group justify="space-between">
-                  <div>
-                    <Text fw={600}>{server.name}</Text>
-                    <Text size="xs" c="dimmed">
-                      {server.id}
-                    </Text>
-                  </div>
-                </Group>
-              </Paper>
-            ))}
+                Cancel
+              </Button>
+              <Button
+                color="red"
+                leftSection={<IconTrash size={16} />}
+                onClick={confirmDeleteServer}
+                loading={isDeleting}
+              >
+                Delete
+              </Button>
+            </Group>
           </Stack>
         )}
-      </div>
+      </Modal>
+
+      <TextInput
+        placeholder="Search servers..."
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.currentTarget.value)}
+        leftSection={<IconSearch size={16} />}
+        style={{ maxWidth: 400 }}
+      />
+
+      {filteredServers.length > 0 && (
+        <Text size="sm" c="dimmed">
+          {summary.n} server{summary.n !== 1 ? 's' : ''} • {summary.regions} total regions • {summary.villages} total villages
+        </Text>
+      )}
+
+      {filteredServers.length === 0 ? (
+        <Paper p="xl" withBorder>
+          <Text size="sm" c="dimmed" ta="center">
+            {servers.length === 0
+              ? 'No servers yet. Create one to get started.'
+              : 'No servers match your search.'}
+          </Text>
+        </Paper>
+      ) : (
+        <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="md">
+          {filteredServers.map((server) => (
+            <ServerCard
+              key={server.id}
+              server={server}
+              onOpen={() => handleOpenServer(server.id)}
+              onDelete={() => openDeleteConfirm(server)}
+            />
+          ))}
+        </SimpleGrid>
+      )}
     </Stack>
+  )
+}
+
+const STAT_ICONS = [
+  { key: 'regions', label: (n: number) => `${n} regions`, Icon: IconMap2 },
+  { key: 'villages', label: (n: number) => `${n} villages`, Icon: IconBuildingCommunity },
+  { key: 'hearts', label: (n: number) => `${n} hearts`, Icon: IconHeart },
+  { key: 'nether', label: (n: number) => `${n} nether regions`, Icon: IconFlame },
+  { key: 'total', label: (n: number) => `${n} total regions`, Icon: IconStack },
+] as const
+
+function ServerCard({
+  server,
+  onOpen,
+  onDelete,
+}: {
+  server: ServerSummaryWithStats
+  onOpen: () => void
+  onDelete: () => void
+}) {
+  const regionCount = server.regionCount ?? 0
+  const villageCount = server.villageCount ?? 0
+  const heartCount = server.heartCount ?? 0
+  const netherRegionCount = server.netherRegionCount ?? 0
+  const lastImportLabel = server.lastImportIso
+    ? new Date(server.lastImportIso).toLocaleDateString(undefined, {
+        dateStyle: 'medium',
+      })
+    : 'Never'
+
+  const totalRegions = regionCount + villageCount + heartCount + netherRegionCount
+  const stats = [
+    { key: 'regions', label: STAT_ICONS[0].label(regionCount), Icon: STAT_ICONS[0].Icon },
+    { key: 'villages', label: STAT_ICONS[1].label(villageCount), Icon: STAT_ICONS[1].Icon },
+    { key: 'hearts', label: STAT_ICONS[2].label(heartCount), Icon: STAT_ICONS[2].Icon },
+    { key: 'nether', label: STAT_ICONS[3].label(netherRegionCount), Icon: STAT_ICONS[3].Icon },
+    { key: 'total', label: STAT_ICONS[4].label(totalRegions), Icon: STAT_ICONS[4].Icon },
+  ]
+
+  return (
+    <Paper
+      className={classes.serverCard}
+      p="lg"
+      withBorder
+      bg="dark.6"
+      style={{ cursor: 'pointer', minHeight: 220, display: 'flex', flexDirection: 'column' }}
+      onClick={onOpen}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          onOpen()
+        }
+      }}
+      aria-label={`Open ${server.name}`}
+    >
+      <Stack gap="sm" style={{ flex: 1 }}>
+        <Group justify="space-between" align="flex-start" wrap="nowrap" gap="xs">
+          <Title order={3} lineClamp={1} style={{ flex: 1, minWidth: 0 }}>
+            {server.name}
+          </Title>
+          <ActionIcon
+            variant="subtle"
+            color="red"
+            size="sm"
+            aria-label={`Delete ${server.name}`}
+            onClick={(e) => {
+              e.stopPropagation()
+              onDelete()
+            }}
+          >
+            <IconTrash size={16} />
+          </ActionIcon>
+        </Group>
+
+        <div className={classes.statsSection} style={{ marginTop: 'auto' }}>
+          <Text size="xs" c="dimmed" className={classes.statsLabel}>
+            World data
+          </Text>
+          <Group gap={8} mb={-8}>
+            {stats.map(({ key, label, Icon }) => (
+              <Center key={key}>
+                <Icon size={16} className={classes.statIcon} stroke={1.5} />
+                <Text size="xs">{label}</Text>
+              </Center>
+            ))}
+          </Group>
+        </div>
+
+        <Text size="xs" c="dimmed" mt="auto">
+          Last import: {lastImportLabel}
+        </Text>
+      </Stack>
+    </Paper>
   )
 }

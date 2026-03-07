@@ -2,9 +2,10 @@
 
 // Extend Window interface for electronAPI
 interface ElectronAPI {
-  listServers: () => Promise<ServerSummary[]>
+  listServers: () => Promise<ServerSummaryWithStats[]>
   createServer: (name: string) => Promise<ServerProfile>
   getServer: (serverId: string) => Promise<ServerProfile | null>
+  deleteServer: (serverId: string) => Promise<{ success: boolean; error?: string }>
   setMyCommandDiscordInvite: (serverId: string, value: string) => Promise<void>
   importRegions: (
     serverId: string,
@@ -66,6 +67,7 @@ declare global {
 // Re-export types for use in renderer
 import type {
   ServerSummary,
+  ServerSummaryWithStats,
   ServerProfile,
   ImportResult,
   BuildResult,

@@ -3,9 +3,10 @@ import { contextBridge, ipcRenderer } from 'electron'
 // Define the IPC API interface
 export interface ElectronAPI {
   // Server profile management
-  listServers: () => Promise<ServerSummary[]>
+  listServers: () => Promise<ServerSummaryWithStats[]>
   createServer: (name: string) => Promise<ServerProfile>
   getServer: (serverId: string) => Promise<ServerProfile>
+  deleteServer: (serverId: string) => Promise<{ success: boolean; error?: string }>
   setMyCommandDiscordInvite: (serverId: string, value: string) => Promise<void>
   
   // Region import
@@ -68,6 +69,16 @@ export interface ElectronAPI {
 interface ServerSummary {
   id: string
   name: string
+}
+
+interface ServerSummaryWithStats {
+  id: string
+  name: string
+  regionCount: number
+  villageCount: number
+  heartCount: number
+  netherRegionCount: number
+  lastImportIso: string | null
 }
 
 interface ServerProfile {
@@ -207,6 +218,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   listServers: () => ipcRenderer.invoke('list-servers'),
   createServer: (name: string) => ipcRenderer.invoke('create-server', name),
   getServer: (serverId: string) => ipcRenderer.invoke('get-server', serverId),
+  deleteServer: (serverId: string) => ipcRenderer.invoke('delete-server', serverId),
   setMyCommandDiscordInvite: (serverId: string, value: string) =>
     ipcRenderer.invoke('set-mycommand-discord-invite', serverId, value),
   importRegions: (serverId: string, world: 'overworld' | 'nether', filePath: string) =>

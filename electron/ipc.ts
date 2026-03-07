@@ -4,6 +4,7 @@ const yaml = require('yaml')
 const {
   loadServerProfile,
   saveServerProfile,
+  deleteServer,
   listServerIds,
   getServerDirectory,
   ensureBuildDirectory,
@@ -111,19 +112,37 @@ function getGuideBooksSourceDir(): string {
   return guideBooksDir
 }
 
-// List all server profiles
-ipcMain.handle('list-servers', async (_event: any): Promise<ServerSummary[]> => {
+// List all server profiles with stats for dashboard cards
+ipcMain.handle('list-servers', async (_event: any) => {
   const serverIds = listServerIds()
-  const summaries: ServerSummary[] = []
+  const summaries = []
 
   for (const id of serverIds) {
     const profile = loadServerProfile(id)
-    if (profile) {
-      summaries.push({
-        id: profile.id,
-        name: profile.name,
-      })
-    }
+    if (!profile) continue
+
+    const regions: Array<{ world?: string; kind?: string }> = profile.regions || []
+    const regionCount = regions.filter((r) => r.world === 'overworld' && r.kind === 'region').length
+    const villageCount = regions.filter((r) => r.world === 'overworld' && r.kind === 'village').length
+    const heartCount = regions.filter((r) => r.world === 'overworld' && r.kind === 'heart').length
+    const netherRegionCount = regions.filter((r) => r.world === 'nether' && r.kind === 'region').length
+
+    const dates = [
+      profile.sources?.overworld?.importedAtIso,
+      profile.sources?.nether?.importedAtIso,
+      profile.sources?.end?.importedAtIso,
+    ].filter(Boolean)
+    const lastImportIso = dates.length > 0 ? dates.sort().reverse()[0] : null
+
+    summaries.push({
+      id: profile.id,
+      name: profile.name,
+      regionCount,
+      villageCount,
+      heartCount,
+      netherRegionCount,
+      lastImportIso,
+    })
   }
 
   return summaries
@@ -163,6 +182,22 @@ ipcMain.handle(
   'get-server',
   async (_event: any, serverId: string): Promise<ServerProfile | null> => {
     return loadServerProfile(serverId)
+  }
+)
+
+// Delete a server (removes its data directory)
+ipcMain.handle(
+  'delete-server',
+  async (_event: any, serverId: string): Promise<{ success: boolean; error?: string }> => {
+    try {
+      deleteServer(serverId)
+      return { success: true }
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error?.message ?? 'Failed to delete server',
+      }
+    }
   }
 )
 
