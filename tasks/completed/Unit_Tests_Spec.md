@@ -1,6 +1,8 @@
 # Unit Tests — Specification
 
-**Status: In Progress**
+**Status: Complete**
+
+Core phases (Setup, Tier Calculation, Region Classification, Region Counts) are implemented. String formatters tests are deferred until after Refactor spec extraction; Config Generators and Diff Validator tests remain optional.
 
 ## Purpose
 
@@ -65,7 +67,7 @@ Create `vitest.config.ts` at project root:
 | Total 1 | `heartsTemplate`, 1 | `[1]` |
 | Half equals all (total 2) | `heartsTemplate`, 2 | `[1, 2]` |
 
-Reference: `tasks/completed/AA_Custom_Achievements_Spec.md` — Generation Examples.
+Reference: `AA_Custom_Achievements_Spec.md` — Generation Examples.
 
 ---
 
@@ -213,5 +215,5 @@ Create `tests/fixtures/`:
 
 ## Related Specs
 
-- **Refactor_Spec.md**: Phase 4 (String Formatters) tests depend on extraction of shared string utilities. Can be deferred or tested in-place. Run tests after each refactor phase to catch regressions.
-- **AA_Custom_Achievements_Spec**: Tier calculation tests align with examples in that spec.
+- **../Refactor_Spec.md**: Phase 4 (String Formatters) tests depend on extraction of shared string utilities. Can be deferred or tested in-place. Run tests after each refactor phase to catch regressions.
+- **AA_Custom_Achievements_Spec.md**: Tier calculation tests align with examples in that spec.
