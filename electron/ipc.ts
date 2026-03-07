@@ -1,6 +1,5 @@
 const { ipcMain, dialog } = require('electron')
 const electron = require('electron')
-const yaml = require('yaml')
 const {
   loadServerProfile,
   saveServerProfile,
@@ -16,85 +15,12 @@ const { randomUUID } = require('crypto')
 const { existsSync, writeFileSync, copyFileSync } = require('fs')
 const path = require('path')
 const { importRegions, importRegionsMeta } = require('./regionParser')
-const { generateAACommands, generateAACustom, mergeAAConfig } = require('./aaGenerator')
-const { generateOwnedCEEvents, mergeCEConfig, getStartRegionAachId } = require('./ceGenerator')
-const { generateOwnedTABSections, mergeTABConfig, computeRegionCounts } = require('./tabGenerator')
-const { generateOwnedLMRules, mergeLMConfig } = require('./lmGenerator')
-const { generateMCConfig } = require('./mcGenerator')
-const { validateAADiff, validateCEDiff, validateTABDiff, validateLMDiff } = require('./diffValidator')
+const { computeRegionCounts } = require('./tabGenerator')
 const { generateLoreBooks } = require('./loreBooksGenerator')
 const { sanitizeServerName } = require('./utils/stringFormatters')
+const { runPluginBuild } = require('./build/buildPluginConfig')
 
 import type { ServerProfile, ImportResult, BuildResult, BuildReport, OnboardingConfig } from './types'
-
-// Resolve config path: use user-provided path if available, otherwise use bundled default
-function resolveConfigPath(type: 'aa' | 'ce' | 'tab' | 'lm' | 'mc' | 'cw', userProvidedPath?: string): string {
-  // If user provided path, validate and use it
-  if (userProvidedPath && userProvidedPath.trim().length > 0) {
-    if (!existsSync(userProvidedPath)) {
-      throw new Error(`${type.toUpperCase()} config file not found: ${userProvidedPath}`)
-    }
-    return userProvidedPath
-  }
-  
-  // Otherwise, use bundled default
-  // In dev mode, __dirname points to dist-electron (where this file is compiled to)
-  // In packaged mode, app.getAppPath() returns resources/app, but templates are in dist-electron/assets/templates
-  const isPackaged = electron.app.isPackaged
-  const basePath = isPackaged ? electron.app.getAppPath() : __dirname
-  const filename = type === 'aa' ? 'advancedachievements-config.yml'
-    : type === 'ce' ? 'conditionalevents-config.yml'
-    : type === 'tab' ? 'tab-config.yml'
-    : type === 'lm' ? 'levelledmobs-rules.yml'
-    : type === 'mc' ? 'mycommand-commands.yml'
-    : 'commandwhitelist-config.yml'
-  // In packaged mode, templates are in dist-electron/assets/templates relative to app.getAppPath()
-  // In dev mode, __dirname is already dist-electron, so we just need assets/templates
-  const templatesPath = isPackaged 
-    ? path.join(basePath, 'dist-electron', 'assets', 'templates', filename)
-    : path.join(basePath, 'assets', 'templates', filename)
-  const defaultPath = templatesPath
-  
-  if (!existsSync(defaultPath)) {
-    throw new Error(`Bundled ${type.toUpperCase()} default config not found at: ${defaultPath}. This may indicate a packaging issue. Please ensure templates were copied during build.`)
-  }
-  
-  return defaultPath
-}
-
-// When "propagate to plugin folders" is on: relative path from plugins root (folder + filename)
-const PLUGIN_OUTPUT_RELATIVE: Record<string, string> = {
-  aa: 'AdvancedAchievements/config.yml',
-  ce: 'ConditionalEvents/config.yml',
-  tab: 'TAB/config.yml',
-  lm: 'LevelledMobs/rules.yml',
-  mc: 'MyCommand/commands/commands.yml',
-  cw: 'CommandWhitelist/config.yml',
-}
-
-const PLUGIN_FLAT_FILENAMES: Record<string, string> = {
-  aa: 'advancedachievements-config.yml',
-  ce: 'conditionalevents-config.yml',
-  tab: 'tab-config.yml',
-  lm: 'levelledmobs-rules.yml',
-  mc: 'mycommand-commands.yml',
-  cw: 'commandwhitelist-config.yml',
-}
-
-function getPluginOutputPaths(
-  pluginId: keyof typeof PLUGIN_OUTPUT_RELATIVE,
-  outDir: string,
-  buildDir: string,
-  serverNameSanitized: string,
-  propagateToPluginFolders: boolean
-): { outputPath: string; buildPath: string } {
-  const flatName = `${serverNameSanitized}-${PLUGIN_FLAT_FILENAMES[pluginId]}`
-  const buildPath = path.join(buildDir, flatName)
-  const outputPath = propagateToPluginFolders
-    ? path.join(outDir, PLUGIN_OUTPUT_RELATIVE[pluginId])
-    : path.join(outDir, flatName)
-  return { outputPath, buildPath }
-}
 
 function getGuideBooksSourceDir(): string {
   const isPackaged = electron.app.isPackaged
@@ -526,278 +452,44 @@ ipcMain.handle(
       
       // Compute region counts for TAB (used in build report)
       const regionCountsForTAB = computeRegionCounts(profile.regions)
-      
-      // Generate AA if checked
+
+      const buildContext = { serverId, buildId, serverNameSanitized, propagate }
+
       if (inputs.generateAA) {
-        try {
-          const aaConfigPath = resolveConfigPath('aa', inputs.aaPath)
-          const usingDefaultAA = !inputs.aaPath || inputs.aaPath.trim().length === 0
-          
-          // Generate AA Commands
-          const newCommands = generateAACommands(profile.regions)
-          
-          // Generate AA Custom sections (requires reading template for reward definitions)
-          const fs = require('fs')
-          const templateContent = fs.readFileSync(aaConfigPath, 'utf-8')
-          const templateConfig = yaml.parse(templateContent)
-          const newCustom = generateAACustom(profile.regions, templateConfig)
-          
-          // Merge into AA config (Commands and Custom)
-          const mergedAAContent = mergeAAConfig(aaConfigPath, newCommands, newCustom)
-          
-          // Validate diff (diff gate)
-          const aaValidation = validateAADiff(aaConfigPath, mergedAAContent)
-          if (!aaValidation.valid) {
-            return {
-              success: false,
-              error: aaValidation.error || 'AA diff validation failed',
-              buildId,
-            }
-          }
-          
-          const buildDir = ensureBuildDirectory(serverId, buildId)
-          const { outputPath: aaOutputPath, buildPath: aaBuildPath } = getPluginOutputPaths(
-            'aa', inputs.outDir, buildDir, serverNameSanitized, propagate
-          )
-          if (propagate) {
-            fs.mkdirSync(path.dirname(aaOutputPath), { recursive: true })
-          }
-          writeFileSync(aaOutputPath, mergedAAContent, 'utf-8')
-          writeFileSync(aaBuildPath, mergedAAContent, 'utf-8')
-          
-          aaGenerated = true
-          configSources.aa = {
-            path: aaConfigPath,
-            isDefault: usingDefaultAA,
-          }
-        } catch (error: any) {
-          return {
-            success: false,
-            error: error.message || 'AA generation failed',
-            buildId,
-          }
-        }
+        const result = runPluginBuild('aa', profile, inputs, buildContext)
+        if (!result.success) return { success: false, error: result.error, buildId }
+        aaGenerated = true
+        configSources.aa = result.configSource
       }
-
-      // Generate CE if checked
       if (inputs.generateCE) {
-        try {
-          const ceConfigPath = resolveConfigPath('ce', inputs.cePath)
-          const usingDefaultCE = !inputs.cePath || inputs.cePath.trim().length === 0
-
-          const ownedEvents = generateOwnedCEEvents(
-            profile.regions,
-            profile.onboarding,
-            profile.regionsMeta?.levelledMobs?.regionBands
-          )
-          let mergedCEContent = mergeCEConfig(ceConfigPath, ownedEvents)
-          mergedCEContent = mergedCEContent.replace(/\{SERVER_NAME\}/g, profile.name)
-          mergedCEContent = mergedCEContent.replace(/\{START_REGION_AACH\}/g, getStartRegionAachId(profile.onboarding, profile.regions))
-          
-          // Validate diff (diff gate)
-          const ceValidation = validateCEDiff(ceConfigPath, mergedCEContent)
-          if (!ceValidation.valid) {
-            return {
-              success: false,
-              error: ceValidation.error || 'CE diff validation failed',
-              buildId,
-            }
-          }
-          
-          const buildDir = ensureBuildDirectory(serverId, buildId)
-          const { outputPath: ceOutputPath, buildPath: ceBuildPath } = getPluginOutputPaths(
-            'ce', inputs.outDir, buildDir, serverNameSanitized, propagate
-          )
-          if (propagate) {
-            fs.mkdirSync(path.dirname(ceOutputPath), { recursive: true })
-          }
-          writeFileSync(ceOutputPath, mergedCEContent, 'utf-8')
-          writeFileSync(ceBuildPath, mergedCEContent, 'utf-8')
-          
-          ceGenerated = true
-          configSources.ce = {
-            path: ceConfigPath,
-            isDefault: usingDefaultCE,
-          }
-        } catch (error: any) {
-          return {
-            success: false,
-            error: error.message || 'CE generation failed',
-            buildId,
-          }
-        }
+        const result = runPluginBuild('ce', profile, inputs, buildContext)
+        if (!result.success) return { success: false, error: result.error, buildId }
+        ceGenerated = true
+        configSources.ce = result.configSource
       }
-
-      // Generate TAB if checked
       if (inputs.generateTAB) {
-        try {
-          const tabConfigPath = resolveConfigPath('tab', inputs.tabPath)
-          const usingDefaultTAB = !inputs.tabPath || inputs.tabPath.trim().length === 0
-
-          const ownedTABSections = generateOwnedTABSections(
-            profile.regions,
-            profile.name,
-            profile.regionsMeta?.levelledMobs?.regionBands
-          )
-          const mergedTABContent = mergeTABConfig(tabConfigPath, ownedTABSections)
-          
-          // Validate diff (diff gate)
-          const tabValidation = validateTABDiff(tabConfigPath, mergedTABContent)
-          if (!tabValidation.valid) {
-            return {
-              success: false,
-              error: tabValidation.error || 'TAB diff validation failed',
-              buildId,
-            }
-          }
-          
-          const buildDir = ensureBuildDirectory(serverId, buildId)
-          const { outputPath: tabOutputPath, buildPath: tabBuildPath } = getPluginOutputPaths(
-            'tab', inputs.outDir, buildDir, serverNameSanitized, propagate
-          )
-          if (propagate) {
-            fs.mkdirSync(path.dirname(tabOutputPath), { recursive: true })
-          }
-          writeFileSync(tabOutputPath, mergedTABContent, 'utf-8')
-          writeFileSync(tabBuildPath, mergedTABContent, 'utf-8')
-          
-          tabGenerated = true
-          configSources.tab = {
-            path: tabConfigPath,
-            isDefault: usingDefaultTAB,
-          }
-        } catch (error: any) {
-          return {
-            success: false,
-            error: error.message || 'TAB generation failed',
-            buildId,
-          }
-        }
+        const result = runPluginBuild('tab', profile, inputs, buildContext)
+        if (!result.success) return { success: false, error: result.error, buildId }
+        tabGenerated = true
+        configSources.tab = result.configSource
       }
-
-      // Generate LM if checked
       if (inputs.generateLM) {
-        try {
-          const lmConfigPath = resolveConfigPath('lm', inputs.lmPath)
-          const usingDefaultLM = !inputs.lmPath || inputs.lmPath.trim().length === 0
-
-          // Generate owned LM rules
-          const ownedLMRules = generateOwnedLMRules(
-            profile.regions,
-            profile.regionsMeta?.levelledMobs
-          )
-          
-          // Merge into LM config
-          const mergedLMContent = mergeLMConfig(lmConfigPath, ownedLMRules)
-          
-          // Validate diff (diff gate)
-          const lmValidation = validateLMDiff(lmConfigPath, mergedLMContent)
-          if (!lmValidation.valid) {
-            return {
-              success: false,
-              error: lmValidation.error || 'LM diff validation failed',
-              buildId,
-            }
-          }
-          
-          const buildDir = ensureBuildDirectory(serverId, buildId)
-          const { outputPath: lmOutputPath, buildPath: lmBuildPath } = getPluginOutputPaths(
-            'lm', inputs.outDir, buildDir, serverNameSanitized, propagate
-          )
-          if (propagate) {
-            fs.mkdirSync(path.dirname(lmOutputPath), { recursive: true })
-          }
-          writeFileSync(lmOutputPath, mergedLMContent, 'utf-8')
-          writeFileSync(lmBuildPath, mergedLMContent, 'utf-8')
-          
-          lmGenerated = true
-          configSources.lm = {
-            path: lmConfigPath,
-            isDefault: usingDefaultLM,
-          }
-        } catch (error: any) {
-          return {
-            success: false,
-            error: error.message || 'LM generation failed',
-            buildId,
-          }
-        }
+        const result = runPluginBuild('lm', profile, inputs, buildContext)
+        if (!result.success) return { success: false, error: result.error, buildId }
+        lmGenerated = true
+        configSources.lm = result.configSource
       }
-
-      // Generate MC if checked
       if (inputs.generateMC) {
-        try {
-          const mcConfigPath = resolveConfigPath('mc', inputs.mcPath)
-          const usingDefaultMC = !inputs.mcPath || inputs.mcPath.trim().length === 0
-
-          // Generate MC config with server name, region tab completers, Discord invite, and conditional lore
-          const discordInvite = inputs.myCommandDiscordInvite ?? profile.myCommand?.discordInvite ?? ''
-          const hasLore = (profile.regions || []).some(
-            (r: { loreBookDescription?: string; description?: string }) =>
-              Boolean((r.loreBookDescription ?? r.description)?.trim())
-          )
-          const generatedMCContent = generateMCConfig(
-            mcConfigPath,
-            profile.name,
-            profile.regions || [],
-            discordInvite,
-            hasLore
-          )
-          
-          const buildDir = ensureBuildDirectory(serverId, buildId)
-          const { outputPath: mcOutputPath, buildPath: mcBuildPath } = getPluginOutputPaths(
-            'mc', inputs.outDir, buildDir, serverNameSanitized, propagate
-          )
-          if (propagate) {
-            fs.mkdirSync(path.dirname(mcOutputPath), { recursive: true })
-          }
-          writeFileSync(mcOutputPath, generatedMCContent, 'utf-8')
-          writeFileSync(mcBuildPath, generatedMCContent, 'utf-8')
-          
-          mcGenerated = true
-          configSources.mc = {
-            path: mcConfigPath,
-            isDefault: usingDefaultMC,
-          }
-        } catch (error: any) {
-          return {
-            success: false,
-            error: error.message || 'MC generation failed',
-            buildId,
-          }
-        }
+        const result = runPluginBuild('mc', profile, inputs, buildContext)
+        if (!result.success) return { success: false, error: result.error, buildId }
+        mcGenerated = true
+        configSources.mc = result.configSource
       }
-
-      // CommandWhitelist: copy from bundle/override (no generator yet)
       if (inputs.generateCW) {
-        try {
-          const cwConfigPath = resolveConfigPath('cw', inputs.cwPath)
-          const usingDefaultCW = !inputs.cwPath || inputs.cwPath.trim().length === 0
-          const fs = require('fs')
-          const cwContent = fs.readFileSync(cwConfigPath, 'utf-8')
-
-          const buildDir = ensureBuildDirectory(serverId, buildId)
-          const { outputPath: cwOutputPath, buildPath: cwBuildPath } = getPluginOutputPaths(
-            'cw', inputs.outDir, buildDir, serverNameSanitized, propagate
-          )
-          if (propagate) {
-            fs.mkdirSync(path.dirname(cwOutputPath), { recursive: true })
-          }
-          writeFileSync(cwOutputPath, cwContent, 'utf-8')
-          writeFileSync(cwBuildPath, cwContent, 'utf-8')
-
-          cwGenerated = true
-          configSources.cw = {
-            path: cwConfigPath,
-            isDefault: usingDefaultCW,
-          }
-        } catch (error: any) {
-          return {
-            success: false,
-            error: error.message || 'CommandWhitelist copy failed',
-            buildId,
-          }
-        }
+        const result = runPluginBuild('cw', profile, inputs, buildContext)
+        if (!result.success) return { success: false, error: result.error, buildId }
+        cwGenerated = true
+        configSources.cw = result.configSource
       }
 
       // BookGUI: copy guide books from bundle, substitute {SERVER_NAME}, skip guide_lore.yml if !hasLore

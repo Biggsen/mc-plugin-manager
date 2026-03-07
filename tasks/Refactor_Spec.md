@@ -212,10 +212,10 @@ Recommended sequence (dependencies first):
 - [x] Replace all duplicated string logic and sanitization calls
 
 ### Phase 2: Config & Build
-- [ ] Create `electron/utils/configPathResolver.ts` with `resolveConfigPath`
-- [ ] Add `PluginType` and `PLUGIN_TYPES` to types
-- [ ] Create `electron/build/buildPluginConfig.ts` (or equivalent) with generic build helper
-- [ ] Refactor `build-configs` handler to use build helper
+- [x] Create `electron/utils/configPathResolver.ts` with `resolveConfigPath`
+- [x] Add `PluginType` and `PLUGIN_TYPES` to types
+- [x] Create `electron/build/buildPluginConfig.ts` (or equivalent) with generic build helper
+- [x] Refactor `build-configs` handler to use build helper
 
 ### Phase 3: IPC Split
 - [ ] Create `electron/ipc/` directory and handler modules

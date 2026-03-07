@@ -2,6 +2,10 @@
 
 export type ServerId = string
 
+export type PluginType = 'aa' | 'ce' | 'tab' | 'lm' | 'mc' | 'cw'
+
+export const PLUGIN_TYPES: PluginType[] = ['aa', 'ce', 'tab', 'lm', 'mc', 'cw']
+
 export type RegionKind = 'system' | 'region' | 'village' | 'heart'
 
 export type DiscoverMethod = 'disabled' | 'on_enter' | 'first_join'
