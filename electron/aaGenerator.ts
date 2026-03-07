@@ -1,16 +1,7 @@
 const yaml = require('yaml')
 
-interface RegionRecord {
-  world: 'overworld' | 'nether' | 'end'
-  id: string
-  kind: 'system' | 'region' | 'village' | 'heart'
-  discover: {
-    method: 'disabled' | 'on_enter' | 'first_join'
-    recipeId: 'region' | 'heart' | 'nether_region' | 'nether_heart' | 'none' | 'village'
-    commandIdOverride?: string
-    displayNameOverride?: string
-  }
-}
+import type { RegionRecord } from './types'
+import { snakeToTitleCase } from './utils/stringFormatters'
 
 interface AACommand {
   Goal: string
@@ -120,27 +111,6 @@ function snakeToPascalCase(str: string): string {
     .split('_')
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
     .join('')
-}
-
-/**
- * Convert snake_case to Title Case (with spaces)
- * Keeps "of" lowercase in the middle
- * Examples:
- * - cherrybrook -> Cherrybrook
- * - heart_of_monkvos -> Heart of Monkvos
- * - ebon_of_wither -> Ebon of Wither
- */
-function snakeToTitleCase(str: string): string {
-  return str
-    .split('_')
-    .map((word, index) => {
-      // Keep "of" lowercase (except at start)
-      if (index > 0 && word.toLowerCase() === 'of') {
-        return 'of'
-      }
-      return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-    })
-    .join(' ')
 }
 
 /**

@@ -204,12 +204,12 @@ Recommended sequence (dependencies first):
 ## Implementation Checklist
 
 ### Phase 1: Types & Utilities
-- [ ] Create `electron/types.ts` re-exporting from `src/types`
-- [ ] Update all electron modules to import `RegionRecord` from shared types
-- [ ] Remove `type X = any` from ipc.ts; use proper types
-- [ ] Create `electron/utils/stringFormatters.ts` with `snakeToTitleCase`, `formatRegionTitle`, `sanitizeServerName`
-- [ ] Create `src/utils/stringFormatters.ts` for renderer (or shared)
-- [ ] Replace all duplicated string logic and sanitization calls
+- [x] Create `electron/types.ts` re-exporting from `src/types` (via tsconfig.types.json → dist-types)
+- [x] Update all electron modules to import `RegionRecord` from shared types
+- [x] Remove `type X = any` from ipc.ts; use proper types
+- [x] Create `electron/utils/stringFormatters.ts` with `snakeToTitleCase`, `formatRegionTitle`, `sanitizeServerName`
+- [x] Create `src/utils/stringFormatters.ts` for renderer (or shared)
+- [x] Replace all duplicated string logic and sanitization calls
 
 ### Phase 2: Config & Build
 - [ ] Create `electron/utils/configPathResolver.ts` with `resolveConfigPath`

@@ -23,13 +23,9 @@ const { generateOwnedLMRules, mergeLMConfig } = require('./lmGenerator')
 const { generateMCConfig } = require('./mcGenerator')
 const { validateAADiff, validateCEDiff, validateTABDiff, validateLMDiff } = require('./diffValidator')
 const { generateLoreBooks } = require('./loreBooksGenerator')
+const { sanitizeServerName } = require('./utils/stringFormatters')
 
-type ServerProfile = any
-type ServerSummary = any
-type ImportResult = any
-type BuildResult = any
-type BuildReport = any
-type OnboardingConfig = any
+import type { ServerProfile, ImportResult, BuildResult, BuildReport, OnboardingConfig } from './types'
 
 // Resolve config path: use user-provided path if available, otherwise use bundled default
 function resolveConfigPath(type: 'aa' | 'ce' | 'tab' | 'lm' | 'mc' | 'cw', userProvidedPath?: string): string {
@@ -152,7 +148,7 @@ ipcMain.handle('list-servers', async (_event: any) => {
 ipcMain.handle(
   'create-server',
   async (_event: any, name: string): Promise<ServerProfile> => {
-    const id = name.toLowerCase().replace(/[^a-z0-9]/g, '-')
+    const id = sanitizeServerName(name)
     const serverId = `${id}-${randomUUID().substring(0, 8)}`
 
     const profile: ServerProfile = {
@@ -499,7 +495,7 @@ ipcMain.handle(
       }
 
       const propagate = Boolean(inputs.propagateToPluginFolders)
-      const serverNameSanitized = profile.name.toLowerCase().replace(/[^a-z0-9]/g, '-')
+      const serverNameSanitized = sanitizeServerName(profile.name)
 
       // Generate build ID
       const buildId = `build-${Date.now()}`

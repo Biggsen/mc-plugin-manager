@@ -2,7 +2,7 @@ const { app } = require('electron')
 const { join } = require('path')
 const { existsSync, mkdirSync, readFileSync, writeFileSync, readdirSync, rmSync } = require('fs')
 
-type ServerProfile = any // Will be properly typed after build
+import type { ServerProfile } from './types'
 
 const DATA_DIR_NAME = 'mc-plugin-manager-data'
 

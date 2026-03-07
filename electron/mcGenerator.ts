@@ -1,11 +1,7 @@
 const { readFileSync } = require('fs')
 const yaml = require('yaml')
 
-interface RegionRecord {
-  world: string
-  id: string
-  kind: string
-}
+import type { RegionRecord } from './types'
 
 const yamlOptions = { indent: 2, lineWidth: 0, singleQuote: true }
 

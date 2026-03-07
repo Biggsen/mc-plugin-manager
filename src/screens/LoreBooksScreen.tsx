@@ -12,11 +12,7 @@ import {
 } from '@mantine/core'
 import type { ServerProfile, RegionRecord } from '../types'
 import { LoreBookPreview } from '../components/LoreBookPreview'
-
-function formatRegionLabel(region: RegionRecord): string {
-  return region.discover.displayNameOverride
-    ?? region.id.split('_').map((s) => s.charAt(0).toUpperCase() + s.slice(1).toLowerCase()).join(' ')
-}
+import { formatRegionLabel } from '../utils/stringFormatters'
 
 interface LoreBooksScreenProps {
   server: ServerProfile

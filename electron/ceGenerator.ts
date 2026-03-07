@@ -3,30 +3,7 @@ const yaml = require('yaml')
 // Reuse AA command-id generation so CE calls the right /aach give IDs.
 const { generateCommandId } = require('./aaGenerator')
 
-interface RegionRecord {
-  world: 'overworld' | 'nether' | 'end'
-  id: string
-  kind: 'system' | 'region' | 'village' | 'heart'
-  description?: string
-  discover: {
-    method: 'disabled' | 'on_enter' | 'first_join'
-    recipeId: 'region' | 'heart' | 'nether_region' | 'nether_heart' | 'none' | 'village'
-    commandIdOverride?: string
-    displayNameOverride?: string
-  }
-}
-
-interface OnboardingConfig {
-  startRegionId: string
-  teleport: {
-    world: string
-    x: number
-    y?: number
-    z: number
-    yaw?: number
-    pitch?: number
-  }
-}
+import type { RegionRecord, OnboardingConfig } from './types'
 
 type CEEvent = {
   type: string

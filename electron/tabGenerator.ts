@@ -1,16 +1,6 @@
 const yaml = require('yaml')
 
-interface RegionRecord {
-  world: 'overworld' | 'nether' | 'end'
-  id: string
-  kind: 'system' | 'region' | 'village' | 'heart'
-  discover: {
-    method: 'disabled' | 'on_enter' | 'first_join'
-    recipeId: 'region' | 'heart' | 'nether_region' | 'nether_heart' | 'none' | 'village'
-    commandIdOverride?: string
-    displayNameOverride?: string
-  }
-}
+import type { RegionRecord } from './types'
 
 const DIFFICULTIES = ['easy', 'normal', 'hard', 'severe', 'deadly'] as const
 type Difficulty = (typeof DIFFICULTIES)[number]

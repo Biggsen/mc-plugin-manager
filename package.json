@@ -9,7 +9,7 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "prebuild:electron": "node scripts/copy-templates.js",
-    "build:electron": "tsc -p tsconfig.electron.json",
+    "build:electron": "tsc -b tsconfig.electron.json",
     "preview": "vite preview",
     "electron:dev": "npm run build:electron && electron .",
     "electron:build": "npm run build:electron && vite build && node scripts/package-electron.js"

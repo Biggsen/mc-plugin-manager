@@ -5,6 +5,8 @@
     "lib": ["ES2020"],
     "outDir": "./dist-electron",
     "rootDir": "./electron",
+    "baseUrl": ".",
+    "paths": { "@shared/types": ["./dist-types/index.d.ts"] },
     "moduleResolution": "node",
     "strict": true,
     "esModuleInterop": true,
@@ -15,5 +17,6 @@
     "types": ["node"]
   },
   "include": ["electron/**/*"],
-  "exclude": ["node_modules", "dist", "dist-electron"]
+  "exclude": ["node_modules", "dist", "dist-electron"],
+  "references": [{ "path": "./tsconfig.types.json" }]
 }

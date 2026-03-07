@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from 'react'
 import { Stack, Text, Box, Button, Group, Textarea, SegmentedControl } from '@mantine/core'
+import { formatRegionTitle } from '../utils/stringFormatters'
 
 const ANCHOR_LENGTH = 24
 
@@ -10,13 +11,6 @@ interface LoreBookPreviewProps {
   onDescriptionChange: (description: string) => void
   regionId?: string
   regionTitle?: string
-}
-
-function formatRegionTitle(id: string): string {
-  return id
-    .split('_')
-    .map((s) => s.charAt(0).toUpperCase() + s.slice(1).toLowerCase())
-    .join(' ')
 }
 
 export function LoreBookPreview({

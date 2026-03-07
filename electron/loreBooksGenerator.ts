@@ -4,24 +4,8 @@ function escapeForDoubleQuotedYaml(str: string): string {
   return str.replace(/\\/g, '\\\\').replace(/"/g, '\\"')
 }
 
-interface RegionRecord {
-  world: string
-  id: string
-  kind: string
-  discover: {
-    displayNameOverride?: string
-  }
-  description?: string
-  loreBookAnchors?: string[]
-  loreBookDescription?: string
-}
-
-function formatRegionTitle(id: string): string {
-  return id
-    .split('_')
-    .map((s) => s.charAt(0).toUpperCase() + s.slice(1).toLowerCase())
-    .join(' ')
-}
+import type { RegionRecord } from './types'
+import { formatRegionTitle } from './utils/stringFormatters'
 
 function paginateDescription(text: string, charsPerPage: number = CHARS_PER_PAGE): string[] {
   const trimmed = text.trim()

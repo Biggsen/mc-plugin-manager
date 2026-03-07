@@ -1,17 +1,8 @@
 const yaml = require('yaml')
 const { readFileSync } = require('fs')
 
-interface RegionRecord {
-  world: 'overworld' | 'nether' | 'end'
-  id: string
-  kind: 'system' | 'region' | 'village' | 'heart'
-  discover: {
-    method: 'disabled' | 'on_enter' | 'first_join'
-    recipeId: 'region' | 'heart' | 'nether_region' | 'nether_heart' | 'none' | 'village'
-    commandIdOverride?: string
-    displayNameOverride?: string
-  }
-}
+import type { RegionRecord } from './types'
+import { snakeToTitleCase } from './utils/stringFormatters'
 
 interface LevelledMobsMeta {
   villageBandStrategy?: string
@@ -21,25 +12,6 @@ interface LevelledMobsMeta {
 interface OwnedLMRules {
   villagesRule?: any
   regionBandRules: any[]
-}
-
-/**
- * Convert snake_case to Title Case (with spaces)
- * Examples:
- * - dradacliff -> Dradacliff
- * - heart_of_foo -> Heart Of Foo
- */
-function snakeToTitleCase(str: string): string {
-  return str
-    .split('_')
-    .map((word) => {
-      // Keep "of" lowercase in the middle
-      if (word.toLowerCase() === 'of' && str.split('_').length > 1) {
-        return 'of'
-      }
-      return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-    })
-    .join(' ')
 }
 
 /**

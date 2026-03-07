@@ -2,6 +2,8 @@ const yaml = require('yaml')
 const { readFileSync, statSync } = require('fs')
 const { createHash } = require('crypto')
 
+import type { RegionRecord, ImportedSource, OnboardingConfig } from './types'
+
 type RegionForgeExport = {
   regions: {
     [regionId: string]: {
@@ -15,48 +17,6 @@ type RegionForgeExport = {
       priority?: number
       [key: string]: any
     }
-  }
-}
-
-interface RegionRecord {
-  world: 'overworld' | 'nether' | 'end'
-  id: string
-  kind: 'system' | 'region' | 'village' | 'heart'
-  discover: {
-    method: 'disabled' | 'on_enter' | 'first_join'
-    recipeId: 'region' | 'heart' | 'nether_region' | 'nether_heart' | 'none' | 'village' | 'nether_village'
-    commandIdOverride?: string
-    displayNameOverride?: string
-  }
-  biomes?: Array<{ biome: string; percentage: number }>
-  category?: string
-  items?: Array<{ id: string; name: string }>
-  theme?: Array<{ a: string; b: string }>
-  description?: string
-}
-
-interface ImportedSource {
-  label: string
-  originalFilename: string
-  importedAtIso: string
-  fileHash: string
-  spawnCenter?: {
-    world: string
-    x: number
-    y?: number
-    z: number
-  }
-}
-
-interface OnboardingConfig {
-  startRegionId: string
-  teleport: {
-    world: string
-    x: number
-    y?: number
-    z: number
-    yaw?: number
-    pitch?: number
   }
 }
 
