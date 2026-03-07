@@ -1,6 +1,6 @@
 const { app, BrowserWindow } = require('electron')
 const { join } = require('path')
-const ipc = require('./ipc')
+require('./ipc')
 const storage = require('./storage')
 
 let mainWindow: any = null

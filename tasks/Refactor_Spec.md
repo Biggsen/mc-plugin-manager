@@ -218,11 +218,11 @@ Recommended sequence (dependencies first):
 - [x] Refactor `build-configs` handler to use build helper
 
 ### Phase 3: IPC Split
-- [ ] Create `electron/ipc/` directory and handler modules
-- [ ] Move handlers to respective files
-- [ ] Create `electron/ipc/index.ts` to register handlers
-- [ ] Update main process to use new ipc index
-- [ ] Remove original `ipc.ts`
+- [x] Create `electron/ipc/` directory and handler modules
+- [x] Move handlers to respective files
+- [x] Create `electron/ipc/index.ts` to register handlers
+- [x] Update main process to use new ipc index
+- [x] Remove original `ipc.ts`
 
 ### Phase 4: Cleanup
 - [ ] Create `electron/utils/regionStats.ts`; consolidate region counting

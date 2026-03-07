@@ -10,7 +10,7 @@ import {
   Paper,
   Divider,
 } from '@mantine/core'
-import type { ServerProfile, RegionRecord } from '../types'
+import type { ServerProfile } from '../types'
 import { LoreBookPreview } from '../components/LoreBookPreview'
 import { formatRegionLabel } from '../utils/stringFormatters'
 
