@@ -1,7 +1,7 @@
 # Refactor — Code Quality & Maintainability Specification
 
-**Status: Pending**  
-*Last reviewed against codebase: 2025-03-07 (line numbers and locations verified).*
+**Status: Completed**  
+*Last reviewed against codebase: 2026-03-07. Completed 2026-03-08.*
 
 ## Purpose
 
@@ -242,7 +242,14 @@ Recommended sequence (dependencies first):
 
 ---
 
+## Post-completion: tests added
+
+- **Generator tests**: `ceGenerator`, `lmGenerator`, `mcGenerator`, `loreBooksGenerator` (electron); fixture `electron/fixtures/mc-template.yml` for MC.
+- **Shared-utils tests**: `electron/utils/stringFormatters`, `regionStats`, `yamlOptions`, `configPathResolver` (pure parts); `src/utils/stringFormatters`, `regionStats`.
+
+---
+
 ## Related Specs
 
-- **tasks/completed/Unit_Tests_Spec.md**: Run tests after each refactor phase to catch regressions. String formatter tests depend on Phase 1 extraction.
+- **Unit_Tests_Spec.md** (this folder): Run tests after each refactor phase to catch regressions. String formatter tests depend on Phase 1 extraction.
 - **Existing specs**: Refactor preserves behavior specified in AA_Custom_Achievements, Bundle_Default_Config_Files, TAB_Plugin_Integration, LevelledMobs_Generator, etc.
