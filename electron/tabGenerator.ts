@@ -1,6 +1,10 @@
 const yaml = require('yaml')
 
 import type { RegionRecord } from './types'
+import { computeRegionCounts } from './utils/regionStats'
+import type { RegionCounts } from './utils/regionStats'
+
+export { computeRegionCounts }
 
 const DIFFICULTIES = ['easy', 'normal', 'hard', 'severe', 'deadly'] as const
 type Difficulty = (typeof DIFFICULTIES)[number]
@@ -11,56 +15,6 @@ const DIFFICULTY_COLOURS: Record<Difficulty, string> = {
   hard: '&6',
   severe: '&c',
   deadly: '&4',
-}
-
-interface RegionCounts {
-  overworldRegions: number
-  overworldHearts: number
-  netherRegions: number
-  netherHearts: number
-  villages: number
-  total: number
-}
-
-/**
- * Compute region counts from region records
- */
-export function computeRegionCounts(regions: RegionRecord[]): RegionCounts {
-  const counts: RegionCounts = {
-    overworldRegions: 0,
-    overworldHearts: 0,
-    netherRegions: 0,
-    netherHearts: 0,
-    villages: 0,
-    total: 0,
-  }
-
-  for (const region of regions) {
-    // Only count regions where discover.method != 'disabled'
-    if (region.discover.method === 'disabled') {
-      continue
-    }
-
-    if (region.kind === 'village') {
-      counts.villages++
-    } else if (region.kind === 'heart') {
-      if (region.world === 'nether') {
-        counts.netherHearts++
-      } else {
-        counts.overworldHearts++
-      }
-    } else if (region.kind === 'region') {
-      if (region.world === 'nether') {
-        counts.netherRegions++
-      } else {
-        counts.overworldRegions++
-      }
-    }
-
-    counts.total++
-  }
-
-  return counts
 }
 
 /**
@@ -451,11 +405,8 @@ export function mergeTABConfig(
   config.conditions = mergedConditions
 
   // Stringify with proper formatting (2-space indentation)
-  return yaml.stringify(config, {
-    indent: 2,
-    lineWidth: 0,
-    simpleKeys: false,
-  })
+  const { YAML_STRINGIFY_OPTIONS } = require('./utils/yamlOptions')
+  return yaml.stringify(config, YAML_STRINGIFY_OPTIONS)
 }
 
 module.exports = {

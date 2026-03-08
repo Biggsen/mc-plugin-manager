@@ -438,12 +438,8 @@ export function mergeAAConfig(
     }
   }
   
-  // Stringify with proper formatting (2-space indentation)
-  return yaml.stringify(config, {
-    indent: 2,
-    lineWidth: 0,
-    simpleKeys: false,
-  })
+  const { YAML_STRINGIFY_OPTIONS } = require('./utils/yamlOptions')
+  return yaml.stringify(config, YAML_STRINGIFY_OPTIONS)
 }
 
 // Export tier calculation for testing

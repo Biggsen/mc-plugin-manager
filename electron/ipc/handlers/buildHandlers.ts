@@ -9,11 +9,11 @@ const {
   loadBuildReport,
   listBuildIds,
 } = require('../../storage')
-const { computeRegionCounts } = require('../../tabGenerator')
+const { computeRegionCounts, computeRegionStats } = require('../../utils/regionStats')
 const { sanitizeServerName } = require('../../utils/stringFormatters')
 const { runPluginBuild } = require('../../build/buildPluginConfig')
 
-import type { BuildResult, BuildReport, RegionRecord } from '../../types'
+import type { BuildResult, BuildReport } from '../../types'
 
 function getGuideBooksSourceDir(): string {
   const electron = require('electron')
@@ -87,14 +87,7 @@ export function registerBuildHandlers(): void {
         const timestamp = new Date().toISOString()
         const warnings: string[] = []
         const errors: string[] = []
-        const regionCounts = {
-          overworld: profile.regions.filter((r: RegionRecord) => r.world === 'overworld').length,
-          nether: profile.regions.filter((r: RegionRecord) => r.world === 'nether').length,
-          hearts: profile.regions.filter((r: RegionRecord) => r.kind === 'heart').length,
-          villages: profile.regions.filter((r: RegionRecord) => r.kind === 'village').length,
-          regions: profile.regions.filter((r: RegionRecord) => r.kind === 'region').length,
-          system: profile.regions.filter((r: RegionRecord) => r.kind === 'system').length,
-        }
+        const regionCounts = computeRegionStats(profile.regions)
 
         let aaGenerated = false
         let bookGuiGenerated = false

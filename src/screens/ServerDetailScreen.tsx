@@ -13,6 +13,7 @@ import {
 } from '@mantine/core'
 import { IconArrowLeft, IconFileImport, IconUser, IconHammer, IconMap2, IconBook } from '@tabler/icons-react'
 import type { ServerProfile } from '../types'
+import { computeRegionDisplayStats } from '../utils/regionStats'
 import { ImportScreen } from './ImportScreen'
 import { OnboardingScreen } from './OnboardingScreen'
 import { BuildScreen } from './BuildScreen'
@@ -49,12 +50,8 @@ export function ServerDetailScreen({ server: initialServer, onBack }: ServerDeta
     setServer(updated)
   }
 
-  const overworldRegions = server.regions.filter((r) => r.world === 'overworld' && r.kind === 'region').length
-  const overworldVillages = server.regions.filter((r) => r.world === 'overworld' && r.kind === 'village').length
-  const overworldHearts = server.regions.filter((r) => r.world === 'overworld' && r.kind === 'heart').length
-  const netherRegions = server.regions.filter((r) => r.world === 'nether' && r.kind === 'region').length
-  const netherHearts = server.regions.filter((r) => r.world === 'nether' && r.kind === 'heart').length
-  const totalRegions = server.regions.filter((r) => r.kind !== 'system').length
+  const stats = computeRegionDisplayStats(server.regions)
+  const { overworldRegions, overworldVillages, overworldHearts, netherRegions, netherHearts, totalRegions } = stats
   const spawnConfigured = server.spawnCenter != null || (server.onboarding?.teleport != null) ? 1 : 0
 
   const statSections = [

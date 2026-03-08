@@ -9,33 +9,27 @@ const { readFileSync } = require('fs')
  * - Custom.regions_discovered
  * - Custom.hearts_discovered
  */
-function removeOwnedAASections(config: any): any {
-  const cleaned = { ...config }
+function removeOwnedAASections(config: Record<string, unknown>): Record<string, unknown> {
+  const cleaned = { ...config } as Record<string, unknown>
   
-  // Remove Commands section (owned)
   delete cleaned.Commands
   
-  // Remove owned Custom categories
-  if (cleaned.Custom) {
-    cleaned.Custom = { ...cleaned.Custom }
-    delete cleaned.Custom.villages_discovered
-    delete cleaned.Custom.regions_discovered
-    delete cleaned.Custom.hearts_discovered
+  if (cleaned.Custom && typeof cleaned.Custom === 'object' && !Array.isArray(cleaned.Custom)) {
+    cleaned.Custom = { ...(cleaned.Custom as Record<string, unknown>) }
+    delete (cleaned.Custom as Record<string, unknown>).villages_discovered
+    delete (cleaned.Custom as Record<string, unknown>).regions_discovered
+    delete (cleaned.Custom as Record<string, unknown>).hearts_discovered
   }
   
   return cleaned
 }
 
-/**
- * Remove owned sections from CE config for comparison
- */
-function removeOwnedCESections(config: any): any {
-  const cleaned = { ...config }
+function removeOwnedCESections(config: Record<string, unknown>): Record<string, unknown> {
+  const cleaned = { ...config } as Record<string, unknown>
   
-  if (cleaned.Events) {
-    const cleanedEvents: any = {}
+  if (cleaned.Events && typeof cleaned.Events === 'object' && !Array.isArray(cleaned.Events)) {
+    const cleanedEvents: Record<string, unknown> = {}
     
-    // Keep only non-owned events
     for (const [key, value] of Object.entries(cleaned.Events)) {
       // Owned events:
       // - *_discover_once
@@ -61,15 +55,11 @@ function removeOwnedCESections(config: any): any {
   return cleaned
 }
 
-/**
- * Remove owned sections from TAB config for comparison
- */
-function removeOwnedTABSections(config: any): any {
-  const cleaned = { ...config }
+function removeOwnedTABSections(config: Record<string, unknown>): Record<string, unknown> {
+  const cleaned = { ...config } as Record<string, unknown>
   
-  // Remove owned header-footer sections
-  if (cleaned['header-footer']) {
-    const cleanedHeaderFooter = { ...cleaned['header-footer'] }
+  if (cleaned['header-footer'] && typeof cleaned['header-footer'] === 'object' && !Array.isArray(cleaned['header-footer'])) {
+    const cleanedHeaderFooter = { ...(cleaned['header-footer'] as Record<string, unknown>) }
     delete cleanedHeaderFooter.header
     delete cleanedHeaderFooter.footer
     if (Object.keys(cleanedHeaderFooter).length === 0) {
@@ -81,19 +71,15 @@ function removeOwnedTABSections(config: any): any {
   
   // Remove all scoreboard sections (entire scoreboards section is owned/replaced)
   // Also normalize enabled field since we always set it to true
-  if (cleaned.scoreboard) {
-    if (cleaned.scoreboard.scoreboards) {
-      // Remove the entire scoreboards object since we replace it entirely with generated ones
-      delete cleaned.scoreboard.scoreboards
-    }
-    // Normalize enabled field (we always set it to true)
-    cleaned.scoreboard.enabled = true
+  if (cleaned.scoreboard && typeof cleaned.scoreboard === 'object') {
+    const sb = cleaned.scoreboard as Record<string, unknown>
+    if (sb.scoreboards) delete sb.scoreboards
+    sb.enabled = true
   }
   
-  // Remove owned conditions
-  if (cleaned.conditions) {
-    const cleanedConditions: any = {}
-    for (const [key, value] of Object.entries(cleaned.conditions)) {
+  if (cleaned.conditions && typeof cleaned.conditions === 'object' && !Array.isArray(cleaned.conditions)) {
+    const cleanedConditions: Record<string, unknown> = {}
+    for (const [key, value] of Object.entries(cleaned.conditions as Record<string, unknown>)) {
       // Owned conditions:
       // - top-explorers-title, top-explorer-1 through top-explorer-5
       // - region-name-easy, region-name-normal, region-name-hard, region-name-severe, region-name-deadly
@@ -145,20 +131,15 @@ function removeOwnedTABSections(config: any): any {
     },
   }
 
-  // Add static conditions if missing (normalize both configs)
+  const conditions = cleaned.conditions as Record<string, unknown>
   for (const [key, value] of Object.entries(staticConditions)) {
-    if (!cleaned.conditions[key]) {
-      cleaned.conditions[key] = value
-    }
+    if (!conditions[key]) conditions[key] = value
   }
   
   return cleaned
 }
 
-/**
- * Deep equality check (handles objects, arrays, primitives)
- */
-function deepEqual(a: any, b: any, path: string = ''): { equal: boolean; differences: string[] } {
+function deepEqual(a: unknown, b: unknown, path: string = ''): { equal: boolean; differences: string[] } {
   const differences: string[] = []
   
   if (a === b) {
@@ -175,8 +156,8 @@ function deepEqual(a: any, b: any, path: string = ''): { equal: boolean; differe
     return { equal: false, differences }
   }
   
-  if (typeof a !== 'object') {
-    differences.push(`${path}: ${a} !== ${b}`)
+  if (typeof a !== 'object' || a === null || typeof b !== 'object' || b === null) {
+    differences.push(`${path}: ${String(a)} !== ${String(b)}`)
     return { equal: false, differences }
   }
   
@@ -185,7 +166,7 @@ function deepEqual(a: any, b: any, path: string = ''): { equal: boolean; differe
     return { equal: false, differences }
   }
   
-  if (Array.isArray(a)) {
+  if (Array.isArray(a) && Array.isArray(b)) {
     if (a.length !== b.length) {
       differences.push(`${path}: array length mismatch (${a.length} vs ${b.length})`)
       return { equal: false, differences }
@@ -198,9 +179,10 @@ function deepEqual(a: any, b: any, path: string = ''): { equal: boolean; differe
       }
     }
   } else {
-    // Object comparison
-    const keysA = Object.keys(a).sort()
-    const keysB = Object.keys(b).sort()
+    const oa = a as Record<string, unknown>
+    const ob = b as Record<string, unknown>
+    const keysA = Object.keys(oa).sort()
+    const keysB = Object.keys(ob).sort()
     
     if (keysA.length !== keysB.length) {
       differences.push(`${path}: object key count mismatch (${keysA.length} vs ${keysB.length})`)
@@ -209,12 +191,12 @@ function deepEqual(a: any, b: any, path: string = ''): { equal: boolean; differe
     const allKeys = new Set([...keysA, ...keysB])
     for (const key of allKeys) {
       const newPath = path ? `${path}.${key}` : key
-      if (!(key in a)) {
+      if (!(key in oa)) {
         differences.push(`${newPath}: missing in original`)
-      } else if (!(key in b)) {
+      } else if (!(key in ob)) {
         differences.push(`${newPath}: missing in generated`)
       } else {
-        const result = deepEqual(a[key], b[key], newPath)
+        const result = deepEqual(oa[key], ob[key], newPath)
         if (!result.equal) {
           differences.push(...result.differences)
         }
@@ -257,11 +239,9 @@ export function validateAADiff(
     }
     
     return { valid: true }
-  } catch (error: any) {
-    return {
-      valid: false,
-      error: `Failed to validate AA diff: ${error.message}`,
-    }
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : String(error)
+    return { valid: false, error: `Failed to validate AA diff: ${msg}` }
   }
 }
 
@@ -294,11 +274,9 @@ export function validateCEDiff(
     }
     
     return { valid: true }
-  } catch (error: any) {
-    return {
-      valid: false,
-      error: `Failed to validate CE diff: ${error.message}`,
-    }
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : String(error)
+    return { valid: false, error: `Failed to validate CE diff: ${msg}` }
   }
 }
 
@@ -331,33 +309,27 @@ export function validateTABDiff(
     }
     
     return { valid: true }
-  } catch (error: any) {
-    return {
-      valid: false,
-      error: `Failed to validate TAB diff: ${error.message}`,
-    }
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : String(error)
+    return { valid: false, error: `Failed to validate TAB diff: ${msg}` }
   }
 }
 
-/**
- * Remove owned sections from LevelledMobs config for comparison
- */
-function removeOwnedLMSections(config: any): any {
-  const cleaned = { ...config }
+function removeOwnedLMSections(config: Record<string, unknown>): Record<string, unknown> {
+  const cleaned = { ...config } as Record<string, unknown>
   
-  // Only modify custom-rules, preserve everything else
   if (cleaned['custom-rules'] && Array.isArray(cleaned['custom-rules'])) {
-    const cleanedRules: any[] = []
+    const cleanedRules: unknown[] = []
     
-    for (const rule of cleaned['custom-rules']) {
-      if (!rule.conditions || !rule.conditions['worldguard-regions']) {
-        // No worldguard-regions, preserve
+    for (const rule of cleaned['custom-rules'] as unknown[]) {
+      const r = rule as Record<string, unknown>
+      const cond = r.conditions as Record<string, unknown> | undefined
+      if (!cond || !cond['worldguard-regions']) {
         cleanedRules.push(rule)
         continue
       }
-
-      const wgRegions = rule.conditions['worldguard-regions']
-      const usePreset = rule['use-preset'] || ''
+      const wgRegions = cond['worldguard-regions']
+      const usePreset = String(r['use-preset'] ?? '')
 
       // Owned rules:
       // 1. Villages band: worldguard-regions is an array
@@ -407,11 +379,9 @@ export function validateLMDiff(
     }
     
     return { valid: true }
-  } catch (error: any) {
-    return {
-      valid: false,
-      error: `Failed to validate LM diff: ${error.message}`,
-    }
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : String(error)
+    return { valid: false, error: `Failed to validate LM diff: ${msg}` }
   }
 }
 

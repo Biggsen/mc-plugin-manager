@@ -2,8 +2,7 @@ const { readFileSync } = require('fs')
 const yaml = require('yaml')
 
 import type { RegionRecord } from './types'
-
-const yamlOptions = { indent: 2, lineWidth: 0, singleQuote: true }
+const { YAML_STRINGIFY_OPTIONS } = require('./utils/yamlOptions')
 
 const LORE_GUIDES_LINE = '&e> Lore; &d/guidelore;/guidelore'
 
@@ -60,7 +59,7 @@ export function generateMCConfig(
     config.lore.tab_completer = mainRegionIds
   }
 
-  return yaml.stringify(config, yamlOptions)
+  return yaml.stringify(config, YAML_STRINGIFY_OPTIONS)
 }
 
 module.exports = {

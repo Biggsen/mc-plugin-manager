@@ -2,7 +2,7 @@ const { app } = require('electron')
 const { join } = require('path')
 const { existsSync, mkdirSync, readFileSync, writeFileSync, readdirSync, rmSync } = require('fs')
 
-import type { ServerProfile } from './types'
+import type { ServerProfile, BuildReport } from './types'
 
 const DATA_DIR_NAME = 'mc-plugin-manager-data'
 
@@ -76,10 +76,10 @@ export function listServerIds(): string[] {
   }
 
   // Read directory and filter for directories that contain profile.json
-  const entries = readdirSync(serversDir, { withFileTypes: true })
+  const entries = readdirSync(serversDir, { withFileTypes: true }) as import('fs').Dirent[]
   return entries
-    .filter((entry: any) => entry.isDirectory())
-    .map((entry: any) => entry.name)
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name)
     .filter((id: string) => {
       const profilePath = getServerProfilePath(id)
       return existsSync(profilePath)
@@ -106,13 +106,13 @@ export function ensureBuildDirectory(serverId: string, buildId: string): string 
   return buildDir
 }
 
-export function saveBuildReport(serverId: string, buildId: string, report: any): void {
+export function saveBuildReport(serverId: string, buildId: string, report: BuildReport): void {
   const buildDir = ensureBuildDirectory(serverId, buildId)
   const reportPath = getBuildReportPath(serverId, buildId)
   writeFileSync(reportPath, JSON.stringify(report, null, 2), 'utf-8')
 }
 
-export function loadBuildReport(serverId: string, buildId: string): any | null {
+export function loadBuildReport(serverId: string, buildId: string): BuildReport | null {
   const reportPath = getBuildReportPath(serverId, buildId)
   if (!existsSync(reportPath)) {
     return null
@@ -120,7 +120,7 @@ export function loadBuildReport(serverId: string, buildId: string): any | null {
 
   try {
     const content = readFileSync(reportPath, 'utf-8')
-    return JSON.parse(content)
+    return JSON.parse(content) as BuildReport
   } catch (error) {
     console.error(`Failed to load build report ${buildId}:`, error)
     return null
@@ -133,10 +133,10 @@ export function listBuildIds(serverId: string): string[] {
     return []
   }
 
-  const entries = readdirSync(buildsDir, { withFileTypes: true })
+  const entries = readdirSync(buildsDir, { withFileTypes: true }) as import('fs').Dirent[]
   return entries
-    .filter((entry: any) => entry.isDirectory())
-    .map((entry: any) => entry.name)
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name)
     .sort()
     .reverse() // Most recent first
 }

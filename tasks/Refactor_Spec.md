@@ -225,9 +225,9 @@ Recommended sequence (dependencies first):
 - [x] Remove original `ipc.ts`
 
 ### Phase 4: Cleanup
-- [ ] Create `electron/utils/regionStats.ts`; consolidate region counting
-- [ ] Replace `any` with proper types in ipc, storage, diffValidator
-- [ ] Create `electron/utils/yamlOptions.ts`; standardize YAML formatting in generators
+- [x] Create `electron/utils/regionStats.ts`; consolidate region counting
+- [x] Replace `any` with proper types in ipc, storage, diffValidator
+- [x] Create `electron/utils/yamlOptions.ts`; standardize YAML formatting in generators
 
 ---
 

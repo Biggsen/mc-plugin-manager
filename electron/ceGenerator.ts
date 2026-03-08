@@ -307,11 +307,8 @@ export function mergeCEConfig(existingConfigPath: string, ownedEvents: CEEventsS
   const mergedEvents: Record<string, any> = { ...ownedEvents, ...preserved }
   config.Events = mergedEvents
 
-  return yaml.stringify(config, {
-    indent: 2,
-    lineWidth: 0,
-    singleQuote: true,
-  })
+  const { YAML_STRINGIFY_OPTIONS } = require('./utils/yamlOptions')
+  return yaml.stringify(config, YAML_STRINGIFY_OPTIONS)
 }
 
 module.exports = { generateOwnedCEEvents, mergeCEConfig, getStartRegionAachId }
