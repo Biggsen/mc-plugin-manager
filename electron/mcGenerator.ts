@@ -2,7 +2,7 @@ const { readFileSync } = require('fs')
 const yaml = require('yaml')
 
 import type { RegionRecord } from './types'
-const { YAML_STRINGIFY_OPTIONS } = require('./utils/yamlOptions')
+import { YAML_STRINGIFY_OPTIONS } from './utils/yamlOptions'
 
 const LORE_GUIDES_LINE = '&e> Lore; &d/guidelore;/guidelore'
 

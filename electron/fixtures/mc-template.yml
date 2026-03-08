@@ -1,0 +1,12 @@
+name: {SERVER_NAME}
+discord:
+  text:
+    - "Join us: {DISCORD_INVITE}"
+server_guides:
+  text:
+    - "&e> Lore; &d/guidelore;/guidelore"
+    - "Other line"
+server_guide_lore:
+  enabled: true
+lore:
+  tab_completer: []

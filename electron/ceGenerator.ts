@@ -1,9 +1,8 @@
 const yaml = require('yaml')
 
-// Reuse AA command-id generation so CE calls the right /aach give IDs.
-const { generateCommandId } = require('./aaGenerator')
-
+import { generateCommandId } from './aaGenerator'
 import type { RegionRecord, OnboardingConfig } from './types'
+import { YAML_STRINGIFY_OPTIONS } from './utils/yamlOptions'
 
 type CEEvent = {
   type: string
@@ -307,7 +306,6 @@ export function mergeCEConfig(existingConfigPath: string, ownedEvents: CEEventsS
   const mergedEvents: Record<string, any> = { ...ownedEvents, ...preserved }
   config.Events = mergedEvents
 
-  const { YAML_STRINGIFY_OPTIONS } = require('./utils/yamlOptions')
   return yaml.stringify(config, YAML_STRINGIFY_OPTIONS)
 }
 

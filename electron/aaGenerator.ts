@@ -442,8 +442,14 @@ export function mergeAAConfig(
   return yaml.stringify(config, YAML_STRINGIFY_OPTIONS)
 }
 
-// Export tier calculation for testing
-export { calculateTiers, VILLAGES_TEMPLATE, REGIONS_TEMPLATE, HEARTS_TEMPLATE }
+// Export tier calculation and command ID for testing and ceGenerator
+export {
+  calculateTiers,
+  VILLAGES_TEMPLATE,
+  REGIONS_TEMPLATE,
+  HEARTS_TEMPLATE,
+  generateCommandId,
+}
 
 module.exports = {
   generateAACommands,
