@@ -12,6 +12,7 @@ const { generateOwnedCEEvents, mergeCEConfig, getStartRegionAachId } = require('
 const { generateOwnedTABSections, mergeTABConfig } = require('../tabGenerator')
 const { generateOwnedLMRules, mergeLMConfig } = require('../lmGenerator')
 const { generateMCConfig } = require('../mcGenerator')
+const { generateCWConfig } = require('../cwGenerator')
 const { validateAADiff, validateCEDiff, validateTABDiff, validateLMDiff } = require('../diffValidator')
 
 import type { PluginType } from '../types'
@@ -49,6 +50,14 @@ export interface BuildPluginContext {
 
 function isDefaultPath(userPath: string | undefined): boolean {
   return !userPath || userPath.trim().length === 0
+}
+
+/** Same predicate as MyCommand: region has lore book or description text. */
+function serverProfileHasLore(profile: ServerProfile): boolean {
+  return (profile.regions || []).some(
+    (r: { loreBookDescription?: string; description?: string }) =>
+      Boolean((r.loreBookDescription ?? r.description)?.trim())
+  )
 }
 
 /**
@@ -89,10 +98,12 @@ export function buildPluginContent(
       return { content, configPath, isDefault }
     }
     case 'tab': {
+      const discordInvite = inputs.myCommandDiscordInvite ?? profile.myCommand?.discordInvite ?? ''
       const ownedTABSections = generateOwnedTABSections(
         profile.regions,
         profile.name,
-        profile.regionsMeta?.levelledMobs?.regionBands
+        profile.regionsMeta?.levelledMobs?.regionBands,
+        discordInvite
       )
       const content = mergeTABConfig(configPath, ownedTABSections)
       return { content, configPath, isDefault }
@@ -104,10 +115,7 @@ export function buildPluginContent(
     }
     case 'mc': {
       const discordInvite = inputs.myCommandDiscordInvite ?? profile.myCommand?.discordInvite ?? ''
-      const hasLore = (profile.regions || []).some(
-        (r: { loreBookDescription?: string; description?: string }) =>
-          Boolean((r.loreBookDescription ?? r.description)?.trim())
-      )
+      const hasLore = serverProfileHasLore(profile)
       const content = generateMCConfig(
         configPath,
         profile.name,
@@ -118,7 +126,9 @@ export function buildPluginContent(
       return { content, configPath, isDefault }
     }
     case 'cw': {
-      const content = fs.readFileSync(configPath, 'utf-8')
+      const discordInvite = inputs.myCommandDiscordInvite ?? profile.myCommand?.discordInvite ?? ''
+      const hasLore = serverProfileHasLore(profile)
+      const content = generateCWConfig(configPath, discordInvite, hasLore)
       return { content, configPath, isDefault }
     }
     default: {

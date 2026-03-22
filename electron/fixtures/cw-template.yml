@@ -1,0 +1,11 @@
+# header
+groups:
+  default:
+    commands:
+    - cc
+    - guidediscovery
+    - guideregions
+    - sb
+    - bookgui
+    subcommands:
+    - aach reload

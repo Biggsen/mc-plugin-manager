@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { computeRegionCounts } from './tabGenerator'
+import { computeRegionCounts, generateOwnedTABSections } from './tabGenerator'
 
 function region(
   kind: 'system' | 'region' | 'village' | 'heart',
@@ -16,6 +16,19 @@ function region(
     },
   }
 }
+
+describe('generateOwnedTABSections footer discord line', () => {
+  it('omits Discord footer line when invite is empty', () => {
+    const owned = generateOwnedTABSections([], 'Srv', undefined, '')
+    const footer = owned.headerFooter.footer.join('\n')
+    expect(footer).not.toContain('Discord')
+  })
+
+  it('includes Discord footer line when invite is set', () => {
+    const owned = generateOwnedTABSections([], 'Srv', undefined, 'https://discord.gg/x')
+    expect(owned.headerFooter.footer.some((l) => l.includes('Discord'))).toBe(true)
+  })
+})
 
 describe('computeRegionCounts', () => {
   it('empty regions returns all zeros', () => {

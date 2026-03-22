@@ -69,8 +69,8 @@ function generateRegionNameDifficultyConditions(
     conditions[`region-name-${difficulty}`] = {
       conditions: condList.length > 0 ? condList : ['%worldguard_region_name_1%=__none__'],
       type: 'OR',
-      yes: `${DIFFICULTY_COLOURS[difficulty]}%condition:region-name%`,
-      no: '',
+      true: `${DIFFICULTY_COLOURS[difficulty]}%condition:region-name%`,
+      false: '',
     }
   }
   return conditions
@@ -96,9 +96,11 @@ function generateHeader(serverName: string): string[] {
 }
 
 /**
- * Generate footer section with top explorers
+ * Generate footer section with top explorers.
+ * Discord hint line matches MyCommand / CommandWhitelist: only when an invite URL is set.
  */
-function generateFooter(): string[] {
+function generateFooter(discordInvite: string = ''): string[] {
+  const hasInvite = Boolean(discordInvite && String(discordInvite).trim())
   return [
     '',
     '&d%condition:top-explorers-title%',
@@ -108,6 +110,7 @@ function generateFooter(): string[] {
     '&b%condition:top-explorer-4%',
     '&b%condition:top-explorer-5%',
     '',
+    ...(hasInvite ? ['&bDiscord: &7/discord'] : []),
     '<#FFFFFF>&m                                                </#FFFF00>',
   ]
 }
@@ -179,33 +182,33 @@ function generateTopExplorersConditions(totalCount: number): Record<string, any>
   const conditions: Record<string, any> = {
     'top-explorers-title': {
       conditions: ["%ajlb_lb_aach_custom_total_discovered_1_alltime_name%!="],
-      yes: 'TOP EXPLORERS',
-      no: '',
+      true: 'TOP EXPLORERS',
+      false: '',
     },
     'top-explorer-1': {
       conditions: ["%ajlb_lb_aach_custom_total_discovered_1_alltime_name%!="],
-      yes: `1. %ajlb_lb_aach_custom_total_discovered_1_alltime_name% - %math_0_round({ajlb_lb_aach_custom_total_discovered_1_alltime_value}/${totalCount}*100,0)%%`,
-      no: '',
+      true: `1. %ajlb_lb_aach_custom_total_discovered_1_alltime_name% - %math_0_round({ajlb_lb_aach_custom_total_discovered_1_alltime_value}/${totalCount}*100,0)%%`,
+      false: '',
     },
     'top-explorer-2': {
       conditions: ["%ajlb_lb_aach_custom_total_discovered_2_alltime_name%!=---"],
-      yes: `2. %ajlb_lb_aach_custom_total_discovered_2_alltime_name% - %math_0_round({ajlb_lb_aach_custom_total_discovered_2_alltime_value}/${totalCount}*100,0)%%`,
-      no: '',
+      true: `2. %ajlb_lb_aach_custom_total_discovered_2_alltime_name% - %math_0_round({ajlb_lb_aach_custom_total_discovered_2_alltime_value}/${totalCount}*100,0)%%`,
+      false: '',
     },
     'top-explorer-3': {
       conditions: ["%ajlb_lb_aach_custom_total_discovered_3_alltime_name%!=---"],
-      yes: `3. %ajlb_lb_aach_custom_total_discovered_3_alltime_name% - %math_0_round({ajlb_lb_aach_custom_total_discovered_3_alltime_value}/${totalCount}*100,0)%%`,
-      no: '',
+      true: `3. %ajlb_lb_aach_custom_total_discovered_3_alltime_name% - %math_0_round({ajlb_lb_aach_custom_total_discovered_3_alltime_value}/${totalCount}*100,0)%%`,
+      false: '',
     },
     'top-explorer-4': {
       conditions: ["%ajlb_lb_aach_custom_total_discovered_4_alltime_name%!=---"],
-      yes: `4. %ajlb_lb_aach_custom_total_discovered_4_alltime_name% - %math_0_round({ajlb_lb_aach_custom_total_discovered_4_alltime_value}/${totalCount}*100,0)%%`,
-      no: '',
+      true: `4. %ajlb_lb_aach_custom_total_discovered_4_alltime_name% - %math_0_round({ajlb_lb_aach_custom_total_discovered_4_alltime_value}/${totalCount}*100,0)%%`,
+      false: '',
     },
     'top-explorer-5': {
       conditions: ["%ajlb_lb_aach_custom_total_discovered_5_alltime_name%!=---"],
-      yes: `5. %ajlb_lb_aach_custom_total_discovered_5_alltime_name% - %math_0_round({ajlb_lb_aach_custom_total_discovered_5_alltime_value}/${totalCount}*100,0)%%`,
-      no: '',
+      true: `5. %ajlb_lb_aach_custom_total_discovered_5_alltime_name% - %math_0_round({ajlb_lb_aach_custom_total_discovered_5_alltime_value}/${totalCount}*100,0)%%`,
+      false: '',
     },
   }
 
@@ -218,7 +221,8 @@ function generateTopExplorersConditions(totalCount: number): Record<string, any>
 export function generateOwnedTABSections(
   regions: RegionRecord[],
   serverName: string,
-  regionBands?: Record<string, string>
+  regionBands?: Record<string, string>,
+  discordInvite: string = ''
 ): {
   headerFooter: { header: string[]; footer: string[] }
   scoreboards: Record<string, any>
@@ -234,7 +238,7 @@ export function generateOwnedTABSections(
   // Generate header/footer
   const headerFooter = {
     header: generateHeader(serverName),
-    footer: generateFooter(),
+    footer: generateFooter(discordInvite),
   }
 
   // Generate scoreboards (conditional by world)
@@ -312,12 +316,29 @@ export function mergeTABConfig(
   const content = fs.readFileSync(existingConfigPath, 'utf-8')
   const config = yaml.parse(content) || {}
 
-  // Merge header-footer
+  // Merge header-footer (TAB 5.x: designs.default.header / footer)
   if (!config['header-footer']) {
     config['header-footer'] = { enabled: true }
   }
-  config['header-footer'].header = ownedSections.headerFooter.header
-  config['header-footer'].footer = ownedSections.headerFooter.footer
+  const headerFooter = config['header-footer'] as Record<string, unknown>
+  delete headerFooter.header
+  delete headerFooter.footer
+  delete headerFooter['disable-condition']
+  delete headerFooter['per-world']
+  delete headerFooter['per-server']
+  if (!headerFooter.designs || typeof headerFooter.designs !== 'object') {
+    headerFooter.designs = {}
+  }
+  const designs = headerFooter.designs as Record<string, unknown>
+  if (!designs.default || typeof designs.default !== 'object') {
+    designs.default = { 'display-condition': '%world%!=disabledworld' }
+  }
+  const defaultDesign = designs.default as Record<string, unknown>
+  if (!defaultDesign['display-condition']) {
+    defaultDesign['display-condition'] = '%world%!=disabledworld'
+  }
+  defaultDesign.header = ownedSections.headerFooter.header
+  defaultDesign.footer = ownedSections.headerFooter.footer
 
   // Merge scoreboards
   if (!config.scoreboard) {
@@ -326,15 +347,15 @@ export function mergeTABConfig(
       'toggle-command': '/sb',
       'remember-toggle-choice': false,
       'hidden-by-default': false,
-      'use-numbers': true,
-      'static-number': 0,
       'delay-on-join-milliseconds': 0,
       scoreboards: {},
     }
   } else {
-    // Ensure scoreboard is enabled (owned section)
     config.scoreboard.enabled = true
   }
+  const scoreboardRoot = config.scoreboard as Record<string, unknown>
+  delete scoreboardRoot['use-numbers']
+  delete scoreboardRoot['static-number']
   if (!config.scoreboard.scoreboards) {
     config.scoreboard.scoreboards = {}
   }
@@ -365,23 +386,23 @@ export function mergeTABConfig(
     'region-name': {
       conditions: ["%worldguard_region_name_2%!="],
       type: 'AND',
-      yes: '%capitalize_pascal-case-forced_{worldguard_region_name_2}%',
-      no: '%capitalize_pascal-case-forced_{worldguard_region_name_1}%',
+      true: '%capitalize_pascal-case-forced_{worldguard_region_name_2}%',
+      false: '%capitalize_pascal-case-forced_{worldguard_region_name_1}%',
     },
     'village-name': {
       conditions: [
-        "%worldguard_region_name_2%!=",
+        '%worldguard_region_name_2%!=',
         '%worldguard_region_name_1%!=%worldguard_region_name_2%',
-        "%worldguard_region_name_1%!=spawn",
+        '%worldguard_region_name_1%!=spawn',
       ],
       type: 'AND',
-      yes: '%condition:heart-region%',
-      no: '-',
+      true: '%condition:heart-region%',
+      false: '-',
     },
     'heart-region': {
       conditions: ["%worldguard_region_name_1%|-heart"],
-      yes: '-',
-      no: '%capitalize_pascal-case-forced_{worldguard_region_name_1}%',
+      true: '-',
+      false: '%capitalize_pascal-case-forced_{worldguard_region_name_1}%',
     },
   }
 

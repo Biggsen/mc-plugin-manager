@@ -62,6 +62,13 @@ function removeOwnedTABSections(config: Record<string, unknown>): Record<string,
     const cleanedHeaderFooter = { ...(cleaned['header-footer'] as Record<string, unknown>) }
     delete cleanedHeaderFooter.header
     delete cleanedHeaderFooter.footer
+    const designs = cleanedHeaderFooter.designs as Record<string, unknown> | undefined
+    if (designs && typeof designs === 'object' && designs.default && typeof designs.default === 'object') {
+      const def = { ...(designs.default as Record<string, unknown>) }
+      delete def.header
+      delete def.footer
+      designs.default = def
+    }
     if (Object.keys(cleanedHeaderFooter).length === 0) {
       delete cleaned['header-footer']
     } else {
@@ -109,25 +116,25 @@ function removeOwnedTABSections(config: Record<string, unknown>): Record<string,
   // This ensures both original and generated configs have the same static conditions
   const staticConditions = {
     'region-name': {
-      conditions: ["%worldguard_region_name_2%!='"],
+      conditions: ['%worldguard_region_name_2%!='],
       type: 'AND',
-      yes: '%capitalize_pascal-case-forced_{worldguard_region_name_2}%',
-      no: '%capitalize_pascal-case-forced_{worldguard_region_name_1}%',
+      true: '%capitalize_pascal-case-forced_{worldguard_region_name_2}%',
+      false: '%capitalize_pascal-case-forced_{worldguard_region_name_1}%',
     },
     'village-name': {
       conditions: [
-        "%worldguard_region_name_2%!='",
+        '%worldguard_region_name_2%!=',
         '%worldguard_region_name_1%!=%worldguard_region_name_2%',
-        "%worldguard_region_name_1%!=spawn",
+        '%worldguard_region_name_1%!=spawn',
       ],
       type: 'AND',
-      yes: '%condition:heart-region%',
-      no: '-',
+      true: '%condition:heart-region%',
+      false: '-',
     },
     'heart-region': {
-      conditions: ["%worldguard_region_name_1%|-heart"],
-      yes: '-',
-      no: '%capitalize_pascal-case-forced_{worldguard_region_name_1}%',
+      conditions: ['%worldguard_region_name_1%|-heart'],
+      true: '-',
+      false: '%capitalize_pascal-case-forced_{worldguard_region_name_1}%',
     },
   }
 
