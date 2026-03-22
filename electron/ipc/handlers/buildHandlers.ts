@@ -99,41 +99,78 @@ export function registerBuildHandlers(): void {
         const configSources: BuildResult['configSources'] = {}
 
         const regionCountsForTAB = computeRegionCounts(profile.regions)
-        const buildContext = { serverId, buildId, serverNameSanitized, propagate }
+        const buildContextBase = {
+          serverId,
+          buildId,
+          serverNameSanitized,
+          propagate,
+          profileId: serverId,
+          generatedAt: timestamp,
+        }
 
         if (inputs.generateAA) {
-          const result = runPluginBuild('aa', profile, inputs, buildContext)
+          const nextGeneratorVersion = (profile.generatorVersions?.aa ?? 0) + 1
+          const result = runPluginBuild('aa', profile, inputs, {
+            ...buildContextBase,
+            nextGeneratorVersion,
+          })
           if (!result.success) return { success: false, error: result.error, buildId }
+          profile.generatorVersions = { ...(profile.generatorVersions ?? {}), aa: nextGeneratorVersion }
           aaGenerated = true
           configSources.aa = result.configSource
         }
         if (inputs.generateCE) {
-          const result = runPluginBuild('ce', profile, inputs, buildContext)
+          const nextGeneratorVersion = (profile.generatorVersions?.ce ?? 0) + 1
+          const result = runPluginBuild('ce', profile, inputs, {
+            ...buildContextBase,
+            nextGeneratorVersion,
+          })
           if (!result.success) return { success: false, error: result.error, buildId }
+          profile.generatorVersions = { ...(profile.generatorVersions ?? {}), ce: nextGeneratorVersion }
           ceGenerated = true
           configSources.ce = result.configSource
         }
         if (inputs.generateTAB) {
-          const result = runPluginBuild('tab', profile, inputs, buildContext)
+          const nextGeneratorVersion = (profile.generatorVersions?.tab ?? 0) + 1
+          const result = runPluginBuild('tab', profile, inputs, {
+            ...buildContextBase,
+            nextGeneratorVersion,
+          })
           if (!result.success) return { success: false, error: result.error, buildId }
+          profile.generatorVersions = { ...(profile.generatorVersions ?? {}), tab: nextGeneratorVersion }
           tabGenerated = true
           configSources.tab = result.configSource
         }
         if (inputs.generateLM) {
-          const result = runPluginBuild('lm', profile, inputs, buildContext)
+          const nextGeneratorVersion = (profile.generatorVersions?.lm ?? 0) + 1
+          const result = runPluginBuild('lm', profile, inputs, {
+            ...buildContextBase,
+            nextGeneratorVersion,
+          })
           if (!result.success) return { success: false, error: result.error, buildId }
+          profile.generatorVersions = { ...(profile.generatorVersions ?? {}), lm: nextGeneratorVersion }
           lmGenerated = true
           configSources.lm = result.configSource
         }
         if (inputs.generateMC) {
-          const result = runPluginBuild('mc', profile, inputs, buildContext)
+          const nextGeneratorVersion = (profile.generatorVersions?.mc ?? 0) + 1
+          const result = runPluginBuild('mc', profile, inputs, {
+            ...buildContextBase,
+            nextGeneratorVersion,
+          })
           if (!result.success) return { success: false, error: result.error, buildId }
+          profile.generatorVersions = { ...(profile.generatorVersions ?? {}), mc: nextGeneratorVersion }
           mcGenerated = true
           configSources.mc = result.configSource
         }
         if (inputs.generateCW) {
-          const result = runPluginBuild('cw', profile, inputs, buildContext)
+          const nextGeneratorVersion = (profile.generatorVersions?.cw ?? 0) + 1
+          const result = runPluginBuild('cw', profile, inputs, {
+            ...buildContextBase,
+            nextGeneratorVersion,
+          })
           if (!result.success) return { success: false, error: result.error, buildId }
+          profile.generatorVersions = { ...(profile.generatorVersions ?? {}), cw: nextGeneratorVersion }
           cwGenerated = true
           configSources.cw = result.configSource
         }
@@ -169,6 +206,7 @@ export function registerBuildHandlers(): void {
           }
         }
 
+        const gvSnap = profile.generatorVersions
         const report: BuildReport = {
           buildId,
           timestamp,
@@ -186,6 +224,9 @@ export function registerBuildHandlers(): void {
           configSources,
           warnings,
           errors,
+          ...(gvSnap && Object.keys(gvSnap).length > 0
+            ? { generatorVersionsSnapshot: { ...gvSnap } }
+            : {}),
         }
         saveBuildReport(serverId, buildId, report)
 

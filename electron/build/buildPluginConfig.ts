@@ -14,6 +14,7 @@ const { generateOwnedLMRules, mergeLMConfig } = require('../lmGenerator')
 const { generateMCConfig } = require('../mcGenerator')
 const { generateCWConfig } = require('../cwGenerator')
 const { validateAADiff, validateCEDiff, validateTABDiff, validateLMDiff } = require('../diffValidator')
+const { prependGeneratorVersionHeader } = require('../utils/generatorVersionHeader')
 
 import type { PluginType } from '../types'
 import type { ServerProfile } from '../types'
@@ -46,6 +47,12 @@ export interface BuildPluginContext {
   buildId: string
   serverNameSanitized: string
   propagate: boolean
+  /** Defaults to `serverId` if omitted (e.g. stale dist-electron). */
+  profileId?: string
+  /** Defaults to `new Date().toISOString()` if omitted. */
+  generatedAt?: string
+  /** Defaults to `1` if omitted — run `npm run build:electron` so buildHandlers passes the real serial. */
+  nextGeneratorVersion?: number
 }
 
 function isDefaultPath(userPath: string | undefined): boolean {
@@ -178,6 +185,16 @@ export function runPluginBuild(
     if (!validation.valid) {
       return { success: false, error: validation.error || `${type.toUpperCase()} diff validation failed` }
     }
+    const nextRaw = context.nextGeneratorVersion
+    const nextVersion =
+      typeof nextRaw === 'number' && Number.isInteger(nextRaw) && nextRaw >= 1 ? nextRaw : 1
+    const contentToWrite = prependGeneratorVersionHeader(content, {
+      plugin: type,
+      profileId: context.profileId ?? context.serverId,
+      buildId: context.buildId,
+      nextVersion,
+      generatedAt: context.generatedAt ?? new Date().toISOString(),
+    })
     const buildDir = ensureBuildDirectory(context.serverId, context.buildId)
     const { outputPath, buildPath } = getPluginOutputPaths(
       type,
@@ -189,8 +206,8 @@ export function runPluginBuild(
     if (context.propagate) {
       fs.mkdirSync(path.dirname(outputPath), { recursive: true })
     }
-    fs.writeFileSync(outputPath, content, 'utf-8')
-    fs.writeFileSync(buildPath, content, 'utf-8')
+    fs.writeFileSync(outputPath, contentToWrite, 'utf-8')
+    fs.writeFileSync(buildPath, contentToWrite, 'utf-8')
     return {
       success: true,
       configSource: { path: configPath, isDefault },

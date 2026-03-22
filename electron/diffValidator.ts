@@ -1,3 +1,5 @@
+import { stripGeneratorVersionCommentLines } from './utils/generatorVersionHeader'
+
 const yaml = require('yaml')
 const { readFileSync } = require('fs')
 
@@ -226,12 +228,12 @@ export function validateAADiff(
 ): { valid: boolean; error?: string; differences?: string[] } {
   try {
     // Read and parse original
-    const originalContent = readFileSync(originalPath, 'utf-8')
+    const originalContent = stripGeneratorVersionCommentLines(readFileSync(originalPath, 'utf-8'))
     const original = yaml.parse(originalContent)
     const originalCleaned = removeOwnedAASections(original)
     
     // Parse generated
-    const generated = yaml.parse(generatedContent)
+    const generated = yaml.parse(stripGeneratorVersionCommentLines(generatedContent))
     const generatedCleaned = removeOwnedAASections(generated)
     
     // Compare
@@ -261,12 +263,12 @@ export function validateCEDiff(
 ): { valid: boolean; error?: string; differences?: string[] } {
   try {
     // Read and parse original
-    const originalContent = readFileSync(originalPath, 'utf-8')
+    const originalContent = stripGeneratorVersionCommentLines(readFileSync(originalPath, 'utf-8'))
     const original = yaml.parse(originalContent)
     const originalCleaned = removeOwnedCESections(original)
     
     // Parse generated
-    const generated = yaml.parse(generatedContent)
+    const generated = yaml.parse(stripGeneratorVersionCommentLines(generatedContent))
     const generatedCleaned = removeOwnedCESections(generated)
     
     // Compare
@@ -296,12 +298,12 @@ export function validateTABDiff(
 ): { valid: boolean; error?: string; differences?: string[] } {
   try {
     // Read and parse original
-    const originalContent = readFileSync(originalPath, 'utf-8')
+    const originalContent = stripGeneratorVersionCommentLines(readFileSync(originalPath, 'utf-8'))
     const original = yaml.parse(originalContent)
     const originalCleaned = removeOwnedTABSections(original)
     
     // Parse generated
-    const generated = yaml.parse(generatedContent)
+    const generated = yaml.parse(stripGeneratorVersionCommentLines(generatedContent))
     const generatedCleaned = removeOwnedTABSections(generated)
     
     // Compare
@@ -366,12 +368,12 @@ export function validateLMDiff(
 ): { valid: boolean; error?: string; differences?: string[] } {
   try {
     // Read and parse original
-    const originalContent = readFileSync(originalPath, 'utf-8')
+    const originalContent = stripGeneratorVersionCommentLines(readFileSync(originalPath, 'utf-8'))
     const original = yaml.parse(originalContent)
     const originalCleaned = removeOwnedLMSections(original)
     
     // Parse generated
-    const generated = yaml.parse(generatedContent)
+    const generated = yaml.parse(stripGeneratorVersionCommentLines(generatedContent))
     const generatedCleaned = removeOwnedLMSections(generated)
     
     // Compare
@@ -392,4 +394,3 @@ export function validateLMDiff(
   }
 }
 
-module.exports = { validateAADiff, validateCEDiff, validateTABDiff, validateLMDiff }

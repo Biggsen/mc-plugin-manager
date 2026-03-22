@@ -47,6 +47,8 @@ export interface ServerProfile {
     loreBooksOutputDirectory?: string
     propagateToPluginFolders?: boolean
   }
+  /** Per-plugin successful emit serial (1-based), keyed by plugin id. */
+  generatorVersions?: Partial<Record<PluginType, number>>
   /** MyCommand plugin settings (e.g. Discord invite for /discord command). */
   myCommand?: {
     discordInvite?: string
@@ -179,4 +181,6 @@ export interface BuildReport {
   }
   warnings: string[]
   errors: string[]
+  /** Counter values persisted on the profile after this build (plugins that were emitted). */
+  generatorVersionsSnapshot?: Partial<Record<PluginType, number>>
 }
