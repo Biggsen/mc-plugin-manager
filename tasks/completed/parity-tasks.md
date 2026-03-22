@@ -1,20 +1,26 @@
 # Charidh config parity — task list
 
+**Status: Completed** (all six tracked plugins at 100% parity with live Charidh; checklist retained as a record.)
+
+## Summary
+
+Parity work aligned **generated** plugin configs with **live** server configs for Charidh. Compare snapshots originally lived under `parity-check/generated-config/` and `parity-check/live-config/` (local workspace; not required in-repo).
+
+---
+
 Working toward **100% parity** between generated plugin configs and live server configs.
 
-**Compare roots**
+**Compare roots (historical)**
 
 - Generated: `parity-check/generated-config/`
 - Live: `parity-check/live-config/`
-
-Add new items under **Backlog** or in the relevant plugin section as you discover more differences. Check items off when generator output matches live (or live is intentionally updated to match generated).
 
 ---
 
 ## Global
 
-- [ ] Re-run full diff after each batch of fixes (`git diff --no-index` or your preferred YAML-aware diff).
-- [ ] Document any intentional live-only overrides (if live must diverge).
+- [x] Re-run full diff after each batch of fixes (`git diff --no-index` or your preferred YAML-aware diff) — done for Charidh sprint; repeat when generators change.
+- [x] Document any intentional live-only overrides (if live must diverge) — captured per plugin below where relevant.
 
 ---
 
@@ -29,7 +35,7 @@ Live `config.yml` was replaced with the generated file → **100% parity** (sour
 
 ## CommandWhitelist (`CommandWhitelist/config.yml`) — **done**
 
-Generated output matches live under `parity-check/` → **100% parity** (source of truth: generator + `generateCWConfig`). Live no longer uses `delhome` / `sethome` / `homes` / `home`.
+Generated output matches live → **100% parity** (source of truth: generator + `generateCWConfig`). Live no longer uses `delhome` / `sethome` / `homes` / `home`.
 
 - [x] `discord` only when invite is set; `lore` / `guidelore` only when `serverProfileHasLore` (`electron/cwGenerator.ts`).
 - [x] Leading blank line on live is cosmetic only; YAML content matches generated.
@@ -67,7 +73,7 @@ Generated `commands/commands.yml` is what runs on live → **100% parity** (sour
 
 ## TAB (`TAB/config.yml`) — **done**
 
-Generated output matches live under `parity-check/` → **100% parity** (source of truth: generator + bundled TAB 5.x template). Bundled: `reference/plugin config files/to be bundled/tab-config.yml`. Merge: `designs.default` header/footer, no legacy `header`/`footer`, no `use-numbers`/`static-number`, owned conditions use `true`/`false`. Discord footer line only when invite is set (same source as MyCommand / CommandWhitelist). `diffValidator` strips `designs.default` header/footer for owned-section checks.
+Generated output matches live → **100% parity** (source of truth: generator + bundled TAB 5.x template). Bundled: `reference/plugin config files/to be bundled/tab-config.yml`. Merge: `designs.default` header/footer, no legacy `header`/`footer`, no `use-numbers`/`static-number`, owned conditions use `true`/`false`. Discord footer line only when invite is set (same source as MyCommand / CommandWhitelist). `diffValidator` strips `designs.default` header/footer for owned-section checks.
 
 - [x] TAB 5.x structure (`designs`, `config-version`, `components`, `channel-name-suffix`, layout `display-condition`).
 - [x] Charidh scoreboards, conditions, and counts aligned with live.
@@ -75,6 +81,6 @@ Generated output matches live under `parity-check/` → **100% parity** (source 
 
 ---
 
-## Backlog (add todos here)
+## Backlog
 
--
+_None._ Further parity work would be a new task (e.g. another server profile or BookGUI).
