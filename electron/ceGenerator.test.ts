@@ -115,4 +115,19 @@ describe('generateOwnedCEEvents', () => {
     expect(actions.some((a) => a.includes('Welcome to {SERVER_NAME}'))).toBe(true)
     expect(actions.some((a) => a.includes('aach give'))).toBe(true)
   })
+
+  it('does not emit discover_once for kind structure', () => {
+    const regions: RegionRecord[] = [
+      region('cherrybrook', 'region', 'overworld', 'first_join'),
+      {
+        world: 'overworld',
+        id: 'inner_core',
+        kind: 'structure',
+        structureType: 'ancient_city',
+        discover: { method: 'on_enter', recipeId: 'none' },
+      },
+    ]
+    const events = generateOwnedCEEvents(regions, onboarding)
+    expect(events['inner_core_discover_once']).toBeUndefined()
+  })
 })

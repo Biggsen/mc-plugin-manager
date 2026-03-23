@@ -19,6 +19,7 @@ export interface BuildReportRegionCounts {
   villages: number
   regions: number
   system: number
+  structures: number
 }
 
 /**
@@ -36,6 +37,7 @@ export function computeRegionCounts(regions: RegionRecord[]): RegionCounts {
 
   for (const region of regions) {
     if (region.discover.method === 'disabled') continue
+    if (region.kind === 'structure') continue
 
     if (region.kind === 'village') {
       counts.villages++
@@ -63,5 +65,6 @@ export function computeRegionStats(regions: RegionRecord[]): BuildReportRegionCo
     villages: regions.filter((r) => r.kind === 'village').length,
     regions: regions.filter((r) => r.kind === 'region').length,
     system: regions.filter((r) => r.kind === 'system').length,
+    structures: regions.filter((r) => r.kind === 'structure').length,
   }
 }

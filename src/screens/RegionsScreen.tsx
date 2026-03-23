@@ -15,6 +15,7 @@ import {
   IconSettings,
   IconLeaf,
   IconList,
+  IconBuilding,
 } from '@tabler/icons-react'
 import type { ServerProfile, RegionRecord } from '../types'
 
@@ -22,6 +23,7 @@ type RegionGroupKey =
   | 'regions'
   | 'villages'
   | 'hearts'
+  | 'structures'
   | 'nether_regions'
   | 'nether_hearts'
   | 'end_regions'
@@ -32,6 +34,7 @@ const REGION_GROUPS: { key: RegionGroupKey; label: string; icon: React.ReactNode
   { key: 'regions', label: 'Regions', icon: <IconMapPin size={18} /> },
   { key: 'villages', label: 'Villages', icon: <IconBuildingCommunity size={18} /> },
   { key: 'hearts', label: 'Hearts', icon: <IconHeart size={18} /> },
+  { key: 'structures', label: 'Structures', icon: <IconBuilding size={18} /> },
   { key: 'nether_regions', label: 'Nether Regions', icon: <IconMapPin size={18} /> },
   { key: 'nether_hearts', label: 'Nether Hearts', icon: <IconHeart size={18} /> },
   { key: 'end_regions', label: 'End Regions', icon: <IconMapPin size={18} /> },
@@ -41,6 +44,7 @@ const REGION_GROUPS: { key: RegionGroupKey; label: string; icon: React.ReactNode
 
 function getRegionGroup(region: RegionRecord): RegionGroupKey | null {
   if (region.kind === 'system') return 'system'
+  if (region.kind === 'structure') return 'structures'
   if (region.world === 'nether') {
     return region.kind === 'heart' ? 'nether_hearts' : 'nether_regions'
   }
@@ -70,6 +74,8 @@ function kindIcon(kind: RegionRecord['kind']) {
       return <IconBuildingCommunity size={16} />
     case 'heart':
       return <IconHeart size={16} />
+    case 'structure':
+      return <IconBuilding size={16} />
     default:
       return <IconMapPin size={16} />
   }
@@ -83,6 +89,8 @@ function kindColor(kind: RegionRecord['kind']): string {
       return 'teal'
     case 'heart':
       return 'red'
+    case 'structure':
+      return 'orange'
     default:
       return 'blue'
   }
@@ -99,8 +107,13 @@ function RegionPanel({ region }: { region: RegionRecord }) {
           <Text size="sm">
             Method: <strong>{region.discover.method}</strong>
           </Text>
+          {region.kind === 'structure' && region.structureType && (
+            <Text size="sm">
+              Structure type: <strong>{region.structureType}</strong>
+            </Text>
+          )}
           <Text size="sm">
-            Recipe: <strong>{region.discover.recipeId}</strong>
+            RecipeId (legacy): <strong>{region.discover.recipeId}</strong>
           </Text>
           {region.discover.commandIdOverride && (
             <Text size="sm">

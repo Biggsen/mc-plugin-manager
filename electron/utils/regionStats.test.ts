@@ -64,6 +64,7 @@ describe('computeRegionStats', () => {
       villages: 0,
       regions: 0,
       system: 0,
+      structures: 0,
     })
   })
 

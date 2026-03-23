@@ -1,5 +1,8 @@
+import { mkdtempSync, writeFileSync, unlinkSync } from 'fs'
+import { join } from 'path'
+import { tmpdir } from 'os'
 import { describe, it, expect } from 'vitest'
-import { classifyRegion } from './regionParser'
+import { classifyRegion, importRegionsMeta } from './regionParser'
 
 describe('classifyRegion', () => {
   const noOnboarding = { startRegionId: '', teleport: { world: 'world', x: 0, z: 0 } }
@@ -65,5 +68,39 @@ describe('classifyRegion', () => {
     expect(result.kind).toBe('region')
     expect(result.discover.method).toBe('on_enter')
     expect(result.discover.recipeId).toBe('nether_region')
+  })
+})
+
+describe('importRegionsMeta', () => {
+  it('derives recipeId when discover.recipeId is omitted', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'regions-meta-'))
+    const filePath = join(dir, 'm.yml')
+    writeFileSync(
+      filePath,
+      `format: 1
+world: overworld
+regions:
+  - id: spawn
+    world: overworld
+    kind: system
+    discover:
+      method: disabled
+  - id: rotherhithe
+    world: overworld
+    kind: village
+    discover:
+      method: on_enter
+`,
+      'utf-8'
+    )
+    try {
+      const result = importRegionsMeta(filePath, 'overworld')
+      const spawn = result.regions.find((r) => r.id === 'spawn')
+      const village = result.regions.find((r) => r.id === 'rotherhithe')
+      expect(spawn?.discover.recipeId).toBe('none')
+      expect(village?.discover.recipeId).toBe('village')
+    } finally {
+      unlinkSync(filePath)
+    }
   })
 })

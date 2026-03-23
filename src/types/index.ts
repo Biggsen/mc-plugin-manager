@@ -6,7 +6,7 @@ export type PluginType = 'aa' | 'ce' | 'tab' | 'lm' | 'mc' | 'cw'
 
 export const PLUGIN_TYPES: PluginType[] = ['aa', 'ce', 'tab', 'lm', 'mc', 'cw']
 
-export type RegionKind = 'system' | 'region' | 'village' | 'heart'
+export type RegionKind = 'system' | 'region' | 'village' | 'heart' | 'structure'
 
 export type DiscoverMethod = 'disabled' | 'on_enter' | 'first_join'
 
@@ -15,6 +15,8 @@ export type RewardRecipeId =
   | 'heart'
   | 'nether_region'
   | 'nether_heart'
+  | 'end_region'
+  | 'end_heart'
   | 'none'
   | 'village'
 
@@ -81,6 +83,8 @@ export interface RegionRecord {
   world: 'overworld' | 'nether' | 'end'
   id: string // canonical id (lowercase, snake_case)
   kind: RegionKind
+  /** When `kind` is `structure`, which POI family (matches regions-meta `structureFamilies`). */
+  structureType?: string
   discover: {
     method: DiscoverMethod
     recipeId: RewardRecipeId
@@ -162,6 +166,7 @@ export interface BuildReport {
     villages: number
     regions: number
     system: number
+    structures: number
   }
   computedCounts?: {
     overworldRegions: number

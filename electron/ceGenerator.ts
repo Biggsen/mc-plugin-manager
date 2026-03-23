@@ -272,7 +272,10 @@ export function generateOwnedCEEvents(
   // on-enter discoveries (skip start region — it's discovered in first_join, not on enter)
   const startId = onboarding.startRegionId
   const discoverOnceRegions = regions.filter(
-    (r) => r.discover.method === 'on_enter' && r.id !== startId
+    (r) =>
+      r.discover.method === 'on_enter' &&
+      r.id !== startId &&
+      r.kind !== 'structure'
   )
   const keys = discoverOnceRegions
     .map((r) => ({ key: `${r.id}_discover_once`, region: r }))

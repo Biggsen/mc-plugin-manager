@@ -185,8 +185,10 @@ function generateDisplayName(regionId: string): string {
 export function generateAACommands(regions: RegionRecord[]): AACommandsSection {
   const commands: AACommandsSection = {}
   
-  // Filter to only regions where discover.method != "disabled"
-  const activeRegions = regions.filter((r) => r.discover.method !== 'disabled')
+  // Filter to only regions where discover.method != "disabled" (structures use separate find-* AA; not generated here yet)
+  const activeRegions = regions.filter(
+    (r) => r.discover.method !== 'disabled' && r.kind !== 'structure'
+  )
   
   // Sort by command ID for deterministic output
   const sortedRegions = [...activeRegions].sort((a, b) => {

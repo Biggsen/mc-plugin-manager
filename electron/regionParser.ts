@@ -2,7 +2,7 @@ const yaml = require('yaml')
 const { readFileSync, statSync } = require('fs')
 const { createHash } = require('crypto')
 
-import type { RegionRecord, ImportedSource, OnboardingConfig } from './types'
+import type { RegionRecord, ImportedSource, OnboardingConfig, RegionKind, RewardRecipeId } from './types'
 
 type RegionForgeExport = {
   regions: {
@@ -26,10 +26,11 @@ type RegionsMetaExport = {
   regions: Array<{
     id: string
     world: string
-    kind: 'system' | 'region' | 'village' | 'heart'
+    kind: RegionKind
+    structureType?: string
     discover: {
       method: 'disabled' | 'on_enter' | 'first_join'
-      recipeId: string
+      recipeId?: string
       commandIdOverride?: string
       displayNameOverride?: string
     }
@@ -255,21 +256,55 @@ function mapWorld(world: string): 'overworld' | 'nether' | 'end' {
 }
 
 /**
+ * When regions-meta omits `discover.recipeId`, derive a stored value from `kind` + `world`.
+ * Generators use `kind` + `world`, not `recipeId`; this keeps profiles backward-compatible.
+ */
+function deriveRecipeIdFromKindWorld(kind: RegionKind, world: 'overworld' | 'nether' | 'end'): RewardRecipeId {
+  switch (kind) {
+    case 'system':
+      return 'none'
+    case 'village':
+      return 'village'
+    case 'heart':
+      if (world === 'nether') return 'nether_heart'
+      if (world === 'end') return 'end_heart'
+      return 'heart'
+    case 'region':
+      if (world === 'nether') return 'nether_region'
+      if (world === 'end') return 'end_region'
+      return 'region'
+    case 'structure':
+      return 'none'
+  }
+}
+
+/**
  * Validate and map recipeId to allowed value
  */
 function validateRecipeId(
   recipeId: string,
   world: 'overworld' | 'nether' | 'end'
-): 'region' | 'heart' | 'nether_region' | 'nether_heart' | 'none' | 'village' {
-  const allowed = ['none', 'region', 'nether_region', 'heart', 'nether_heart', 'village']
+): RewardRecipeId {
+  const allowed = [
+    'none',
+    'region',
+    'nether_region',
+    'end_region',
+    'heart',
+    'nether_heart',
+    'end_heart',
+    'village',
+  ]
   if (allowed.includes(recipeId)) {
-    return recipeId as any
+    return recipeId as RewardRecipeId
   }
-  
-  // Default based on world
+
   console.warn(`Invalid recipeId: ${recipeId}, defaulting based on world`)
   if (world === 'nether') {
     return 'nether_region'
+  }
+  if (world === 'end') {
+    return 'end_region'
   }
   return 'region'
 }
@@ -330,8 +365,8 @@ export function importRegionsMeta(
       continue
     }
 
-    if (!region.discover.method || !region.discover.recipeId) {
-      console.warn(`Skipping region with missing discover fields: ${region.id}`)
+    if (!region.discover.method) {
+      console.warn(`Skipping region with missing discover.method: ${region.id}`)
       continue
     }
 
@@ -343,7 +378,11 @@ export function importRegionsMeta(
 
     // Map region
     const canonicalId = canonicalizeId(region.id)
-    const recipeId = validateRecipeId(region.discover.recipeId, mappedWorld)
+    const rawRecipeId = region.discover.recipeId
+    const recipeId =
+      rawRecipeId !== undefined && rawRecipeId !== ''
+        ? validateRecipeId(String(rawRecipeId), mappedWorld)
+        : deriveRecipeIdFromKindWorld(region.kind, mappedWorld)
 
     const record: RegionRecord = {
       world: mappedWorld,
@@ -356,6 +395,7 @@ export function importRegionsMeta(
         displayNameOverride: region.discover.displayNameOverride,
       },
     }
+    if (region.structureType) record.structureType = region.structureType
     if (region.biomes?.length) record.biomes = region.biomes
     if (region.category) record.category = region.category
     if (region.items?.length) record.items = region.items
