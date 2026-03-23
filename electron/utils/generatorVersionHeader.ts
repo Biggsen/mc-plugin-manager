@@ -1,10 +1,10 @@
-import type { PluginType } from '../types'
+import type { GeneratorVersionKey } from '../types'
 
 /** Machine-discoverable prefix for line 1 of generated plugin YAML. */
 export const GENERATOR_VERSION_HEADER_PREFIX = '# mc-plugin-manager:'
 
 export interface GeneratorVersionHeaderOptions {
-  plugin: PluginType
+  plugin: GeneratorVersionKey
   profileId: string
   buildId: string
   nextVersion: number

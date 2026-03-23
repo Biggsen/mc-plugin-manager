@@ -6,7 +6,7 @@ interface ElectronAPI {
   createServer: (name: string) => Promise<ServerProfile>
   getServer: (serverId: string) => Promise<ServerProfile | null>
   deleteServer: (serverId: string) => Promise<{ success: boolean; error?: string }>
-  setMyCommandDiscordInvite: (serverId: string, value: string) => Promise<void>
+  setDiscordSrvSettings: (serverId: string, partial: import('./types').DiscordSrvSettings) => Promise<void>
   importRegions: (
     serverId: string,
     world: 'overworld' | 'nether',
@@ -37,6 +37,8 @@ interface ElectronAPI {
       generateLM?: boolean
       generateMC?: boolean
       generateCW?: boolean
+      generateDiscordSRV?: boolean
+      discordSrv?: import('./types').DiscordSrvSettings
       aaPath?: string
       cePath?: string
       tabPath?: string
@@ -45,7 +47,6 @@ interface ElectronAPI {
       cwPath?: string
       outDir: string
       propagateToPluginFolders?: boolean
-      myCommandDiscordInvite?: string
     }
   ) => Promise<BuildResult>
   showConfigFileDialog: (title: string, defaultPath?: string) => Promise<string | null>

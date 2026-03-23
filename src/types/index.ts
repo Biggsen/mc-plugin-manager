@@ -18,6 +18,9 @@ export type RewardRecipeId =
   | 'none'
   | 'village'
 
+/** Keys stored in `generatorVersions` (plugin YAML emit serial). */
+export type GeneratorVersionKey = PluginType | 'discordsrv'
+
 export interface ServerProfile {
   id: ServerId
   name: string
@@ -48,11 +51,17 @@ export interface ServerProfile {
     propagateToPluginFolders?: boolean
   }
   /** Per-plugin successful emit serial (1-based), keyed by plugin id. */
-  generatorVersions?: Partial<Record<PluginType, number>>
-  /** MyCommand plugin settings (e.g. Discord invite for /discord command). */
-  myCommand?: {
-    discordInvite?: string
-  }
+  generatorVersions?: Partial<Record<GeneratorVersionKey, number>>
+  /** DiscordSRV build inputs (bot token, channel IDs, invite URL). */
+  discordSrv?: DiscordSrvSettings
+}
+
+export interface DiscordSrvSettings {
+  botToken?: string
+  globalChannelId?: string
+  statusChannelId?: string
+  consoleChannelId?: string
+  discordInviteUrl?: string
 }
 
 export interface ImportedSource {
@@ -139,6 +148,7 @@ export interface BuildResult {
     lm?: { path: string; isDefault: boolean }
     mc?: { path: string; isDefault: boolean }
     cw?: { path: string; isDefault: boolean }
+    discordsrv?: { path: string; isDefault: boolean }
   }
 }
 
@@ -169,6 +179,8 @@ export interface BuildReport {
     lm: boolean
     mc: boolean
     cw: boolean
+    /** Present from builds that include DiscordSRV support; treat absent as false. */
+    discordsrv?: boolean
   }
   configSources?: {
     aa?: { path: string; isDefault: boolean }
@@ -178,9 +190,10 @@ export interface BuildReport {
     lm?: { path: string; isDefault: boolean }
     mc?: { path: string; isDefault: boolean }
     cw?: { path: string; isDefault: boolean }
+    discordsrv?: { path: string; isDefault: boolean }
   }
   warnings: string[]
   errors: string[]
   /** Counter values persisted on the profile after this build (plugins that were emitted). */
-  generatorVersionsSnapshot?: Partial<Record<PluginType, number>>
+  generatorVersionsSnapshot?: Partial<Record<GeneratorVersionKey, number>>
 }

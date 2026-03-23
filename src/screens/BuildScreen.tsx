@@ -14,11 +14,12 @@ import {
   UnstyledButton,
   List,
 } from '@mantine/core'
-import type { ServerProfile, BuildResult, BuildReport } from '../types'
+import type { ServerProfile, BuildResult, BuildReport, DiscordSrvSettings } from '../types'
 
 const BUILD_PLUGINS = [
   { id: 'aa', label: 'AdvancedAchievements', overrideLabel: 'AdvancedAchievements config.yml (optional override)', dialogTitle: 'Select AdvancedAchievements config.yml', generateKey: 'generateAA', pathKey: 'aaPath' },
   { id: 'bookgui', label: 'BookGUI', generateKey: 'generateBookGUI', overrideLabel: undefined, dialogTitle: undefined, pathKey: undefined },
+  { id: 'discordsrv', label: 'DiscordSRV', generateKey: 'generateDiscordSRV', overrideLabel: undefined, dialogTitle: undefined, pathKey: undefined },
   { id: 'cw', label: 'CommandWhitelist', overrideLabel: 'CommandWhitelist config.yml (optional override)', dialogTitle: 'Select CommandWhitelist config.yml', generateKey: 'generateCW', pathKey: 'cwPath' },
   { id: 'ce', label: 'ConditionalEvents', overrideLabel: 'ConditionalEvents config.yml (optional override)', dialogTitle: 'Select ConditionalEvents config.yml', generateKey: 'generateCE', pathKey: 'cePath' },
   { id: 'lm', label: 'LevelledMobs', overrideLabel: 'LevelledMobs rules.yml (optional override)', dialogTitle: 'Select LevelledMobs rules.yml', generateKey: 'generateLM', pathKey: 'lmPath' },
@@ -40,23 +41,30 @@ function getInitialPluginOptions(): Record<BuildPluginId, { generate: boolean; p
 
 interface BuildScreenProps {
   server: ServerProfile
+  /** Called after build success or DiscordSRV persist so parent state matches saved profile (survives tab unmount). */
+  onServerUpdate?: (server: ServerProfile) => void
 }
 
-export function BuildScreen({ server }: BuildScreenProps) {
+export function BuildScreen({ server, onServerUpdate }: BuildScreenProps) {
   const [pluginOptions, setPluginOptions] = useState(getInitialPluginOptions)
   const [outDir, setOutDir] = useState(server.build.outputDirectory || '')
   const [propagateToPluginFolders, setPropagateToPluginFolders] = useState(
     Boolean(server.build?.propagateToPluginFolders)
   )
-  const [myCommandDiscordInvite, setMyCommandDiscordInvite] = useState(
-    server.myCommand?.discordInvite ?? ''
-  )
+  const [discordSrv, setDiscordSrv] = useState<DiscordSrvSettings>(() => ({
+    botToken: server.discordSrv?.botToken ?? '',
+    globalChannelId: server.discordSrv?.globalChannelId ?? '',
+    statusChannelId: server.discordSrv?.statusChannelId ?? '',
+    consoleChannelId: server.discordSrv?.consoleChannelId ?? '',
+    discordInviteUrl: server.discordSrv?.discordInviteUrl ?? '',
+  }))
   const [isBuilding, setIsBuilding] = useState(false)
   const [buildResult, setBuildResult] = useState<BuildResult | null>(null)
   const [buildReport, setBuildReport] = useState<BuildReport | null>(null)
   const [pastBuilds, setPastBuilds] = useState<string[]>([])
   const [validationError, setValidationError] = useState<string | null>(null)
   const [showOverrides, setShowOverrides] = useState(false)
+  const [showDiscordSrvSettings, setShowDiscordSrvSettings] = useState(false)
 
   async function handleSelectPluginFile(id: BuildPluginId) {
     const plugin = BUILD_PLUGINS.find((p) => p.id === id)
@@ -94,35 +102,57 @@ export function BuildScreen({ server }: BuildScreenProps) {
       return
     }
 
-    if (pluginOptions.mc.generate && !myCommandDiscordInvite.trim()) {
-      setValidationError('Discord invite is required when generating MyCommand')
-      return
+    if (pluginOptions.discordsrv.generate) {
+      const d = discordSrv
+      if (
+        !d.botToken?.trim() ||
+        !d.globalChannelId?.trim() ||
+        !d.statusChannelId?.trim() ||
+        !d.discordInviteUrl?.trim()
+      ) {
+        setValidationError(
+          'DiscordSRV requires bot token, global channel ID, status channel ID, and Discord invite URL'
+        )
+        return
+      }
     }
 
     setIsBuilding(true)
     setBuildResult(null)
 
     try {
-      const payload: Record<string, boolean | string> = {
+      type BuildPayload = Parameters<typeof window.electronAPI.buildConfigs>[1]
+      const payload = {
         outDir,
         propagateToPluginFolders,
-      }
+      } as Record<string, unknown>
       for (const p of BUILD_PLUGINS) {
         payload[p.generateKey] = pluginOptions[p.id].generate
         if (pluginOptions[p.id].generate && 'pathKey' in p && p.pathKey && pluginOptions[p.id].path) {
           payload[p.pathKey] = pluginOptions[p.id].path
         }
       }
-      if (pluginOptions.mc.generate) {
-        payload.myCommandDiscordInvite = myCommandDiscordInvite
+      if (pluginOptions.discordsrv.generate) {
+        payload.discordSrv = {
+          botToken: discordSrv.botToken ?? '',
+          globalChannelId: discordSrv.globalChannelId ?? '',
+          statusChannelId: discordSrv.statusChannelId ?? '',
+          consoleChannelId: discordSrv.consoleChannelId ?? '',
+          discordInviteUrl: discordSrv.discordInviteUrl ?? '',
+        }
       }
       const result = await window.electronAPI.buildConfigs(
         server.id,
-        payload as Parameters<typeof window.electronAPI.buildConfigs>[1]
+        payload as unknown as BuildPayload
       )
 
       setBuildResult(result)
-      
+
+      if (result.success && onServerUpdate) {
+        const updated = await window.electronAPI.getServer(server.id)
+        if (updated) onServerUpdate(updated)
+      }
+
       // Load build report if successful
       if (result.success && result.buildId) {
         await loadBuildReport(result.buildId)
@@ -142,8 +172,23 @@ export function BuildScreen({ server }: BuildScreenProps) {
   useEffect(() => {
     setOutDir(server.build?.outputDirectory || '')
     setPropagateToPluginFolders(Boolean(server.build?.propagateToPluginFolders))
-    setMyCommandDiscordInvite(server.myCommand?.discordInvite ?? '')
-  }, [server.id, server.build?.outputDirectory, server.build?.propagateToPluginFolders, server.myCommand?.discordInvite])
+    setDiscordSrv({
+      botToken: server.discordSrv?.botToken ?? '',
+      globalChannelId: server.discordSrv?.globalChannelId ?? '',
+      statusChannelId: server.discordSrv?.statusChannelId ?? '',
+      consoleChannelId: server.discordSrv?.consoleChannelId ?? '',
+      discordInviteUrl: server.discordSrv?.discordInviteUrl ?? '',
+    })
+  }, [
+    server.id,
+    server.build?.outputDirectory,
+    server.build?.propagateToPluginFolders,
+    server.discordSrv?.botToken,
+    server.discordSrv?.globalChannelId,
+    server.discordSrv?.statusChannelId,
+    server.discordSrv?.consoleChannelId,
+    server.discordSrv?.discordInviteUrl,
+  ])
 
   useEffect(() => {
     loadPastBuilds()
@@ -164,6 +209,14 @@ export function BuildScreen({ server }: BuildScreenProps) {
       setBuildReport(report)
     } catch (error) {
       console.error('Failed to load build report:', error)
+    }
+  }
+
+  async function persistDiscordSrv(next: DiscordSrvSettings) {
+    await window.electronAPI.setDiscordSrvSettings(server.id, next)
+    if (onServerUpdate) {
+      const updated = await window.electronAPI.getServer(server.id)
+      if (updated) onServerUpdate(updated)
     }
   }
 
@@ -195,22 +248,92 @@ export function BuildScreen({ server }: BuildScreenProps) {
         <Text size="sm" c="dimmed">
           Checked plugins will be generated. Leave paths empty to use bundled defaults, or provide custom config files.
         </Text>
-        {pluginOptions.mc.generate && (
+        {pluginOptions.discordsrv.generate && (
           <Stack gap="xs" mt="sm">
-            <Text size="sm" fw={600}>
-              MyCommand Discord invite <Text component="span" c="red">*</Text>
-            </Text>
-            <TextInput
-              value={myCommandDiscordInvite}
-              onChange={(e) => setMyCommandDiscordInvite(e.currentTarget.value)}
-              onBlur={() =>
-                window.electronAPI.setMyCommandDiscordInvite(server.id, myCommandDiscordInvite)
-              }
-              placeholder="https://discord.gg/..."
-            />
-            <Text size="xs" c="dimmed">
-              Required for MyCommand. The /discord command is only added to the generated config when an invite is provided.
-            </Text>
+            <UnstyledButton
+              onClick={() => setShowDiscordSrvSettings((o) => !o)}
+              c="blue.6"
+              td="underline"
+              size="sm"
+              style={{ alignSelf: 'flex-start' }}
+            >
+              {showDiscordSrvSettings ? '▼' : '▶'} DiscordSRV Settings{' '}
+              <Text component="span" c="red" fz="sm">
+                *
+              </Text>
+            </UnstyledButton>
+            {!showDiscordSrvSettings && (
+              <Text size="xs" c="dimmed">
+                Expand to set bot token, channel IDs, and invite URL before building.
+              </Text>
+            )}
+            <Collapse in={showDiscordSrvSettings}>
+              <Stack gap="sm" mt="xs">
+                <Text size="xs" c="dimmed">
+                  Values are written into generated config.yml. Console channel ID may be left empty to
+                  disable the console channel.
+                </Text>
+                <TextInput
+                  label="Bot token"
+                  type="password"
+                  value={discordSrv.botToken ?? ''}
+                  onChange={(e) => {
+                    const botToken = e.currentTarget.value
+                    setDiscordSrv((prev) => {
+                      const merged = { ...prev, botToken }
+                      return merged
+                    })
+                  }}
+                  onBlur={(e) =>
+                    void persistDiscordSrv({ ...discordSrv, botToken: e.currentTarget.value })
+                  }
+                />
+                <TextInput
+                  label="Global channel ID"
+                  value={discordSrv.globalChannelId ?? ''}
+                  onChange={(e) => {
+                    const globalChannelId = e.currentTarget.value
+                    setDiscordSrv((prev) => ({ ...prev, globalChannelId }))
+                  }}
+                  onBlur={(e) =>
+                    void persistDiscordSrv({ ...discordSrv, globalChannelId: e.currentTarget.value })
+                  }
+                />
+                <TextInput
+                  label="Status channel ID"
+                  value={discordSrv.statusChannelId ?? ''}
+                  onChange={(e) => {
+                    const statusChannelId = e.currentTarget.value
+                    setDiscordSrv((prev) => ({ ...prev, statusChannelId }))
+                  }}
+                  onBlur={(e) =>
+                    void persistDiscordSrv({ ...discordSrv, statusChannelId: e.currentTarget.value })
+                  }
+                />
+                <TextInput
+                  label="Console channel ID (optional)"
+                  value={discordSrv.consoleChannelId ?? ''}
+                  onChange={(e) => {
+                    const consoleChannelId = e.currentTarget.value
+                    setDiscordSrv((prev) => ({ ...prev, consoleChannelId }))
+                  }}
+                  onBlur={(e) =>
+                    void persistDiscordSrv({ ...discordSrv, consoleChannelId: e.currentTarget.value })
+                  }
+                />
+                <TextInput
+                  label="Discord invite URL"
+                  value={discordSrv.discordInviteUrl ?? ''}
+                  onChange={(e) => {
+                    const discordInviteUrl = e.currentTarget.value
+                    setDiscordSrv((prev) => ({ ...prev, discordInviteUrl }))
+                  }}
+                  onBlur={(e) =>
+                    void persistDiscordSrv({ ...discordSrv, discordInviteUrl: e.currentTarget.value })
+                  }
+                />
+              </Stack>
+            </Collapse>
           </Stack>
         )}
       </Stack>

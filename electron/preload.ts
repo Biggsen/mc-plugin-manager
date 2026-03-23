@@ -7,6 +7,7 @@ import type {
   BuildReport,
   OnboardingConfig,
   RegionRecord,
+  DiscordSrvSettings,
 } from './types'
 
 // Define the IPC API interface
@@ -16,7 +17,7 @@ export interface ElectronAPI {
   createServer: (name: string) => Promise<ServerProfile>
   getServer: (serverId: string) => Promise<ServerProfile>
   deleteServer: (serverId: string) => Promise<{ success: boolean; error?: string }>
-  setMyCommandDiscordInvite: (serverId: string, value: string) => Promise<void>
+  setDiscordSrvSettings: (serverId: string, partial: DiscordSrvSettings) => Promise<void>
   
   // Region import
   importRegions: (
@@ -53,6 +54,8 @@ export interface ElectronAPI {
       generateLM?: boolean
       generateMC?: boolean
       generateCW?: boolean
+      generateDiscordSRV?: boolean
+      discordSrv?: DiscordSrvSettings
       aaPath?: string
       cePath?: string
       tabPath?: string
@@ -60,6 +63,7 @@ export interface ElectronAPI {
       mcPath?: string
       cwPath?: string
       outDir: string
+      propagateToPluginFolders?: boolean
     }
   ) => Promise<BuildResult>
   showConfigFileDialog: (title: string, defaultPath?: string) => Promise<string | null>
@@ -80,8 +84,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   createServer: (name: string) => ipcRenderer.invoke('create-server', name),
   getServer: (serverId: string) => ipcRenderer.invoke('get-server', serverId),
   deleteServer: (serverId: string) => ipcRenderer.invoke('delete-server', serverId),
-  setMyCommandDiscordInvite: (serverId: string, value: string) =>
-    ipcRenderer.invoke('set-mycommand-discord-invite', serverId, value),
+  setDiscordSrvSettings: (serverId: string, partial: DiscordSrvSettings) =>
+    ipcRenderer.invoke('set-discordsrv-settings', serverId, partial),
   importRegions: (serverId: string, world: 'overworld' | 'nether', filePath: string) =>
     ipcRenderer.invoke('import-regions', serverId, world, filePath),
   importRegionsMeta: (serverId: string, world: 'overworld' | 'nether' | 'end', filePath: string) =>
@@ -101,6 +105,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
       generateLM?: boolean
       generateMC?: boolean
       generateCW?: boolean
+      generateDiscordSRV?: boolean
+      discordSrv?: DiscordSrvSettings
       aaPath?: string
       cePath?: string
       tabPath?: string
@@ -109,7 +115,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
       cwPath?: string
       outDir: string
       propagateToPluginFolders?: boolean
-      myCommandDiscordInvite?: string
     }
   ) => ipcRenderer.invoke('build-configs', serverId, inputs),
   showConfigFileDialog: (title: string, defaultPath?: string) =>

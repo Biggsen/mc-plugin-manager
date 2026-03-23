@@ -1,6 +1,7 @@
 const { app, BrowserWindow } = require('electron')
 const { join } = require('path')
-require('./ipc')
+// Load modular handlers from ipc/index (not ./ipc — a stale dist-electron/ipc.js would shadow ipc/index.js)
+require('./ipc/index')
 const storage = require('./storage')
 
 let mainWindow: any = null
@@ -48,7 +49,7 @@ app.whenReady().then(async () => {
   // Initialize data directory
   await storage.initDataDirectory()
   
-  // Setup IPC handlers (handlers are registered via ipcMain.handle in ipc.ts)
+  // IPC: ipc/index registers all ipcMain.handle listeners
   
   createWindow()
 

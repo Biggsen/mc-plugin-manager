@@ -2,10 +2,12 @@
 export type {
   ServerId,
   PluginType,
+  GeneratorVersionKey,
   RegionKind,
   DiscoverMethod,
   RewardRecipeId,
   ServerProfile,
+  DiscordSrvSettings,
   ImportedSource,
   RegionRecord,
   OnboardingConfig,

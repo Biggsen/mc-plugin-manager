@@ -1,7 +1,4 @@
 name: {SERVER_NAME}
-discord:
-  text:
-    - "Join us: {DISCORD_INVITE}"
 server_guides:
   text:
     - "&e> Lore; &d/guidelore;/guidelore"

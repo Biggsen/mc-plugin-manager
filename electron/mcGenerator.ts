@@ -11,7 +11,8 @@ const LORE_GUIDES_LINE = '&e> Lore; &d/guidelore;/guidelore'
  *
  * Placeholders:
  * - {SERVER_NAME} -> profile.name
- * - {DISCORD_INVITE} -> only substituted when discordInvite is provided; otherwise the discord command is omitted
+ *
+ * Any `discord` command block is removed (DiscordSRV owns /discord).
  *
  * When hasLore is true and regions are provided, the lore command's tab_completer is replaced with
  * main region IDs (overworld, kind: region), sorted alphabetically.
@@ -21,26 +22,14 @@ export function generateMCConfig(
   templatePath: string,
   serverName: string,
   regions: RegionRecord[] = [],
-  discordInvite: string = '',
   hasLore: boolean = false
 ): string {
   let content = readFileSync(templatePath, 'utf-8')
   content = content.replace(/\{SERVER_NAME\}/g, serverName)
 
   const config = yaml.parse(content)
-  const hasInvite = Boolean(discordInvite && discordInvite.trim())
-
   if (config?.discord) {
-    if (hasInvite) {
-      const invite = discordInvite.trim()
-      if (Array.isArray(config.discord.text)) {
-        config.discord.text = config.discord.text.map((line: string) =>
-          String(line).replace(/\{DISCORD_INVITE\}/g, invite)
-        )
-      }
-    } else {
-      delete config.discord
-    }
+    delete config.discord
   }
 
   if (!hasLore) {

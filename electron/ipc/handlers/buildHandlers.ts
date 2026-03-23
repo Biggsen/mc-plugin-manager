@@ -12,8 +12,14 @@ const {
 const { computeRegionCounts, computeRegionStats } = require('../../utils/regionStats')
 const { sanitizeServerName } = require('../../utils/stringFormatters')
 const { runPluginBuild } = require('../../build/buildPluginConfig')
+const {
+  readDiscordSrvTemplatePaths,
+  generateDiscordSrvConfigContent,
+  readDiscordSrvMessagesContent,
+} = require('../../discordSrvGenerator')
+const { prependGeneratorVersionHeader } = require('../../utils/generatorVersionHeader')
 
-import type { BuildResult, BuildReport } from '../../types'
+import type { BuildResult, BuildReport, DiscordSrvSettings } from '../../types'
 
 function getGuideBooksSourceDir(): string {
   const electron = require('electron')
@@ -42,6 +48,8 @@ export function registerBuildHandlers(): void {
         generateLM?: boolean
         generateMC?: boolean
         generateCW?: boolean
+        generateDiscordSRV?: boolean
+        discordSrv?: DiscordSrvSettings
         aaPath?: string
         cePath?: string
         tabPath?: string
@@ -50,7 +58,6 @@ export function registerBuildHandlers(): void {
         cwPath?: string
         outDir: string
         propagateToPluginFolders?: boolean
-        myCommandDiscordInvite?: string
       }
     ): Promise<BuildResult> => {
       try {
@@ -65,11 +72,13 @@ export function registerBuildHandlers(): void {
           !inputs.generateTAB &&
           !inputs.generateLM &&
           !inputs.generateMC &&
-          !inputs.generateCW
+          !inputs.generateCW &&
+          !inputs.generateDiscordSRV
         ) {
           return {
             success: false,
-            error: 'At least one plugin (AA, BookGUI, CE, TAB, LM, MC, or CommandWhitelist) must be selected',
+            error:
+              'At least one plugin (AA, BookGUI, CE, TAB, LM, MC, CommandWhitelist, or DiscordSRV) must be selected',
           }
         }
         if (!inputs.outDir || inputs.outDir.trim().length === 0) {
@@ -96,6 +105,7 @@ export function registerBuildHandlers(): void {
         let lmGenerated = false
         let mcGenerated = false
         let cwGenerated = false
+        let discordsrvGenerated = false
         const configSources: BuildResult['configSources'] = {}
 
         const regionCountsForTAB = computeRegionCounts(profile.regions)
@@ -130,6 +140,92 @@ export function registerBuildHandlers(): void {
           ceGenerated = true
           configSources.ce = result.configSource
         }
+        if (inputs.generateDiscordSRV) {
+          const merged: Required<DiscordSrvSettings> = {
+            botToken: (inputs.discordSrv?.botToken ?? profile.discordSrv?.botToken ?? '').trim(),
+            globalChannelId: (
+              inputs.discordSrv?.globalChannelId ?? profile.discordSrv?.globalChannelId ?? ''
+            ).trim(),
+            statusChannelId: (
+              inputs.discordSrv?.statusChannelId ?? profile.discordSrv?.statusChannelId ?? ''
+            ).trim(),
+            consoleChannelId: (
+              inputs.discordSrv?.consoleChannelId ?? profile.discordSrv?.consoleChannelId ?? ''
+            ).trim(),
+            discordInviteUrl: (
+              inputs.discordSrv?.discordInviteUrl ?? profile.discordSrv?.discordInviteUrl ?? ''
+            ).trim(),
+          }
+          const missing: string[] = []
+          if (!merged.botToken) missing.push('bot token')
+          if (!merged.globalChannelId) missing.push('global channel ID')
+          if (!merged.statusChannelId) missing.push('status channel ID')
+          if (!merged.discordInviteUrl) missing.push('Discord invite URL')
+          if (missing.length > 0) {
+            return {
+              success: false,
+              error: `DiscordSRV requires: ${missing.join(', ')}`,
+              buildId,
+            }
+          }
+          try {
+            const { configPath: srvConfigTpl, messagesPath: srvMessagesTpl } =
+              readDiscordSrvTemplatePaths()
+            const nextGeneratorVersion = (profile.generatorVersions?.discordsrv ?? 0) + 1
+            const headerCtx = {
+              ...buildContextBase,
+              nextGeneratorVersion,
+            }
+            const configBody = generateDiscordSrvConfigContent(srvConfigTpl, merged)
+            const configContent = prependGeneratorVersionHeader(configBody, {
+              plugin: 'discordsrv',
+              profileId: headerCtx.profileId ?? serverId,
+              buildId: headerCtx.buildId,
+              nextVersion: headerCtx.nextGeneratorVersion,
+              generatedAt: headerCtx.generatedAt ?? timestamp,
+            })
+            const messagesBody = readDiscordSrvMessagesContent(srvMessagesTpl)
+            const messagesContent = prependGeneratorVersionHeader(messagesBody, {
+              plugin: 'discordsrv',
+              profileId: headerCtx.profileId ?? serverId,
+              buildId: headerCtx.buildId,
+              nextVersion: headerCtx.nextGeneratorVersion,
+              generatedAt: headerCtx.generatedAt ?? timestamp,
+            })
+            const configFlat = `${serverNameSanitized}-discordsrv-config.yml`
+            const messagesFlat = `${serverNameSanitized}-discordsrv-messages.yml`
+            const buildDir = ensureBuildDirectory(serverId, buildId)
+            if (propagate) {
+              const pluginRoot = path.join(inputs.outDir, 'DiscordSRV')
+              fs.mkdirSync(pluginRoot, { recursive: true })
+              fs.writeFileSync(path.join(pluginRoot, 'config.yml'), configContent, 'utf-8')
+              fs.writeFileSync(path.join(pluginRoot, 'messages.yml'), messagesContent, 'utf-8')
+            } else {
+              fs.writeFileSync(path.join(inputs.outDir, configFlat), configContent, 'utf-8')
+              fs.writeFileSync(path.join(inputs.outDir, messagesFlat), messagesContent, 'utf-8')
+            }
+            fs.writeFileSync(path.join(buildDir, configFlat), configContent, 'utf-8')
+            fs.writeFileSync(path.join(buildDir, messagesFlat), messagesContent, 'utf-8')
+            profile.generatorVersions = {
+              ...(profile.generatorVersions ?? {}),
+              discordsrv: nextGeneratorVersion,
+            }
+            profile.discordSrv = { ...merged }
+            discordsrvGenerated = true
+            configSources.discordsrv = {
+              path: 'Bundled DiscordSRV templates',
+              isDefault: true,
+            }
+          } catch (error: unknown) {
+            const err = error as Error
+            return {
+              success: false,
+              error: err.message || 'DiscordSRV generation failed',
+              buildId,
+            }
+          }
+        }
+
         if (inputs.generateTAB) {
           const nextGeneratorVersion = (profile.generatorVersions?.tab ?? 0) + 1
           const result = runPluginBuild('tab', profile, inputs, {
@@ -220,6 +316,7 @@ export function registerBuildHandlers(): void {
             lm: lmGenerated,
             mc: mcGenerated,
             cw: cwGenerated,
+            discordsrv: discordsrvGenerated,
           },
           configSources,
           warnings,
@@ -235,9 +332,8 @@ export function registerBuildHandlers(): void {
         if (typeof inputs.propagateToPluginFolders === 'boolean') {
           profile.build.propagateToPluginFolders = inputs.propagateToPluginFolders
         }
-        if (inputs.myCommandDiscordInvite !== undefined) {
-          profile.myCommand = profile.myCommand ?? {}
-          profile.myCommand.discordInvite = inputs.myCommandDiscordInvite
+        if (inputs.discordSrv !== undefined) {
+          profile.discordSrv = { ...(profile.discordSrv ?? {}), ...inputs.discordSrv }
         }
         saveServerProfile(profile)
 

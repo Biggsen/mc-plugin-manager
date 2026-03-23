@@ -35,6 +35,23 @@ export function ServerDetailScreen({ server: initialServer, onBack }: ServerDeta
     loadServer()
   }, [initialServer.id])
 
+  // Reload profile when opening Build so fields (e.g. DiscordSRV) match disk after tab unmount.
+  useEffect(() => {
+    if (activeSection !== 'build') return
+    let cancelled = false
+    ;(async () => {
+      try {
+        const updated = await window.electronAPI.getServer(server.id)
+        if (!cancelled && updated) setServer(updated)
+      } catch (error) {
+        console.error('Failed to load server:', error)
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [activeSection, server.id])
+
   async function loadServer() {
     try {
       const updated = await window.electronAPI.getServer(server.id)
@@ -176,7 +193,9 @@ export function ServerDetailScreen({ server: initialServer, onBack }: ServerDeta
         {activeSection === 'onboarding' && (
           <OnboardingScreen server={server} onServerUpdate={handleServerUpdate} />
         )}
-        {activeSection === 'build' && <BuildScreen server={server} />}
+        {activeSection === 'build' && (
+          <BuildScreen server={server} onServerUpdate={handleServerUpdate} />
+        )}
         {activeSection === 'loreBooks' && (
           <LoreBooksScreen server={server} onServerUpdate={handleServerUpdate} />
         )}

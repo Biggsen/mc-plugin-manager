@@ -3,7 +3,7 @@ const { readFileSync } = require('fs')
 /**
  * Generate CommandWhitelist config.yml from the template.
  *
- * - `discord` is listed only when a Discord invite is set (same source as MyCommand).
+ * - `discord` is listed only when DiscordSRV's invite URL is set (profile or build inputs).
  * - `guidelore` and `lore` are listed only when the profile has lore content (same rule
  *   as MyCommand `generateMCConfig` / `hasLore`).
  */

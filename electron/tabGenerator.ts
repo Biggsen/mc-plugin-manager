@@ -97,7 +97,7 @@ function generateHeader(serverName: string): string[] {
 
 /**
  * Generate footer section with top explorers.
- * Discord hint line matches MyCommand / CommandWhitelist: only when an invite URL is set.
+ * Discord hint line matches CommandWhitelist: only when DiscordSRV invite URL is set.
  */
 function generateFooter(discordInvite: string = ''): string[] {
   const hasInvite = Boolean(discordInvite && String(discordInvite).trim())

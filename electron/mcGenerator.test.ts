@@ -16,24 +16,18 @@ function region(id: string, kind: 'region' | 'village' | 'heart', world: 'overwo
 
 describe('generateMCConfig', () => {
   it('replaces SERVER_NAME in output', () => {
-    const out = generateMCConfig(FIXTURE_PATH, 'My Server', [], '', false)
+    const out = generateMCConfig(FIXTURE_PATH, 'My Server', [], false)
     expect(out).toContain('My Server')
     expect(out).not.toContain('{SERVER_NAME}')
   })
 
-  it('removes discord section when discordInvite is empty', () => {
-    const out = generateMCConfig(FIXTURE_PATH, 'Srv', [], '', false)
+  it('omits discord command block', () => {
+    const out = generateMCConfig(FIXTURE_PATH, 'Srv', [], false)
     expect(out).not.toMatch(/discord:/)
   })
 
-  it('substitutes DISCORD_INVITE when discordInvite provided', () => {
-    const out = generateMCConfig(FIXTURE_PATH, 'Srv', [], 'https://discord.gg/abc', false)
-    expect(out).toContain('https://discord.gg/abc')
-    expect(out).not.toContain('{DISCORD_INVITE}')
-  })
-
   it('when hasLore is false, omits lore and server_guide_lore and Lore line in server_guides', () => {
-    const out = generateMCConfig(FIXTURE_PATH, 'Srv', [], '', false)
+    const out = generateMCConfig(FIXTURE_PATH, 'Srv', [], false)
     expect(out).not.toMatch(/lore:/)
     expect(out).not.toMatch(/server_guide_lore:/)
     expect(out).not.toContain('&e> Lore; &d/guidelore;/guidelore')
@@ -47,7 +41,7 @@ describe('generateMCConfig', () => {
       region('nether_place', 'region', 'nether'),
       region('oak_village', 'village'),
     ]
-    const out = generateMCConfig(FIXTURE_PATH, 'Srv', regions, '', true)
+    const out = generateMCConfig(FIXTURE_PATH, 'Srv', regions, true)
     expect(out).toMatch(/lore:/)
     expect(out).toContain('a_region')
     expect(out).toContain('z_region')
@@ -57,7 +51,7 @@ describe('generateMCConfig', () => {
 
   it('tab_completer is sorted alphabetically', () => {
     const regions: RegionRecord[] = [region('cherrybrook', 'region'), region('desert_ruins', 'region')]
-    const out = generateMCConfig(FIXTURE_PATH, 'Srv', regions, '', true)
+    const out = generateMCConfig(FIXTURE_PATH, 'Srv', regions, true)
     const cherryIdx = out.indexOf('cherrybrook')
     const desertIdx = out.indexOf('desert_ruins')
     expect(cherryIdx).toBeLessThan(desertIdx)

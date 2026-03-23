@@ -6,11 +6,20 @@ const sourceDir = path.join(__dirname, '..', 'reference', 'plugin config files',
 // Target directory
 const targetDir = path.join(__dirname, '..', 'dist-electron', 'assets', 'templates')
 
+// Old monolithic ipc.js in dist-electron shadows ipc/index.js when main uses require('./ipc').
+const staleIpcJs = path.join(__dirname, '..', 'dist-electron', 'ipc.js')
+if (fs.existsSync(staleIpcJs)) {
+  fs.unlinkSync(staleIpcJs)
+  console.log('Removed stale dist-electron/ipc.js (handlers live in dist-electron/ipc/)')
+}
+
 // Template files to copy
 const templates = [
   'advancedachievements-config.yml',
   'commandwhitelist-config.yml',
   'conditionalevents-config.yml',
+  'discordsrv-config.yml',
+  'discordsrv-messages.yml',
   'levelledmobs-rules.yml',
   'mycommand-commands.yml',
   'tab-config.yml'
