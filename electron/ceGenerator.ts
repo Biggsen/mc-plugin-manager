@@ -1,6 +1,7 @@
 const yaml = require('yaml')
 
 import { generateCommandId } from './aaGenerator'
+import type { StructureFamiliesMap } from './aaGenerator'
 import type { RegionRecord, OnboardingConfig } from './types'
 import { YAML_STRINGIFY_OPTIONS } from './utils/yamlOptions'
 
@@ -151,6 +152,21 @@ function generateDiscoverOnceEvent(
   }
 }
 
+function generateStructureDiscoverOnceEvent(region: RegionRecord, customCounter: string): CEEvent {
+  const cmd = getAACommandId(region)
+  return {
+    type: 'wgevents_region_enter',
+    one_time: true,
+    conditions: [`%region% == ${region.id}`],
+    actions: {
+      default: [
+        `console_command: aach give ${cmd} %player%`,
+        `console_command: aach add 1 Custom.${customCounter} %player%`,
+      ],
+    },
+  }
+}
+
 function generateJoinLogEvent(): CEEvent {
   return {
     type: 'player_join',
@@ -260,7 +276,8 @@ export function getStartRegionAachId(
 export function generateOwnedCEEvents(
   regions: RegionRecord[],
   onboarding: OnboardingConfig,
-  regionBands?: Record<string, string>
+  regionBands?: Record<string, string>,
+  structureFamilies?: StructureFamiliesMap
 ): CEEventsSection {
   const owned: CEEventsSection = {}
 
@@ -277,12 +294,35 @@ export function generateOwnedCEEvents(
       r.id !== startId &&
       r.kind !== 'structure'
   )
-  const keys = discoverOnceRegions
-    .map((r) => ({ key: `${r.id}_discover_once`, region: r }))
-    .sort((a, b) => a.key.localeCompare(b.key))
 
-  for (const { key, region } of keys) {
-    owned[key] = generateDiscoverOnceEvent(region, regionBands)
+  const structureDiscoverRegions = regions.filter(
+    (r) =>
+      r.kind === 'structure' &&
+      r.discover.method === 'on_enter' &&
+      r.id !== startId &&
+      Boolean(r.structureType && structureFamilies?.[r.structureType]?.counter)
+  )
+
+  type DiscoverEntry =
+    | { key: string; region: RegionRecord; variant: 'main' }
+    | { key: string; region: RegionRecord; variant: 'structure'; counter: string }
+
+  const discoverEntries: DiscoverEntry[] = [
+    ...discoverOnceRegions.map((r) => ({ key: `${r.id}_discover_once`, region: r, variant: 'main' as const })),
+    ...structureDiscoverRegions.map((r) => ({
+      key: `${r.id}_discover_once`,
+      region: r,
+      variant: 'structure' as const,
+      counter: structureFamilies![r.structureType!].counter,
+    })),
+  ].sort((a, b) => a.key.localeCompare(b.key))
+
+  for (const entry of discoverEntries) {
+    if (entry.variant === 'structure') {
+      owned[entry.key] = generateStructureDiscoverOnceEvent(entry.region, entry.counter)
+    } else {
+      owned[entry.key] = generateDiscoverOnceEvent(entry.region, regionBands)
+    }
   }
 
   return owned

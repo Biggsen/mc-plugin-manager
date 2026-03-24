@@ -74,3 +74,33 @@ describe('computeRegionCounts', () => {
     expect(counts.overworldRegions).toBe(0)
   })
 })
+
+describe('structures TAB section', () => {
+  const families = {
+    ancient_city: { label: 'Ancient Cities', counter: 'ancient_cities_found' },
+  }
+
+  it('adds Structures lines and structure-name when overworld has POIs', () => {
+    const regions = [
+      {
+        world: 'overworld' as const,
+        id: 'inner_core',
+        kind: 'structure' as const,
+        structureType: 'ancient_city',
+        discover: { method: 'on_enter' as const, recipeId: 'none' as const },
+      },
+    ]
+    const owned = generateOwnedTABSections(regions, 'Srv', undefined, '', families)
+    const lines = owned.scoreboards['scoreboard-overworld'].lines as string[]
+    expect(lines.some((l) => l === '&bStructures')).toBe(true)
+    expect(lines.some((l) => l.includes('structure-name'))).toBe(true)
+    expect(lines.some((l) => l.includes('Ancient Cities') && l.includes('ancient_cities_found'))).toBe(
+      true
+    )
+    const sn = owned.structureConditions?.['structure-name'] as Record<string, unknown>
+    expect(sn?.type).toBe('OR')
+    expect(sn?.conditions).toEqual(['%worldguard_region_name_1%=inner_core'])
+    const vn = owned.structureConditions?.['village-name'] as Record<string, unknown>
+    expect((vn?.conditions as string[]).includes('%condition:structure-name%=-')).toBe(true)
+  })
+})

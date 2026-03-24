@@ -4,7 +4,12 @@ import {
   VILLAGES_TEMPLATE,
   REGIONS_TEMPLATE,
   HEARTS_TEMPLATE,
+  structureTypeToSingularTitle,
+  generateAACommands,
+  generateAACustom,
 } from './aaGenerator'
+
+import type { RegionRecord } from './types'
 
 describe('calculateTiers', () => {
   it('67 villages', () => {
@@ -37,5 +42,67 @@ describe('calculateTiers', () => {
 
   it('half equals all (total 2)', () => {
     expect(calculateTiers(HEARTS_TEMPLATE, 2)).toEqual([1, 2])
+  })
+})
+
+describe('structureTypeToSingularTitle', () => {
+  it('title-cases segments', () => {
+    expect(structureTypeToSingularTitle('ancient_city')).toBe('Ancient City')
+    expect(structureTypeToSingularTitle('buried_treasure')).toBe('Buried Treasure')
+    expect(structureTypeToSingularTitle('pillager_outpost')).toBe('Pillager Outpost')
+  })
+})
+
+describe('structure AA generation', () => {
+  it('generateAACommands includes structure POIs with singular-type DisplayName', () => {
+    const regions: RegionRecord[] = [
+      {
+        world: 'overworld',
+        id: 'inner_core',
+        kind: 'structure',
+        structureType: 'ancient_city',
+        discover: { method: 'on_enter', recipeId: 'none' },
+      },
+    ]
+    const cmds = generateAACommands(regions)
+    expect(cmds.discoverInnerCore).toEqual({
+      Goal: 'Discover Inner Core',
+      Message: 'You found Inner Core',
+      Name: 'discover_inner_core',
+      DisplayName: 'Ancient City Found',
+      Type: 'normal',
+    })
+  })
+
+  it('generateAACustom emits single tier N(T) per structure family', () => {
+    const regions: RegionRecord[] = [
+      {
+        world: 'overworld',
+        id: 'a',
+        kind: 'structure',
+        structureType: 'ancient_city',
+        discover: { method: 'on_enter', recipeId: 'none' },
+      },
+      {
+        world: 'overworld',
+        id: 'b',
+        kind: 'structure',
+        structureType: 'ancient_city',
+        discover: { method: 'on_enter', recipeId: 'none' },
+      },
+    ]
+    const families = {
+      ancient_city: { label: 'Ancient Cities', counter: 'ancient_cities_found' },
+    }
+    const custom = generateAACustom(regions, { Custom: {} }, families)
+    expect(custom.ancient_cities_found).toEqual({
+      2: {
+        Message: 'All Ancient Cities Found!',
+        Name: 'ancient_cities_found_2',
+        DisplayName: 'Ancient Cities Wanderer',
+        Type: 'normal',
+        Reward: { Experience: 1000 },
+      },
+    })
   })
 })

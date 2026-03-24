@@ -45,6 +45,8 @@ export interface ServerProfile {
       villageBandStrategy?: string
       regionBands?: Record<string, string>
     }
+    /** Merged from regions-meta root `structureFamilies`. Keys = structureType. */
+    structureFamilies?: Record<string, { label: string; counter: string }>
   }
   build: {
     lastBuildId?: string

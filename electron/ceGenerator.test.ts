@@ -116,7 +116,7 @@ describe('generateOwnedCEEvents', () => {
     expect(actions.some((a) => a.includes('aach give'))).toBe(true)
   })
 
-  it('does not emit discover_once for kind structure', () => {
+  it('does not emit structure discover_once without structureFamilies', () => {
     const regions: RegionRecord[] = [
       region('cherrybrook', 'region', 'overworld', 'first_join'),
       {
@@ -129,5 +129,33 @@ describe('generateOwnedCEEvents', () => {
     ]
     const events = generateOwnedCEEvents(regions, onboarding)
     expect(events['inner_core_discover_once']).toBeUndefined()
+  })
+
+  it('emits structure discover_once with aach give + family counter only', () => {
+    const families = {
+      ancient_city: { label: 'Ancient Cities', counter: 'ancient_cities_found' },
+    }
+    const regions: RegionRecord[] = [
+      region('cherrybrook', 'region', 'overworld', 'first_join'),
+      {
+        world: 'overworld',
+        id: 'inner_core',
+        kind: 'structure',
+        structureType: 'ancient_city',
+        discover: { method: 'on_enter', recipeId: 'none' },
+      },
+    ]
+    const events = generateOwnedCEEvents(regions, onboarding, undefined, families)
+    const ev = events['inner_core_discover_once']
+    expect(ev).toBeDefined()
+    expect(ev?.type).toBe('wgevents_region_enter')
+    expect(ev?.one_time).toBe(true)
+    expect(ev?.conditions).toEqual(['%region% == inner_core'])
+    const actions = ev!.actions!.default as string[]
+    expect(actions).toEqual([
+      'console_command: aach give discoverInnerCore %player%',
+      'console_command: aach add 1 Custom.ancient_cities_found %player%',
+    ])
+    expect(actions.some((a) => a.includes('total_discovered'))).toBe(false)
   })
 })

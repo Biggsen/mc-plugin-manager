@@ -17,6 +17,85 @@ const DIFFICULTY_COLOURS: Record<Difficulty, string> = {
   deadly: '&4',
 }
 
+export type StructureFamiliesMap = Record<string, { label: string; counter: string }>
+
+function isActiveStructurePoi(r: RegionRecord, structureFamilies?: StructureFamiliesMap): boolean {
+  return (
+    r.kind === 'structure' &&
+    r.discover.method !== 'disabled' &&
+    Boolean(r.structureType && structureFamilies?.[r.structureType]?.counter)
+  )
+}
+
+/** N(T) globally: all worlds, method !== disabled */
+function structureTypeGlobalCount(regions: RegionRecord[], structureType: string): number {
+  return regions.filter(
+    (r) =>
+      r.kind === 'structure' &&
+      r.discover.method !== 'disabled' &&
+      r.structureType === structureType
+  ).length
+}
+
+/**
+ * Overworld structure families with at least one POI in overworld (for TAB rows).
+ * Sorted by structureType ascending.
+ */
+function overworldStructureTabRows(
+  regions: RegionRecord[],
+  structureFamilies?: StructureFamiliesMap
+): Array<{ structureType: string; label: string; counter: string; nGlobal: number }> {
+  if (!structureFamilies) return []
+  const typesInOverworld = new Set<string>()
+  for (const r of regions) {
+    if (r.world !== 'overworld' || !isActiveStructurePoi(r, structureFamilies)) continue
+    typesInOverworld.add(r.structureType!)
+  }
+  const rows: Array<{ structureType: string; label: string; counter: string; nGlobal: number }> = []
+  for (const structureType of [...typesInOverworld].sort((a, b) => a.localeCompare(b))) {
+    const fam = structureFamilies[structureType]
+    if (!fam?.label || !fam.counter) continue
+    rows.push({
+      structureType,
+      label: fam.label,
+      counter: fam.counter,
+      nGlobal: structureTypeGlobalCount(regions, structureType),
+    })
+  }
+  return rows
+}
+
+function overworldStructureRegionIds(
+  regions: RegionRecord[],
+  structureFamilies?: StructureFamiliesMap
+): string[] {
+  return regions
+    .filter((r) => r.world === 'overworld' && isActiveStructurePoi(r, structureFamilies))
+    .map((r) => r.id)
+    .sort((a, b) => a.localeCompare(b))
+}
+
+function generateStructureNameCondition(sortedIds: string[]): Record<string, unknown> {
+  return {
+    conditions: sortedIds.map((id) => `%worldguard_region_name_1%=${id}`),
+    type: 'OR',
+    true: '%capitalize_pascal-case-forced_{worldguard_region_name_1}%',
+    false: '-',
+  }
+}
+
+const VILLAGE_NAME_WITH_STRUCTURE_GUARD: Record<string, unknown> = {
+  conditions: [
+    '%worldguard_region_name_2%!=',
+    '%worldguard_region_name_1%!=%worldguard_region_name_2%',
+    '%worldguard_region_name_1%!=spawn',
+    '%condition:structure-name%=-',
+  ],
+  type: 'AND',
+  true: '%condition:heart-region%',
+  false: '-',
+}
+
 /**
  * Build map of difficulty -> list of main region IDs (overworld + nether only).
  * Only includes regions with kind === 'region' that appear in regionBands.
@@ -121,11 +200,14 @@ function generateFooter(discordInvite: string = ''): string[] {
 function generateOverworldScoreboard(
   serverName: string,
   counts: RegionCounts,
-  useDifficultyColour: boolean
+  useDifficultyColour: boolean,
+  structureLines: string[] = []
 ): any {
   const currentRegionLine = useDifficultyColour
     ? REGION_CURRENT_LINE_WITH_DIFFICULTY
     : '&eCurrent&7:||%condition:region-name%'
+  const structureBlock =
+    structureLines.length > 0 ? ['', '&bStructures', ...structureLines] : []
   return {
     title: `<#E0B11E>${serverName}</#FF0000>`,
     'display-condition': '%player-version-id%>=765;%bedrock%=false;%world%=world',
@@ -141,6 +223,7 @@ function generateOverworldScoreboard(
       '',
       '&bRegion Hearts',
       `&eDiscovered&7:||%aach_custom_hearts_discovered%/${counts.overworldHearts}`,
+      ...structureBlock,
       '%animation:MyAnimation1%',
       '&2🧭 %player_direction%||&7%player_x% %player_y% %player_z%',
     ],
@@ -222,18 +305,39 @@ export function generateOwnedTABSections(
   regions: RegionRecord[],
   serverName: string,
   regionBands?: Record<string, string>,
-  discordInvite: string = ''
+  discordInvite: string = '',
+  structureFamilies?: StructureFamiliesMap
 ): {
   headerFooter: { header: string[]; footer: string[] }
   scoreboards: Record<string, any>
   topExplorersConditions: Record<string, any>
   regionNameDifficultyConditions: Record<string, any>
+  structureConditions?: Record<string, unknown>
 } {
   const counts = computeRegionCounts(regions)
   const byDifficulty = buildDifficultyRegionIds(regions, regionBands)
   const hasAnyDifficultyRegions =
     DIFFICULTIES.some((d) => byDifficulty[d].length > 0)
   const useDifficultyColour = Boolean(regionBands && hasAnyDifficultyRegions)
+
+  const overworldStructureRows = overworldStructureTabRows(regions, structureFamilies)
+  const structurePoiIds = overworldStructureRegionIds(regions, structureFamilies)
+  const structureLines: string[] = []
+  let structureConditions: Record<string, unknown> | undefined
+  if (overworldStructureRows.length > 0 && structurePoiIds.length > 0) {
+    structureLines.push('&eCurrent&7:||%condition:structure-name%')
+    for (const row of overworldStructureRows) {
+      structureLines.push(
+        `&e${row.label}&7:||%aach_custom_${row.counter}%/${row.nGlobal}`
+      )
+    }
+    structureConditions = {
+      'structure-name': generateStructureNameCondition(structurePoiIds),
+      'village-name': VILLAGE_NAME_WITH_STRUCTURE_GUARD,
+    }
+  }
+
+  const hasOverworldStructures = overworldStructureRows.length > 0
 
   // Generate header/footer
   const headerFooter = {
@@ -243,11 +347,17 @@ export function generateOwnedTABSections(
 
   // Generate scoreboards (conditional by world)
   const scoreboards: Record<string, any> = {}
-  if (counts.overworldRegions > 0 || counts.overworldHearts > 0 || counts.villages > 0) {
+  if (
+    counts.overworldRegions > 0 ||
+    counts.overworldHearts > 0 ||
+    counts.villages > 0 ||
+    hasOverworldStructures
+  ) {
     scoreboards['scoreboard-overworld'] = generateOverworldScoreboard(
       serverName,
       counts,
-      useDifficultyColour
+      useDifficultyColour,
+      structureLines
     )
   }
   if (counts.netherRegions > 0 || counts.netherHearts > 0) {
@@ -271,6 +381,7 @@ export function generateOwnedTABSections(
     scoreboards,
     topExplorersConditions,
     regionNameDifficultyConditions,
+    ...(structureConditions ? { structureConditions } : {}),
   }
 }
 
@@ -310,6 +421,7 @@ export function mergeTABConfig(
     scoreboards: Record<string, any>
     topExplorersConditions: Record<string, any>
     regionNameDifficultyConditions: Record<string, any>
+    structureConditions?: Record<string, unknown>
   }
 ): string {
   const fs = require('fs')
@@ -381,6 +493,11 @@ export function mergeTABConfig(
     }
   }
 
+  if (ownedSections.structureConditions) {
+    delete preservedConditions['structure-name']
+    delete preservedConditions['village-name']
+  }
+
   // Ensure static conditions are present (add from reference if missing)
   const staticConditions = {
     'region-name': {
@@ -423,6 +540,13 @@ export function mergeTABConfig(
   for (const key of difficultyConditionKeys) {
     mergedConditions[key] = ownedSections.regionNameDifficultyConditions[key]
   }
+
+  if (ownedSections.structureConditions) {
+    for (const key of Object.keys(ownedSections.structureConditions).sort()) {
+      mergedConditions[key] = ownedSections.structureConditions[key]
+    }
+  }
+
   config.conditions = mergedConditions
 
   // Stringify with proper formatting (2-space indentation)

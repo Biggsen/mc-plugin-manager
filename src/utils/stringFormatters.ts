@@ -24,3 +24,14 @@ export function formatRegionTitle(id: string): string {
 export function formatRegionLabel(region: { id: string; discover?: { displayNameOverride?: string } }): string {
   return region.discover?.displayNameOverride ?? formatRegionTitle(region.id)
 }
+
+/**
+ * Label for `structureType` keys (e.g. ancient_city → Ancient City).
+ */
+export function formatStructureTypeLabel(structureType: string): string {
+  if (structureType === 'unknown') return 'Unknown type'
+  return structureType
+    .split('_')
+    .map((seg) => seg.charAt(0).toUpperCase() + seg.slice(1).toLowerCase())
+    .join(' ')
+}

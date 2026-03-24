@@ -61,6 +61,36 @@ type RegionsMetaExport = {
     villageBandStrategy?: string
     regionBands?: Record<string, string>
   }
+  structureFamilies?: Record<string, { label: string; counter: string }>
+}
+
+/**
+ * Parse root `structureFamilies`; unknown keys on each entry are ignored.
+ */
+function parseStructureFamilies(
+  raw: unknown
+): Record<string, { label: string; counter: string }> | undefined {
+  if (raw === undefined || raw === null) return undefined
+  if (typeof raw !== 'object' || Array.isArray(raw)) {
+    console.warn('structureFamilies: expected object, ignoring')
+    return undefined
+  }
+  const out: Record<string, { label: string; counter: string }> = {}
+  for (const [typeKey, entry] of Object.entries(raw as Record<string, unknown>)) {
+    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
+      console.warn(`structureFamilies[${typeKey}]: expected object, skipping`)
+      continue
+    }
+    const e = entry as Record<string, unknown>
+    const label = e.label
+    const counter = e.counter
+    if (typeof label !== 'string' || typeof counter !== 'string' || !label.trim() || !counter.trim()) {
+      console.warn(`structureFamilies[${typeKey}]: missing label or counter, skipping`)
+      continue
+    }
+    out[typeKey] = { label: label.trim(), counter: counter.trim() }
+  }
+  return Object.keys(out).length > 0 ? out : undefined
 }
 
 /**
@@ -322,6 +352,7 @@ export function importRegionsMeta(
   onboarding?: OnboardingConfig
   spawnCenter?: { world: string; x: number; y?: number; z: number }
   levelledMobs?: { villageBandStrategy?: string; regionBands?: Record<string, string> }
+  structureFamilies?: Record<string, { label: string; counter: string }>
 } {
   // Read and parse YAML
   let parsed: RegionsMetaExport
@@ -356,6 +387,8 @@ export function importRegionsMeta(
     throw new Error('Missing or invalid "regions" field: must be an array')
   }
 
+  const structureFamilies = parseStructureFamilies(parsed.structureFamilies)
+
   // Process regions
   const regions: RegionRecord[] = []
   for (const region of parsed.regions) {
@@ -368,6 +401,25 @@ export function importRegionsMeta(
     if (!region.discover.method) {
       console.warn(`Skipping region with missing discover.method: ${region.id}`)
       continue
+    }
+
+    if (region.kind === 'structure') {
+      const st = region.structureType
+      if (!st || typeof st !== 'string' || !st.trim()) {
+        console.warn(`Skipping structure region with missing structureType: ${region.id}`)
+        continue
+      }
+      if (!structureFamilies || !(st in structureFamilies)) {
+        console.warn(
+          `Skipping structure region ${region.id}: structureType "${st}" not in structureFamilies`
+        )
+        continue
+      }
+      if (region.discover.method !== 'on_enter') {
+        console.warn(
+          `Structure region ${region.id}: discover.method is ${region.discover.method} (generators only emit CE for on_enter)`
+        )
+      }
     }
 
     // Validate region.world matches root world (warn if not)
@@ -426,6 +478,7 @@ export function importRegionsMeta(
     onboarding?: OnboardingConfig
     spawnCenter?: { world: string; x: number; y?: number; z: number }
     levelledMobs?: { villageBandStrategy?: string; regionBands?: Record<string, string> }
+    structureFamilies?: Record<string, { label: string; counter: string }>
   } = {
     regions,
     world: mappedWorld,
@@ -452,6 +505,10 @@ export function importRegionsMeta(
 
   if (parsed.levelledMobs) {
     result.levelledMobs = parsed.levelledMobs
+  }
+
+  if (structureFamilies) {
+    result.structureFamilies = structureFamilies
   }
 
   return result

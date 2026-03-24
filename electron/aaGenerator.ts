@@ -180,15 +180,22 @@ function generateDisplayName(regionId: string): string {
 }
 
 /**
+ * DisplayName for structure POI commands: title case each segment of structureType (singular phrase base).
+ */
+export function structureTypeToSingularTitle(structureType: string): string {
+  return structureType
+    .split('_')
+    .map((seg) => seg.charAt(0).toUpperCase() + seg.slice(1).toLowerCase())
+    .join(' ')
+}
+
+/**
  * Generate AA Commands section from region records
  */
 export function generateAACommands(regions: RegionRecord[]): AACommandsSection {
   const commands: AACommandsSection = {}
   
-  // Filter to only regions where discover.method != "disabled" (structures use separate find-* AA; not generated here yet)
-  const activeRegions = regions.filter(
-    (r) => r.discover.method !== 'disabled' && r.kind !== 'structure'
-  )
+  const activeRegions = regions.filter((r) => r.discover.method !== 'disabled')
   
   // Sort by command ID for deterministic output
   const sortedRegions = [...activeRegions].sort((a, b) => {
@@ -207,7 +214,13 @@ export function generateAACommands(regions: RegionRecord[]): AACommandsSection {
     let message: string
     let displayName: string
     
-    if (region.kind === 'heart') {
+    if (region.kind === 'structure') {
+      const idTitle = snakeToTitleCase(region.id)
+      goal = `Discover ${idTitle}`
+      message = `You found ${idTitle}`
+      const st = region.structureType ?? ''
+      displayName = `${structureTypeToSingularTitle(st)} Found`
+    } else if (region.kind === 'heart') {
       goal = `Discover the Heart of ${regionName}`
       message = `You discovered the Heart of ${regionName}`
       displayName = region.world === 'nether' ? 'Nether Heart Discovery' : 'Heart Discovery'
@@ -351,13 +364,44 @@ function generateCustomCategory(
   return result
 }
 
+export type StructureFamiliesMap = Record<string, { label: string; counter: string }>
+
+function countStructureTotalsByType(regions: RegionRecord[]): Record<string, number> {
+  const byType: Record<string, number> = {}
+  for (const r of regions) {
+    if (r.kind !== 'structure' || r.discover.method === 'disabled') continue
+    const t = r.structureType
+    if (!t) continue
+    byType[t] = (byType[t] ?? 0) + 1
+  }
+  return byType
+}
+
+function warnStructureFamiliesMismatch(regions: RegionRecord[], structureFamilies?: StructureFamiliesMap): void {
+  const orphans = regions.filter(
+    (r) =>
+      r.kind === 'structure' &&
+      r.discover.method !== 'disabled' &&
+      r.structureType &&
+      (!structureFamilies || !structureFamilies[r.structureType])
+  )
+  if (orphans.length > 0) {
+    console.warn(
+      `[AA] ${orphans.length} structure region(s) have no matching regionsMeta.structureFamilies entry; skipping Custom/commands for those families.`
+    )
+  }
+}
+
 /**
  * Generate the owned Custom section categories based on region counts
  */
 export function generateAACustom(
   regions: RegionRecord[],
-  templateConfig: any
+  templateConfig: any,
+  structureFamilies?: StructureFamiliesMap
 ): { [category: string]: { [tier: number]: any } } {
+  warnStructureFamiliesMismatch(regions, structureFamilies)
+
   const counts = countRegionsByKind(regions)
   const result: { [category: string]: { [tier: number]: any } } = {}
   
@@ -404,6 +448,26 @@ export function generateAACustom(
       )
     }
   }
+
+  if (structureFamilies && Object.keys(structureFamilies).length > 0) {
+    const byType = countStructureTotalsByType(regions)
+    for (const structureType of Object.keys(byType).sort()) {
+      const n = byType[structureType]
+      if (n <= 0) continue
+      const fam = structureFamilies[structureType]
+      if (!fam?.counter || !fam.label) continue
+      const { counter, label } = fam
+      result[counter] = {
+        [n]: {
+          Message: `All ${label} Found!`,
+          Name: `${counter}_${n}`,
+          DisplayName: `${label} Wanderer`,
+          Type: 'normal',
+          Reward: { Experience: 1000 },
+        },
+      }
+    }
+  }
   
   return result
 }
@@ -425,18 +489,13 @@ export function mergeAAConfig(
   // Replace Commands section
   config.Commands = newCommands
   
-  // Merge Custom section if provided
+  // Merge Custom section if provided — replace every category the generator emitted (main + structure counters)
   if (newCustom) {
     if (!config.Custom) {
       config.Custom = {}
     }
-    
-    // Replace only owned categories, preserve others
-    const ownedCategories = ['villages_discovered', 'regions_discovered', 'hearts_discovered']
-    for (const category of ownedCategories) {
-      if (newCustom[category]) {
-        config.Custom[category] = newCustom[category]
-      }
+    for (const category of Object.keys(newCustom).sort()) {
+      config.Custom[category] = newCustom[category]
     }
   }
   
@@ -463,4 +522,5 @@ module.exports = {
   VILLAGES_TEMPLATE,
   REGIONS_TEMPLATE,
   HEARTS_TEMPLATE,
+  structureTypeToSingularTitle,
 }

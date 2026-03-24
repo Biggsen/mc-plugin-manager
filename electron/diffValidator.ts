@@ -10,6 +10,7 @@ const { readFileSync } = require('fs')
  * - Custom.villages_discovered
  * - Custom.regions_discovered
  * - Custom.hearts_discovered
+ * - Custom.<counter> for structure families (keys ending in _found, e.g. ancient_cities_found)
  */
 function removeOwnedAASections(config: Record<string, unknown>): Record<string, unknown> {
   const cleaned = { ...config } as Record<string, unknown>
@@ -18,9 +19,15 @@ function removeOwnedAASections(config: Record<string, unknown>): Record<string, 
   
   if (cleaned.Custom && typeof cleaned.Custom === 'object' && !Array.isArray(cleaned.Custom)) {
     cleaned.Custom = { ...(cleaned.Custom as Record<string, unknown>) }
-    delete (cleaned.Custom as Record<string, unknown>).villages_discovered
-    delete (cleaned.Custom as Record<string, unknown>).regions_discovered
-    delete (cleaned.Custom as Record<string, unknown>).hearts_discovered
+    const custom = cleaned.Custom as Record<string, unknown>
+    delete custom.villages_discovered
+    delete custom.regions_discovered
+    delete custom.hearts_discovered
+    for (const k of Object.keys(custom)) {
+      if (/_found$/.test(k)) {
+        delete custom[k]
+      }
+    }
   }
   
   return cleaned
@@ -92,6 +99,7 @@ function removeOwnedTABSections(config: Record<string, unknown>): Record<string,
       // Owned conditions:
       // - top-explorers-title, top-explorer-1 through top-explorer-5
       // - region-name-easy, region-name-normal, region-name-hard, region-name-severe, region-name-deadly
+      // - structure-name, village-name (mergeTABConfig regenerates from profile; normalize via static block below)
       const isOwned =
         key === 'top-explorers-title' ||
         key === 'top-explorer-1' ||
@@ -103,7 +111,9 @@ function removeOwnedTABSections(config: Record<string, unknown>): Record<string,
         key === 'region-name-normal' ||
         key === 'region-name-hard' ||
         key === 'region-name-severe' ||
-        key === 'region-name-deadly'
+        key === 'region-name-deadly' ||
+        key === 'structure-name' ||
+        key === 'village-name'
       
       if (!isOwned) {
         cleanedConditions[key] = value

@@ -14,6 +14,7 @@ import {
 import { IconArrowLeft, IconFileImport, IconUser, IconHammer, IconMap2, IconBook } from '@tabler/icons-react'
 import type { ServerProfile } from '../types'
 import { computeRegionDisplayStats } from '../utils/regionStats'
+import { formatStructureTypeLabel } from '../utils/stringFormatters'
 import { ImportScreen } from './ImportScreen'
 import { OnboardingScreen } from './OnboardingScreen'
 import { BuildScreen } from './BuildScreen'
@@ -21,6 +22,8 @@ import { RegionsScreen } from './RegionsScreen'
 import { LoreBooksScreen } from './LoreBooksScreen'
 
 type SectionValue = 'import' | 'regions' | 'onboarding' | 'build' | 'loreBooks'
+
+type ImportStatRow = { key: string; label: string; value: number; nested?: boolean }
 
 interface ServerDetailScreenProps {
   server: ServerProfile
@@ -68,32 +71,65 @@ export function ServerDetailScreen({ server: initialServer, onBack }: ServerDeta
   }
 
   const stats = computeRegionDisplayStats(server.regions)
-  const { overworldRegions, overworldVillages, overworldHearts, netherRegions, netherHearts, totalRegions } = stats
+  const {
+    overworldRegions,
+    overworldVillages,
+    overworldHearts,
+    overworldStructures,
+    structureTypesOverworld,
+    netherRegions,
+    netherHearts,
+    netherStructures,
+    structureTypesNether,
+    totalRegions,
+    totalStructures,
+    structureTypesAll,
+  } = stats
   const spawnConfigured = server.spawnCenter != null || (server.onboarding?.teleport != null) ? 1 : 0
 
-  const statSections = [
+  function structureBreakdownRows(
+    prefix: string,
+    breakdown: { structureType: string; count: number }[]
+  ): ImportStatRow[] {
+    return breakdown.map(({ structureType, count }) => ({
+      key: `${prefix}-st-${structureType}`,
+      label: formatStructureTypeLabel(structureType),
+      value: count,
+      nested: true,
+    }))
+  }
+
+  const statSections: { title: string; stats: ImportStatRow[] }[] = [
     {
       title: 'Overworld',
       stats: [
-        { label: 'Regions', value: overworldRegions },
-        { label: 'Villages', value: overworldVillages },
-        { label: 'Hearts', value: overworldHearts },
+        { key: 'ow-reg', label: 'Regions', value: overworldRegions },
+        { key: 'ow-vil', label: 'Villages', value: overworldVillages },
+        { key: 'ow-hrt', label: 'Hearts', value: overworldHearts },
+        { key: 'ow-st-sum', label: 'Structures', value: overworldStructures },
+        ...structureBreakdownRows('ow', structureTypesOverworld),
       ],
     },
     {
       title: 'Nether',
       stats: [
-        { label: 'Regions', value: netherRegions },
-        { label: 'Hearts', value: netherHearts },
+        { key: 'ne-reg', label: 'Regions', value: netherRegions },
+        { key: 'ne-hrt', label: 'Hearts', value: netherHearts },
+        { key: 'ne-st-sum', label: 'Structures', value: netherStructures },
+        ...structureBreakdownRows('ne', structureTypesNether),
       ],
     },
     {
       title: 'Totals',
-      stats: [{ label: 'Region total', value: totalRegions }],
+      stats: [
+        { key: 'tot-reg', label: 'Region total', value: totalRegions },
+        { key: 'tot-st-sum', label: 'Structures', value: totalStructures },
+        ...structureBreakdownRows('tot', structureTypesAll),
+      ],
     },
     {
       title: 'Spawn',
-      stats: [{ label: 'Configured', value: spawnConfigured }],
+      stats: [{ key: 'sp-cfg', label: 'Configured', value: spawnConfigured }],
     },
   ]
 
@@ -170,12 +206,12 @@ export function ServerDetailScreen({ server: initialServer, onBack }: ServerDeta
                     {title}
                   </Text>
                   <Stack gap="xs">
-                    {stats.map(({ label, value }) => (
-                      <Group key={label} justify="space-between" wrap="nowrap">
-                        <Text size="sm" c="dimmed">
-                          {label}
+                    {stats.map(({ key, label, value, nested }) => (
+                      <Group key={key} justify="space-between" wrap="nowrap" pl={nested ? 'sm' : 0}>
+                        <Text size={nested ? 'xs' : 'sm'} c="dimmed">
+                          {nested ? `· ${label}` : label}
                         </Text>
-                        <Text size="md" fw={600}>
+                        <Text size={nested ? 'sm' : 'md'} fw={nested ? 500 : 600}>
                           {value}
                         </Text>
                       </Group>

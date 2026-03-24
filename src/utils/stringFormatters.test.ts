@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { formatRegionTitle, formatRegionLabel } from './stringFormatters'
+import { formatRegionTitle, formatRegionLabel, formatStructureTypeLabel } from './stringFormatters'
 
 describe('formatRegionTitle', () => {
   it('snake_case to Title Case, keeps "of" lowercase', () => {
@@ -27,5 +27,16 @@ describe('formatRegionLabel', () => {
 
   it('handles missing discover', () => {
     expect(formatRegionLabel({ id: 'oak_village' })).toBe('Oak Village')
+  })
+})
+
+describe('formatStructureTypeLabel', () => {
+  it('title-cases snake_case segments', () => {
+    expect(formatStructureTypeLabel('ancient_city')).toBe('Ancient City')
+    expect(formatStructureTypeLabel('trail_ruins')).toBe('Trail Ruins')
+  })
+
+  it('maps unknown bucket', () => {
+    expect(formatStructureTypeLabel('unknown')).toBe('Unknown type')
   })
 })

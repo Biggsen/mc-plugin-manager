@@ -1,6 +1,6 @@
 # Structures (POI) — Import, AA, CE, TAB — Specification
 
-**Status: 📋 PLANNED**
+**Status: ✅ IMPLEMENTED**
 
 ## Purpose
 

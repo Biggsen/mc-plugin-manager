@@ -103,4 +103,48 @@ regions:
       unlinkSync(filePath)
     }
   })
+
+  it('parses structureFamilies and skips invalid structure rows', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'regions-meta-'))
+    const filePath = join(dir, 's.yml')
+    writeFileSync(
+      filePath,
+      `format: 1
+world: overworld
+structureFamilies:
+  ancient_city:
+    label: Ancient Cities
+    counter: ancient_cities_found
+regions:
+  - id: good_poi
+    world: overworld
+    kind: structure
+    structureType: ancient_city
+    discover:
+      method: on_enter
+  - id: bad_missing_type
+    world: overworld
+    kind: structure
+    discover:
+      method: on_enter
+  - id: bad_unknown_family
+    world: overworld
+    kind: structure
+    structureType: igloo
+    discover:
+      method: on_enter
+`,
+      'utf-8'
+    )
+    try {
+      const result = importRegionsMeta(filePath, 'overworld')
+      expect(result.structureFamilies?.ancient_city).toEqual({
+        label: 'Ancient Cities',
+        counter: 'ancient_cities_found',
+      })
+      expect(result.regions.map((r) => r.id)).toEqual(['good_poi'])
+    } finally {
+      unlinkSync(filePath)
+    }
+  })
 })

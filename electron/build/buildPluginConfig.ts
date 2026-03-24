@@ -91,7 +91,11 @@ export function buildPluginContent(
       const newCommands = generateAACommands(profile.regions)
       const templateContent = fs.readFileSync(configPath, 'utf-8')
       const templateConfig = yaml.parse(templateContent)
-      const newCustom = generateAACustom(profile.regions, templateConfig)
+      const newCustom = generateAACustom(
+        profile.regions,
+        templateConfig,
+        profile.regionsMeta?.structureFamilies
+      )
       const content = mergeAAConfig(configPath, newCommands, newCustom)
       return { content, configPath, isDefault }
     }
@@ -99,7 +103,8 @@ export function buildPluginContent(
       const ownedEvents = generateOwnedCEEvents(
         profile.regions,
         profile.onboarding,
-        profile.regionsMeta?.levelledMobs?.regionBands
+        profile.regionsMeta?.levelledMobs?.regionBands,
+        profile.regionsMeta?.structureFamilies
       )
       let content = mergeCEConfig(configPath, ownedEvents)
       content = content.replace(/\{SERVER_NAME\}/g, profile.name)
@@ -112,7 +117,8 @@ export function buildPluginContent(
         profile.regions,
         profile.name,
         profile.regionsMeta?.levelledMobs?.regionBands,
-        discordInvite
+        discordInvite,
+        profile.regionsMeta?.structureFamilies
       )
       const content = mergeTABConfig(configPath, ownedTABSections)
       return { content, configPath, isDefault }

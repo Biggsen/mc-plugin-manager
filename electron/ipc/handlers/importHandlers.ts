@@ -124,6 +124,14 @@ export function registerImportHandlers(): void {
           }
         }
 
+        if (result.structureFamilies) {
+          if (!profile.regionsMeta) profile.regionsMeta = { levelledMobs: {} }
+          profile.regionsMeta.structureFamilies = {
+            ...(profile.regionsMeta.structureFamilies ?? {}),
+            ...result.structureFamilies,
+          }
+        }
+
         saveServerProfile(profile)
         return { success: true, regionCount: result.regions.length }
       } catch (error: unknown) {
