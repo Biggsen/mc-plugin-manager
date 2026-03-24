@@ -16,7 +16,7 @@ This spec closes that gap so structure discovery behaves like the schema describ
 |-----------------|------|
 | `reference/regions-meta-schema.md` | Authoritative YAML shape; denominators come from **counts** of imported regions per `structureType`, not from fixed numbers in `structureFamilies`. |
 | `tasks/completed/Regions_Meta_Import_Spec.md` | Existing import merge rules for `profile.regions`, `regionsMeta.levelledMobs`. |
-| `tasks/completed/AA_Custom_Achievements_Spec.md` | Tier templates, `calculateTiers`, merge rules for owned Custom categories. |
+| `tasks/completed/AA_Custom_Achievements_Spec.md` | Merge rules for owned Custom categories. **Structure families do not use** `calculateTiers` or village/region tier templates — see § Advanced Achievements (hardcoded single tier). |
 | `tasks/completed/TAB_Plugin_Integration_Spec.md` | Scoreboard layout and placeholder conventions. |
 | `electron/regionParser.ts` | `importRegionsMeta` — extend parsing and return value. |
 | `electron/ipc/handlers/importHandlers.ts` | Merge `structureFamilies` into `profile.regionsMeta`. |
@@ -30,9 +30,9 @@ This spec closes that gap so structure discovery behaves like the schema describ
 
 1. **Persist** `structureFamilies` from each regions-meta import into the server profile.
 2. **Validate** structure rows on import (required fields, consistency with `structureFamilies`); fail soft (warn + skip bad rows) unless we agree to hard-fail—default **warn + skip** to match existing region validation style.
-3. **AA**: Per-POI **Commands** (`discover…` id, Goal/Message/Name/DisplayName/Type per § Advanced Achievements) and per-family **Custom** tiers driven by **count of** `kind: structure` regions per `structureType` (see § Denominator rules).
+3. **AA**: Per-POI **Commands** (`discover…` id, Goal/Message/Name/DisplayName/Type per § Advanced Achievements) and per-family **Custom** with a **single completion tier** (“all” = **N(T)**) per `structureType` (see § Denominator rules and § Advanced Achievements).
 4. **CE**: One-time `wgevents_region_enter` events keyed **`{id}_discover_once`**, `aach give` using the **same command id as AA** (`generateCommandId` / override), then **`aach add 1 Custom.<counter>`** only (default **no crate**, no `total_discovered` or main exploration counters).
-5. **TAB**: **Structures** scoreboard section when a world has POIs; **`structureFamilies[].label` drives each family row’s title**; `%aach_custom_<counter>%/<N(T)>` for counts; **Current** row via **`%condition:structure-name%`**, backed by a **generated** `conditions.structure-name` block (single-slot WG stack, § TAB). (Plural **label** on TAB; AA **DisplayName** uses singular from `structureType`, see § Advanced Achievements.)
+5. **TAB**: **Structures** scoreboard section when a world has POIs; **`structureFamilies[].label` drives each family row’s title**; `%aach_custom_<counter>%/<N(T)>` for counts; **Current** row via **`%condition:structure-name%`**, backed by a **generated** `conditions.structure-name` block (single-slot WG stack, § TAB). (Plural **label** on TAB; AA **DisplayName** uses singular from `structureType`, see § Advanced Achievements.) **v1 implementation:** add this section on the **overworld** scoreboard only (no Nether/End structure rows in data yet); logic stays world-aware for when POIs exist in other dimensions.
 
 ---
 
@@ -40,7 +40,7 @@ This spec closes that gap so structure discovery behaves like the schema describ
 
 - LevelledMobs rules for structures (POIs are not main `kind: region` bands).
 - Changing top-explorers **percentage** denominator to include structures (schema: structures do not count toward main exploration; keep `<TOTAL_COUNT>` definition unchanged).
-- Nether/End-specific structure families unless present in data; generator must be **data-driven** off imported regions + `structureFamilies`.
+- Nether/End **scoreboard** work for structures in v1 (no POIs there yet); generator remains **data-driven** off imported regions + `structureFamilies` so future Nether/End rows do not require a spec rewrite.
 - CommandWhitelist / DiscordSRV changes unless a follow-up task requires new commands.
 - TAB **`structure-name`** using **`worldguard_region_name_2`** or nested primary→secondary when the POI is only in the second WG stack slot (v1 is **`name_1` only**).
 
@@ -93,7 +93,9 @@ Add root-level optional `structureFamilies` matching the schema.
 |-------|--------|
 | Missing `structureType` | `console.warn`, **skip** region (do not push to `regions`). |
 | `structureType` not a key in file’s `structureFamilies` | `console.warn`, **skip** region (or warn and keep row but generators skip—prefer **skip** for consistency). |
-| `discover.method` not `on_enter` | Warn; v1 still import row (generators only emit CE for `on_enter`). |
+| `discover.method` not `on_enter` | Warn; still import row if kept (generators only emit CE for `on_enter`). |
+
+**Data convention:** Region Forge exports use **`discover.method: on_enter`** for every structure. **N(T)** (see § Denominator) therefore matches the set of POIs that receive **`*_discover_once`** CE events; no mismatch between TAB/AA denominators and CE in normal data. Non-`on_enter` rows remain possible for defensive parsing only.
 
 ### IPC / profile merge
 
@@ -108,10 +110,10 @@ After a successful parse, merge `result.structureFamilies` into `profile.regions
 
 **v1 default (single rule everywhere):**
 
-- **AA Custom tiers** for family T use **N(T)** as the total (“all” tier = **N(T)**). One custom counter per `counter` key; all worlds contribute to the same stat.
-- **TAB**: Show a subsection for family T on world **W**’s scoreboard only if **N(T, W) > 0** (so empty worlds do not show that family). Use placeholder `%aach_custom_<counter>%` with denominator **N(T)** (global). That keeps numerator ≤ denominator and matches the AA “all” tier.
+- **AA Custom** for family T: **one tier only** — threshold **N(T)** (the numeric YAML tier key under that `counter` is **N(T)**). One custom counter per `counter` key; all worlds contribute to the same stat.
+- **TAB**: Show a subsection for family T on world **W**’s scoreboard only if **N(T, W) > 0** (so empty worlds do not show that family). Use placeholder `%aach_custom_<counter>%` with denominator **N(T)** (global). That keeps numerator ≤ denominator and matches the AA single completion tier.
 
-**Future (out of v1):** Per-world AA counters or TAB denominators **N(T, W)** if design wants “100% of this world’s ancient cities” with a global stat—requires AA/TAB contract change.
+**Future (out of v1):** Per-world AA counters or TAB denominators **N(T, W)** if design wants “100% of this world’s ancient cities” with a global stat—requires AA/TAB contract change. Intermediate **Custom** milestones for structures (beyond the single **N(T)** tier) would also be a separate change.
 
 ---
 
@@ -147,23 +149,26 @@ discoverInnerCore:
 
 `discover.displayNameOverride` on the region, if present, replaces **`DisplayName`** only (same as other kinds).
 
-### Custom section (owned) — one category per structure family counter
+### Custom section (owned) — one category per structure family counter, **single “all” tier**
 
 Emit **all** structure family counters that appear in the build: for each `structureType` T with **N(T) &gt; 0** and a matching entry in `profile.regionsMeta.structureFamilies` with **`counter`** and **`label`**:
 
 - **Custom YAML key:** **`counter`** (e.g. `ancient_cities_found`) — must match CE `aach add Custom.<counter>` and AA’s internal stat name (no `Custom.` prefix in the key).
-- **Tier keys:** numeric milestones only, produced by **`calculateTiers(STRUCTURE_TEMPLATE, N(T))`** (choose a **STRUCTURE_TEMPLATE** such as `[1, 'half', 'all']` or align with hearts/regions; same filtering rules as `AA_Custom_Achievements_Spec.md`).
-- **Per-tier entry shape** (each generated tier value maps to one block under that `counter`):
+- **Tier keys:** **exactly one** numeric tier per family: the integer **N(T)**. Do **not** use `calculateTiers`, `_half`, intermediate milestones, or a bundled YAML prototype for structure families (v1).
+
+**Per-tier entry shape** (the single block under that `counter`):
 
 | Field | Rule |
 |-------|------|
-| `Message` | **Template-driven** with substitutions. The **highest tier (“all”)** must read **`All <label> Found!`** where **`<label>`** is **`structureFamilies[T].label`** (e.g. `All Ancient Cities Found!`). Intermediate tiers use the **bundled prototype** messages with **`{label}`** / tier count substituted (same cloning approach as `generateCustomCategory` for villages/regions). |
-| `Name` | **`<counter>_<tier>`** (e.g. `ancient_cities_found_7`). |
-| `DisplayName` | **`<label> Wanderer`** (literal suffix ` Wanderer`; **`<label>`** = `structureFamilies[T].label`). If the bundled template defines per-tier `DisplayName`, substitute **`{label}`**; default v1 is the same **`<label> Wanderer`** for every tier unless the template varies by tier key. |
+| `Message` | **`All <label> Found!`** where **`<label>`** is **`structureFamilies[T].label`** (e.g. `All Ancient Cities Found!`). |
+| `Name` | **`<counter>_<N(T)>`** (e.g. `ancient_cities_found_14` when **N(T) = 14**). |
+| `DisplayName` | **`<label> Wanderer`** (literal suffix ` Wanderer`; **`<label>`** = `structureFamilies[T].label`). |
 | `Type` | `normal` |
-| `Reward` | From bundled prototype (clone per tier). **v1 default:** `Experience: 1000` on each tier unless the template specifies different rewards per numeric/`_half`/`_all` slot. |
+| `Reward` | **`Experience: 1000`** — set in **code** (v1); no YAML template clone for structure families. |
 
-**Example** (illustrative single tier; `counter: ancient_cities_found`, `label: Ancient Cities`, `N(T) = 14` ⇒ one of the emitted numeric keys might be `14`):
+**Implementation (v1):** Emit these fields **entirely in `aaGenerator` (or shared helper)** — **option 2 (hardcoded)** from design review: no `_structure_family_template` or other bundled Custom prototype for structures.
+
+**Example** (`counter: ancient_cities_found`, `label: Ancient Cities`, **N(T) = 14**):
 
 ```yaml
 ancient_cities_found:
@@ -176,20 +181,13 @@ ancient_cities_found:
       Experience: 1000
 ```
 
-Lower tiers under the same `ancient_cities_found` key follow the same field set with different numeric keys and **Message** / optional **Reward** from the prototype (not necessarily the “All … Found!” line).
-
 - **`mergeAAConfig`**: Extend owned-category replacement to include:
   - Fixed: `villages_discovered`, `regions_discovered`, `hearts_discovered`
   - **Dynamic**: every **`counter`** string present in generated structure Custom output for this build (so all structure families are regenerated each time).
 
-### Bundled template
-
-- Add a **prototype** `Custom` subcategory (e.g. `_structure_family_template`) whose tier slots (`1`, `_half`, `_all`, …) provide **Message**, **DisplayName**, **Reward** patterns with placeholders for **`{label}`** and tier numbers — cloned for each real **`counter`** + **`label`** pair, then pruned to **`calculateTiers`** output (same mental model as `generateCustomCategory` in `aaGenerator.ts`).
-- Alternatively, hardcode the **DisplayName** / **Reward** rules above in code and only keep **Message** variants in YAML; tests should lock whichever approach is chosen.
-
 ### Preconditions
 
-- If `structureFamilies` is missing but structure regions exist: **no** Custom tiers for those families; **warn** at build or import. Commands may still be generated if families missing—prefer **skip command generation** for structure rows without a resolvable family (consistent with skipped import).
+- If `structureFamilies` is missing but structure regions exist: **no** Custom entries for those families; **warn** at build or import. Prefer **skip command generation** for structure rows without a resolvable family (consistent with skipped import).
 
 ---
 
@@ -245,7 +243,7 @@ inner_core_discover_once:
 
 ### Structures scoreboard (owned)
 
-Add a world-specific scoreboard section (e.g. key `structures` under `scoreboard.scoreboards`) when that world has at least one structure POI (**N(T, W) &gt; 0** for any family), using the same **title** / **display-condition** / **world** patterns as the existing overworld scoreboard (server name color markup, Java client, `%world%=world` for overworld—mirror for nether/end if those worlds ever have structure rows).
+Add a world-specific scoreboard section (e.g. key `structures` under `scoreboard.scoreboards`) when that world has at least one structure POI (**N(T, W) &gt; 0** for any family), using the same **title** / **display-condition** / **world** patterns as the existing **overworld** scoreboard (server name color markup, Java client, `%world%=world`, etc.). **v1:** wire this only for the overworld scoreboard path; when structure rows exist in other dimensions later, reuse the same patterns for those worlds’ scoreboards (see § Goals, § Non-goals).
 
 **`lines` layout (conceptual):**
 
@@ -316,7 +314,7 @@ village-name:
 
 ## Build pipeline
 
-- `buildPluginConfig` (or equivalent) must pass **`profile.regionsMeta?.structureFamilies`** into AA, CE, and TAB generators together with `profile.regions`. TAB emits **`conditions.structure-name`** from structure region ids for the relevant world(s).
+- `buildPluginConfig` (or equivalent) must pass **`profile.regionsMeta?.structureFamilies`** into AA, CE, and TAB generators together with `profile.regions`. TAB emits **`conditions.structure-name`** from structure region ids per world; **v1** targets the overworld scoreboard where POIs actually live.
 - Bump **`generatorVersions`** for affected plugins if emit output shape changes (per existing project rules).
 
 ---
@@ -327,7 +325,7 @@ village-name:
 |------|-----------|
 | Parser | YAML with `structureFamilies` + valid structure rows → merged profile; missing `structureType` → row skipped + warning |
 | Merge | Second import overwrites same `structureType` key; import without `structureFamilies` preserves previous |
-| AA | Custom per `counter`: tier keys from `calculateTiers`; `Name` `<counter>_<tier>`; **all** tier `Message` `All <label> Found!`; `DisplayName` `<label> Wanderer`; `Reward.Experience` from template (default 1000); Commands per POI with singular-type `DisplayName` + ` Found` |
+| AA | Custom per `counter`: **single** numeric tier key **N(T)**; `Name` `<counter>_<N(T)>`; `Message` `All <label> Found!`; `DisplayName` `<label> Wanderer`; `Reward.Experience: 1000` from code; Commands per POI with singular-type `DisplayName` + ` Found` |
 | CE | `{id}_discover_once`; `aach give` matches AA command id; `Custom.<counter>` only; no `total_discovered` |
 | TAB | Structures scoreboard when N(T,W)&gt;0; **`structure-name`** OR-list; **`village-name`** AND includes `%condition:structure-name%=-`; family rows use **`label`** + `%aach_custom_<counter>%/<N(T)>` |
 | Integration | Build from reference `reference/regions-meta.yml` (extend fixture if needed) |
@@ -340,7 +338,7 @@ village-name:
 |-------|-------------|
 | **1** | Types + parser + IPC merge for `structureFamilies`; import validation for structure rows |
 | **2** | CE structure `discover_once` events + tests |
-| **3** | AA Commands for structures + Custom tiers per family + template + mergeAAConfig dynamic owned keys |
+| **3** | AA Commands for structures + Custom **single tier per family** (hardcoded) + mergeAAConfig dynamic owned keys |
 | **4** | TAB scoreboard lines + tests |
 | **5** | Docs: reference schema cross-link; mark this spec **COMPLETED** |
 
@@ -349,10 +347,10 @@ village-name:
 ## Acceptance criteria
 
 - Importing a Region Forge file with structures and `structureFamilies` yields a profile that survives save/load and shows structure counts in UI (existing Regions screen already shows `structureType`).
-- Build produces AA config with discover commands for every imported structure POI (Goal / Message / Name / DisplayName / Type per § Advanced Achievements; **DisplayName** from `structureType` singular + ` Found`) and **Custom** milestones for **every** family **`counter`** with N(T) &gt; 0 (per-tier shape: **Name** `<counter>_<tier>`, **all**-tier **Message** `All <label> Found!`, **DisplayName** `<label> Wanderer`, **Reward.Experience** per § Custom section).
+- Build produces AA config with discover commands for every imported structure POI (Goal / Message / Name / DisplayName / Type per § Advanced Achievements; **DisplayName** from `structureType` singular + ` Found`) and **Custom** for **every** family **`counter`** with N(T) &gt; 0: **one** tier keyed by **N(T)** — **Name** `<counter>_<N(T)>`, **Message** `All <label> Found!`, **DisplayName** `<label> Wanderer`, **Reward.Experience: 1000** (hardcoded in generator per § Custom section).
 - Build produces CE events (`{id}_discover_once`) that `aach give` the same per-POI command as AA and increment only the family `Custom.<counter>`.
-- Build produces a **structures** scoreboard when applicable: **Current** uses generated **`structure-name`** (OR of `%worldguard_region_name_1%=<id>` per POI, capitalize on match, else `'-'`); family rows use **`structureFamilies[].label`** and `%aach_custom_<counter>%/<N(T)>`; **`village-name`** includes **`%condition:structure-name%=-`** in its AND list so structure POIs do not show the village/heart path; no regression to other TAB conditions or scoreboards.
-- No regression for servers with **zero** structure regions (no empty Custom categories injected unless template requires).
+- Build produces a **structures** scoreboard when applicable (**v1:** overworld scoreboard where POIs exist): **Current** uses generated **`structure-name`** (OR of `%worldguard_region_name_1%=<id>` per POI, capitalize on match, else `'-'`); family rows use **`structureFamilies[].label`** and `%aach_custom_<counter>%/<N(T)>`; **`village-name`** includes **`%condition:structure-name%=-`** in its AND list so structure POIs do not show the village/heart path; no regression to other TAB conditions or scoreboards.
+- No regression for servers with **zero** structure regions (no empty structure Custom categories injected).
 
 ---
 
@@ -367,3 +365,4 @@ village-name:
 | 1.4 | TAB: structures scoreboard section; **data-driven row titles** from `structureFamilies.label`; `%condition:structure-name%` for current row; preserve template-defined `structure-name` condition until defined; ordering + N(T) denominators. |
 | 1.5 | TAB: **`structure-name`** spec — generated **owned** condition; OR list `%worldguard_region_name_1%=<id>` for all `kind: structure` ids in world; `true` capitalize placeholder; `false` `'-'`; v1 single-slot only (no `name_2`). |
 | 1.6 | TAB: **`village-name`** must AND **`%condition:structure-name%=-`** so village/heart path does not run inside structure POIs; full YAML shape documented. |
+| 1.7 | **AA Custom:** single completion tier per family (numeric key **N(T)** only); **no** `calculateTiers` or bundled prototype — hardcoded Message / DisplayName / Reward in code. **Import:** data convention — all structures **`on_enter`** so **N(T)** aligns with CE. **TAB:** v1 overworld-only scoreboard wiring; non-goals clarified for Nether/End. |
