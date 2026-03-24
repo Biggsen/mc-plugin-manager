@@ -32,7 +32,7 @@ This spec closes that gap so structure discovery behaves like the schema describ
 2. **Validate** structure rows on import (required fields, consistency with `structureFamilies`); fail soft (warn + skip bad rows) unless we agree to hard-fail—default **warn + skip** to match existing region validation style.
 3. **AA**: Per-POI **Commands** (`discover…` id, Goal/Message/Name/DisplayName/Type per § Advanced Achievements) and per-family **Custom** tiers driven by **count of** `kind: structure` regions per `structureType` (see § Denominator rules).
 4. **CE**: One-time `wgevents_region_enter` events keyed **`{id}_discover_once`**, `aach give` using the **same command id as AA** (`generateCommandId` / override), then **`aach add 1 Custom.<counter>`** only (default **no crate**, no `total_discovered` or main exploration counters).
-5. **TAB**: **Structures** scoreboard section when a world has POIs; **`structureFamilies[].label` drives each family row’s title** (not hardcoded names); `%aach_custom_<counter>%/<N(T)>` for counts; **Current** row via `%condition:structure-name%` (condition body TBD / preserved from TAB template). (Plural **label** on TAB; AA command **DisplayName** uses singular from `structureType`, see § Advanced Achievements.)
+5. **TAB**: **Structures** scoreboard section when a world has POIs; **`structureFamilies[].label` drives each family row’s title**; `%aach_custom_<counter>%/<N(T)>` for counts; **Current** row via **`%condition:structure-name%`**, backed by a **generated** `conditions.structure-name` block (single-slot WG stack, § TAB). (Plural **label** on TAB; AA **DisplayName** uses singular from `structureType`, see § Advanced Achievements.)
 
 ---
 
@@ -42,6 +42,7 @@ This spec closes that gap so structure discovery behaves like the schema describ
 - Changing top-explorers **percentage** denominator to include structures (schema: structures do not count toward main exploration; keep `<TOTAL_COUNT>` definition unchanged).
 - Nether/End-specific structure families unless present in data; generator must be **data-driven** off imported regions + `structureFamilies`.
 - CommandWhitelist / DiscordSRV changes unless a follow-up task requires new commands.
+- TAB **`structure-name`** using **`worldguard_region_name_2`** or nested primary→secondary when the POI is only in the second WG stack slot (v1 is **`name_1` only**).
 
 ---
 
@@ -250,7 +251,7 @@ Add a world-specific scoreboard section (e.g. key `structures` under `scoreboard
 
 1. Leading animation / header lines (match style of other scoreboards).
 2. Section title line, e.g. `&bStructures`.
-3. **Current** line: `&eCurrent&7:||%condition:structure-name%` — shows whichever structure region the player is in (or empty when not in one). The **`structure-name`** condition body is **static TAB plugin YAML** (like `region-name` / `village-name`): **preserve from the base template** or add when the condition definition is finalized; mc-plugin-manager does not synthesize WG logic for it until that definition exists (see follow-up from product).
+3. **Current** line: `&eCurrent&7:||%condition:structure-name%` — shows the structure WG region name when the player’s **primary** stack slot matches a known POI id, else a dash. **`structure-name`** is **generated** (see § Condition `structure-name`); v1 uses **`worldguard_region_name_1` only** (no `name_2` / secondary block).
 4. **One line per structure family** shown in this world: **row title** = **`structureFamilies[T].label`** (data-driven — no hardcoded “Ancient Cities” / “Igloos” strings in generator output). **Row value** = `%aach_custom_<counter>%/<DENOM>` where **`<counter>`** is `structureFamilies[T].counter` and **`<DENOM>`** = **N(T)** (global count per § Denominator rules).
 5. **Formatting:** e.g. `&e<label>&7:||%aach_custom_<counter>%/<N(T)>` (color codes can follow the same convention as other scoreboard lines; escape `&` / `%` / `:` in `label` if ever needed).
 6. Trailing animation / compass lines as required for parity with other scoreboards.
@@ -259,17 +260,63 @@ Add a world-specific scoreboard section (e.g. key `structures` under `scoreboard
 
 **Which families get a row:** Only types T with **N(T, W) &gt; 0** for this scoreboard’s world **and** a resolvable `structureFamilies[T]` entry (`label` + `counter`). Do not emit rows for families absent from the merged `structureFamilies` map.
 
-### Merge / preservation
+### Condition `structure-name` (owned)
 
-- Preserve surgical ownership: only touch owned scoreboard sections; follow existing merge and sorting rules.
-- **`conditions.structure-name`**: treat as **preserved** from the bundled TAB template (same strategy as `region-name` / `village-name` in `TAB_Plugin_Integration_Spec.md`) until/unless a later spec adds generated structure detection logic.
-- Update `tasks/completed/TAB_Plugin_Integration_Spec.md` or add a structures addendum once `structure-name` is defined and shipped (optional doc follow-up).
+**v1:** one TAB condition, **primary WG slot only** (`worldguard_region_name_1`). If the structure region is only in slot 2 due to overlaps, the **Current** line shows **`'-'`** until a future spec adds **`worldguard_region_name_2`** / secondary logic.
+
+**Algorithm:** For the scoreboard’s world, collect every `profile.regions` id where `kind === 'structure'` and `world` matches; sort deterministically (e.g. `id` ascending). Emit one OR branch per id:
+
+- **conditions:** list of `'%worldguard_region_name_1%=<id>'` for each canonical id (lowercase snake_case, matching WG and CE `discover_once`).
+- **type:** `OR`
+- **true:** `'%capitalize_pascal-case-forced_{worldguard_region_name_1}%'`
+- **false:** `'-'`
+
+**Example** (two ids; real output lists all POIs for that world):
+
+```yaml
+structure-name:
+  conditions:
+    - '%worldguard_region_name_1%=inner_core'
+    - '%worldguard_region_name_1%=sanctum_of_echoes'
+  type: OR
+  true: '%capitalize_pascal-case-forced_{worldguard_region_name_1}%'
+  false: '-'
+```
+
+**Merge:** Replace **`conditions.structure-name`** on each TAB build (owned key), same surgical pattern as other generated TAB sections. Extend `tabGenerator` (or equivalent) ownership list accordingly.
+
+### Condition `village-name` (coordination)
+
+**`village-name`** must not show village/heart copy when the player is in a **structure** POI (where **`structure-name`** resolves to a real title instead of **`'-'`**). Add this **AND** clause:
+
+- **`'%condition:structure-name%=-'`** — requires **`structure-name`** to be the dash branch (not inside any listed structure id).
+
+**Required shape** (existing rows preserved; add the **`structure-name`** line when missing):
+
+```yaml
+village-name:
+  conditions:
+    - '%worldguard_region_name_2%!='
+    - '%worldguard_region_name_1%!=%worldguard_region_name_2%'
+    - '%worldguard_region_name_1%!=spawn'
+    - '%condition:structure-name%=-'
+  type: AND
+  true: '%condition:heart-region%'
+  false: '-'
+```
+
+**Implementation:** Update the **bundled TAB template** and/or treat **`village-name`** as merge-owned for this block when generating TAB so the guard stays in sync with **`structure-name`**. **`region-name`** and other conditions remain as today unless the main TAB spec says otherwise.
+
+### Merge / preservation (scoreboard + conditions)
+
+- Preserve surgical ownership: only touch owned scoreboard sections and owned conditions; follow existing merge and sorting rules.
+- Update `tasks/completed/TAB_Plugin_Integration_Spec.md` with a structures addendum when implementation ships (optional doc follow-up).
 
 ---
 
 ## Build pipeline
 
-- `buildPluginConfig` (or equivalent) must pass **`profile.regionsMeta?.structureFamilies`** into AA, CE, and TAB generators together with `profile.regions`.
+- `buildPluginConfig` (or equivalent) must pass **`profile.regionsMeta?.structureFamilies`** into AA, CE, and TAB generators together with `profile.regions`. TAB emits **`conditions.structure-name`** from structure region ids for the relevant world(s).
 - Bump **`generatorVersions`** for affected plugins if emit output shape changes (per existing project rules).
 
 ---
@@ -282,7 +329,7 @@ Add a world-specific scoreboard section (e.g. key `structures` under `scoreboard
 | Merge | Second import overwrites same `structureType` key; import without `structureFamilies` preserves previous |
 | AA | Custom per `counter`: tier keys from `calculateTiers`; `Name` `<counter>_<tier>`; **all** tier `Message` `All <label> Found!`; `DisplayName` `<label> Wanderer`; `Reward.Experience` from template (default 1000); Commands per POI with singular-type `DisplayName` + ` Found` |
 | CE | `{id}_discover_once`; `aach give` matches AA command id; `Custom.<counter>` only; no `total_discovered` |
-| TAB | Structures scoreboard when N(T,W)&gt;0; each family row uses **`label`** + `%aach_custom_<counter>%/<N(T)>`; deterministic order; `structure-name` condition preserved when present in template |
+| TAB | Structures scoreboard when N(T,W)&gt;0; **`structure-name`** OR-list; **`village-name`** AND includes `%condition:structure-name%=-`; family rows use **`label`** + `%aach_custom_<counter>%/<N(T)>` |
 | Integration | Build from reference `reference/regions-meta.yml` (extend fixture if needed) |
 
 ---
@@ -304,7 +351,7 @@ Add a world-specific scoreboard section (e.g. key `structures` under `scoreboard
 - Importing a Region Forge file with structures and `structureFamilies` yields a profile that survives save/load and shows structure counts in UI (existing Regions screen already shows `structureType`).
 - Build produces AA config with discover commands for every imported structure POI (Goal / Message / Name / DisplayName / Type per § Advanced Achievements; **DisplayName** from `structureType` singular + ` Found`) and **Custom** milestones for **every** family **`counter`** with N(T) &gt; 0 (per-tier shape: **Name** `<counter>_<tier>`, **all**-tier **Message** `All <label> Found!`, **DisplayName** `<label> Wanderer`, **Reward.Experience** per § Custom section).
 - Build produces CE events (`{id}_discover_once`) that `aach give` the same per-POI command as AA and increment only the family `Custom.<counter>`.
-- Build produces a **structures** scoreboard section when applicable: **Current** line uses `%condition:structure-name%` (condition YAML supplied / preserved per template); family rows use **`structureFamilies[].label`** for titles and `%aach_custom_<counter>%/<N(T)>` for values; no regression to other scoreboards.
+- Build produces a **structures** scoreboard when applicable: **Current** uses generated **`structure-name`** (OR of `%worldguard_region_name_1%=<id>` per POI, capitalize on match, else `'-'`); family rows use **`structureFamilies[].label`** and `%aach_custom_<counter>%/<N(T)>`; **`village-name`** includes **`%condition:structure-name%=-`** in its AND list so structure POIs do not show the village/heart path; no regression to other TAB conditions or scoreboards.
 - No regression for servers with **zero** structure regions (no empty Custom categories injected unless template requires).
 
 ---
@@ -318,3 +365,5 @@ Add a world-specific scoreboard section (e.g. key `structures` under `scoreboard
 | 1.2 | AA Commands: fixed shape (Goal / Message / Name / DisplayName / Type); **DisplayName** singular via `structureType` → title case + ` Found`; TAB headings still use plural `label`. |
 | 1.3 | AA Custom: per-**counter** categories; per-tier shape (Message / Name / DisplayName / Type / Reward.Experience); **all** tier Message `All <label> Found!`; **DisplayName** `<label> Wanderer`; **Name** `<counter>_<tier>`; bundled prototype + `calculateTiers`. |
 | 1.4 | TAB: structures scoreboard section; **data-driven row titles** from `structureFamilies.label`; `%condition:structure-name%` for current row; preserve template-defined `structure-name` condition until defined; ordering + N(T) denominators. |
+| 1.5 | TAB: **`structure-name`** spec — generated **owned** condition; OR list `%worldguard_region_name_1%=<id>` for all `kind: structure` ids in world; `true` capitalize placeholder; `false` `'-'`; v1 single-slot only (no `name_2`). |
+| 1.6 | TAB: **`village-name`** must AND **`%condition:structure-name%=-`** so village/heart path does not run inside structure POIs; full YAML shape documented. |

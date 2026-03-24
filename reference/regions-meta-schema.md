@@ -88,9 +88,11 @@ When `kind` is `structure`, **`structureType` is required** and must be one of t
 
 | Value       | Meaning |
 |-------------|---------|
-| `disabled`  | No discovery (e.g. spawn). `recipeId` should be `none`. |
+| `disabled`  | No discovery (e.g. spawn). New exports **omit** `recipeId`; mc-plugin-manager derives `none` for `kind: system`. In legacy files, if `recipeId` is present it **must** be `none`. |
 | `on_enter`  | Discover when player enters the region. |
 | `first_join`| Discover on first join (only one region per world should use this). |
+
+**Region Forge (current exports):** omits `recipeId` on **every** `discover` object (all kinds). Omitting `recipeId` with `method: disabled` matches the importer’s derived `none` for `kind: system`—the same end state as legacy `recipeId: none`.
 
 ### 3.5 `discover.recipeId` — Allowed Values
 
@@ -214,6 +216,8 @@ Unknown keys in `structureFamilies` are ignored unless referenced by a region.
 | `label` | string | **Yes**  | Short label for TAB and UI (e.g. `Ancient Cities`, `Desert Wells`). |
 | `counter` | string | **Yes** | AA counter key **without** the `Custom.` prefix (e.g. `ancient_cities_found`). Used for `Custom.<counter>` in CE and TAB. |
 
+Unknown keys on each structure family object are ignored (same forward-compatibility rule as region objects in §3.1).
+
 Example:
 
 ```yaml
@@ -271,35 +275,30 @@ regions:
     kind: system
     discover:
       method: disabled
-      recipeId: none
 
   - id: heart_of_dradacliff
     world: overworld
     kind: heart
     discover:
       method: on_enter
-      recipeId: heart
 
   - id: acornbrook
     world: overworld
     kind: village
     discover:
       method: first_join
-      recipeId: village
 
   - id: rotherhithe
     world: overworld
     kind: village
     discover:
       method: on_enter
-      recipeId: village
 
   - id: dradacliff
     world: overworld
     kind: region
     discover:
       method: on_enter
-      recipeId: region
     description: A rugged highland region rich in mineral deposits.
     category: ores
     items:
@@ -327,7 +326,6 @@ regions:
     kind: region
     discover:
       method: on_enter
-      recipeId: region
 
   - id: inner_core
     world: overworld
@@ -335,33 +333,11 @@ regions:
     structureType: ancient_city
     discover:
       method: on_enter
-      recipeId: none
 
 structureFamilies:
   ancient_city:
     label: Ancient Cities
     counter: ancient_cities_found
-  buried_treasure:
-    label: Buried Treasures
-    counter: buried_treasures_found
-  desert_pyramid:
-    label: Desert Pyramids
-    counter: desert_pyramids_found
-  desert_well:
-    label: Desert Wells
-    counter: desert_wells_found
-  igloo:
-    label: Igloos
-    counter: igloos_found
-  jungle_temple:
-    label: Jungle Temples
-    counter: jungle_temples_found
-  pillager_outpost:
-    label: Pillager Outposts
-    counter: pillager_outposts_found
-  trail_ruins:
-    label: Trail Ruins
-    counter: trail_ruins_found
 
 levelledMobs:
   villageBandStrategy: easy
@@ -401,11 +377,11 @@ regions:
 
 - **`regions`**  
   - Required. If missing or not an array, reject.  
-  - Each element must have `id`, `world`, `kind`, `discover` with **`method`**. `discover.recipeId` is optional; if omitted, mc-plugin-manager derives it. Invalid or missing required fields: warn and skip that region, or reject the file (mc-plugin-manager may choose per-field).  
+  - Each element must have `id`, `world`, `kind`, `discover` with **`method`**. `discover.recipeId` is optional; if omitted, mc-plugin-manager derives it (Region Forge omits it on all kinds in new exports). Invalid or missing required fields: warn and skip that region, or reject the file (mc-plugin-manager may choose per-field).  
   - `regions[].world` should match the root-level `world` field. Mc-plugin-manager may warn if they differ.
 
 - **`discover.method` / `recipeId`**  
-  - If `method` is `disabled`, `recipeId` (when present) should be `none`. Mc-plugin-manager may warn otherwise. If `recipeId` is omitted, the importer derives `none` for `kind: system` and `structure`, and appropriate values for other kinds.
+  - If `method` is `disabled`, legacy `recipeId` (when present) should be `none`; mc-plugin-manager may warn otherwise. When `recipeId` is omitted, the importer derives stored values from `kind` + `world` (`none` for `kind: system` and `structure`, and the appropriate recipe for regions, hearts, and villages).
 
 - **`levelledMobs.regionBands`**  
   - Keys that do not match any `regions[].id` (for the same logical world) are ignored; no rule is generated.
@@ -422,7 +398,8 @@ regions:
 
 - **`structureFamilies`**  
   - Each `counter` should be a stable snake_case identifier matching the AA custom counter you configure (e.g. `ancient_cities_found`).  
-  - `label` is for display only; human-facing names for individual regions come from **`id`** (formatting rules in mc-plugin-manager).
+  - `label` is for display only; human-facing names for individual regions come from **`id`** (formatting rules in mc-plugin-manager).  
+  - Region Forge emits an entry for **each `structureType` used** in that file (not necessarily every known family).
 
 ---
 
@@ -438,6 +415,9 @@ regions:
 | 1.5    | Added `end_region` and `end_heart` recipeIds for End dimension. End exports omit `biomes` (no biome map support). |
 | 1.6    | Region Forge exports optional `y` in `spawnCenter` and `onboarding.teleport` (manual value; default 0). |
 | 1.7    | Added `kind: structure`, per-region `structureType`, and root `structureFamilies` (`label`, `counter`). Structure POIs do not count toward main exploration metrics; TAB/AA denominators are derived by counting regions per `structureType` in mc-plugin-manager. `discover.recipeId` is optional; omit in new Region Forge exports (mc-plugin-manager derives when absent). |
+| 1.8    | §3.4 `disabled`: clarified that omitting `recipeId` is the preferred new-export shape; explicit `none` remains valid for legacy files. |
+| 1.9    | §10 full example and §12 validation notes aligned with shipped Region Forge export: no `recipeId` in `discover`; `structureFamilies` lists only types referenced in the example. §3.4: note that Forge omits `recipeId` for all kinds. |
+| 1.9    | §7.1: document that unknown keys on each structure family object are ignored (aligns with §3.1). |
 
 ---
 
