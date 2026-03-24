@@ -30,13 +30,13 @@ BookChronologicalOrder: true
 BookSeparator: ""
 
 # Activate firework effects when a player receives an achievement.
-Firework: true
+Firework: false
 
 # Choose ball_large, ball, burst, creeper, star or random.
 FireworkStyle: ball_large
 
 # Activate simpler effects and a calm sound when a player receives an achievement. Ignored if Firework setting is true.
-SimplifiedReception: false
+SimplifiedReception: true
 
 # Number of players displayed in /aach top, week and month commands.
 TopList: 5
