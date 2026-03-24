@@ -200,14 +200,11 @@ function generateFooter(discordInvite: string = ''): string[] {
 function generateOverworldScoreboard(
   serverName: string,
   counts: RegionCounts,
-  useDifficultyColour: boolean,
-  structureLines: string[] = []
+  useDifficultyColour: boolean
 ): any {
   const currentRegionLine = useDifficultyColour
     ? REGION_CURRENT_LINE_WITH_DIFFICULTY
     : '&eCurrent&7:||%condition:region-name%'
-  const structureBlock =
-    structureLines.length > 0 ? ['', '&bStructures', ...structureLines] : []
   return {
     title: `<#E0B11E>${serverName}</#FF0000>`,
     'display-condition': '%player-version-id%>=765;%bedrock%=false;%world%=world',
@@ -223,7 +220,23 @@ function generateOverworldScoreboard(
       '',
       '&bRegion Hearts',
       `&eDiscovered&7:||%aach_custom_hearts_discovered%/${counts.overworldHearts}`,
-      ...structureBlock,
+      '%animation:MyAnimation1%',
+      '&2🧭 %player_direction%||&7%player_x% %player_y% %player_z%',
+    ],
+  }
+}
+
+function generateStructuresOverworldScoreboard(
+  serverName: string,
+  structureLines: string[]
+): any {
+  return {
+    title: `<#E0B11E>${serverName}</#FF0000>`,
+    'display-condition': '%player-version-id%>=765;%bedrock%=false;%world%=world',
+    lines: [
+      '%animation:MyAnimation1%',
+      '&bStructures',
+      ...structureLines,
       '%animation:MyAnimation1%',
       '&2🧭 %player_direction%||&7%player_x% %player_y% %player_z%',
     ],
@@ -353,10 +366,11 @@ export function generateOwnedTABSections(
     counts.villages > 0 ||
     hasOverworldStructures
   ) {
-    scoreboards['scoreboard-overworld'] = generateOverworldScoreboard(
+    scoreboards['main-overworld'] = generateOverworldScoreboard(serverName, counts, useDifficultyColour)
+  }
+  if (hasOverworldStructures) {
+    scoreboards['structures-overworld'] = generateStructuresOverworldScoreboard(
       serverName,
-      counts,
-      useDifficultyColour,
       structureLines
     )
   }
@@ -408,7 +422,12 @@ function isOwnedConditionKey(key: string): boolean {
  * Check if a scoreboard key is owned (generated)
  */
 function isOwnedScoreboardKey(key: string): boolean {
-  return key === 'scoreboard-overworld' || key === 'scoreboard-nether' || key === 'scoreboard-end'
+  return (
+    key === 'main-overworld' ||
+    key === 'structures-overworld' ||
+    key === 'scoreboard-nether' ||
+    key === 'scoreboard-end'
+  )
 }
 
 /**

@@ -91,7 +91,9 @@ describe('structures TAB section', () => {
       },
     ]
     const owned = generateOwnedTABSections(regions, 'Srv', undefined, '', families)
-    const lines = owned.scoreboards['scoreboard-overworld'].lines as string[]
+    const mainLines = owned.scoreboards['main-overworld'].lines as string[]
+    const lines = owned.scoreboards['structures-overworld'].lines as string[]
+    expect(mainLines.some((l) => l === '&bStructures')).toBe(false)
     expect(lines.some((l) => l === '&bStructures')).toBe(true)
     expect(lines.some((l) => l.includes('structure-name'))).toBe(true)
     expect(lines.some((l) => l.includes('Ancient Cities') && l.includes('ancient_cities_found'))).toBe(
