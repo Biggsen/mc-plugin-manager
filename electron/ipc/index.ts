@@ -6,6 +6,7 @@ const { registerImportHandlers } = require('./handlers/importHandlers')
 const { registerBuildHandlers } = require('./handlers/buildHandlers')
 const { registerLoreBookHandlers } = require('./handlers/loreBookHandlers')
 const { registerDialogHandlers } = require('./handlers/dialogHandlers')
+const { registerPluginCompareHandlers } = require('./handlers/pluginCompareHandlers')
 
 function registerAllHandlers(): void {
   registerServerHandlers()
@@ -13,6 +14,7 @@ function registerAllHandlers(): void {
   registerBuildHandlers()
   registerLoreBookHandlers()
   registerDialogHandlers()
+  registerPluginCompareHandlers()
 }
 
 registerAllHandlers()

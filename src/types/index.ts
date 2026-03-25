@@ -25,7 +25,13 @@ export type GeneratorVersionKey = PluginType | 'discordsrv'
 
 export interface ServerProfile {
   id: ServerId
+  /** Display name in this app (e.g. live vs next). */
   name: string
+  /**
+   * String used in generated plugin configs (`{SERVER_NAME}`, TAB header, etc.).
+   * When omitted or empty, `name` is used.
+   */
+  serverName?: string
   sources: {
     overworld?: ImportedSource
     nether?: ImportedSource
@@ -133,6 +139,8 @@ export interface ServerSummaryWithStats {
   villageCount: number
   heartCount: number
   netherRegionCount: number
+  netherHeartCount: number
+  structureCount: number
   lastImportIso: string | null
 }
 
@@ -204,3 +212,57 @@ export interface BuildReport {
   /** Counter values persisted on the profile after this build (plugins that were emitted). */
   generatorVersionsSnapshot?: Partial<Record<GeneratorVersionKey, number>>
 }
+
+/** Single PM-generated path when comparing two plugin folder trees. */
+export type PluginFolderCompareStatus =
+  | 'identical'
+  | 'different'
+  | 'missing_left'
+  | 'missing_right'
+  | 'missing_both'
+  | 'read_error'
+
+export interface PluginFolderCompareFileResult {
+  id: string
+  label: string
+  relativePath: string
+  status: PluginFolderCompareStatus
+  /** Unified diff when status is `different` */
+  unifiedDiff?: string
+  error?: string
+}
+
+export interface PluginFolderCompareResult {
+  leftRoot: string
+  rightRoot: string
+  /** Set when bundled guide books could not be listed — BookGUI rows are omitted. */
+  bookGuiWarning?: string
+  files: PluginFolderCompareFileResult[]
+  summary: {
+    identical: number
+    different: number
+    missingLeft: number
+    missingRight: number
+    missingBoth: number
+    readErrors: number
+  }
+}
+
+export type PluginFolderCompareResponse =
+  | { ok: true; result: PluginFolderCompareResult }
+  | { ok: false; error: string }
+
+/** Saved left/right plugins roots for the folder compare tool. */
+export interface ComparePreset {
+  id: string
+  name: string
+  leftPath: string
+  rightPath: string
+  updatedAt: string
+}
+
+export type ComparePresetMutationResult =
+  | { ok: true; preset: ComparePreset }
+  | { ok: false; error: string }
+
+export type ComparePresetDeleteResult = { ok: true } | { ok: false; error: string }

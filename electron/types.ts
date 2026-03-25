@@ -16,6 +16,13 @@ export type {
   ImportResult,
   BuildResult,
   BuildReport,
+  PluginFolderCompareStatus,
+  PluginFolderCompareFileResult,
+  PluginFolderCompareResult,
+  PluginFolderCompareResponse,
+  ComparePreset,
+  ComparePresetMutationResult,
+  ComparePresetDeleteResult,
 } from '@shared/types'
 
 export const PLUGIN_TYPES: import('@shared/types').PluginType[] = ['aa', 'ce', 'tab', 'lm', 'mc', 'cw']

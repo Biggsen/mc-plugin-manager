@@ -8,13 +8,21 @@ import type {
   OnboardingConfig,
   RegionRecord,
   DiscordSrvSettings,
+  PluginFolderCompareResponse,
+  ComparePreset,
+  ComparePresetMutationResult,
+  ComparePresetDeleteResult,
 } from './types'
 
 // Define the IPC API interface
 export interface ElectronAPI {
   // Server profile management
   listServers: () => Promise<ServerSummaryWithStats[]>
-  createServer: (name: string) => Promise<ServerProfile>
+  createServer: (name: string, serverName?: string) => Promise<ServerProfile>
+  updateServerIdentity: (
+    serverId: string,
+    partial: { name?: string; serverName?: string }
+  ) => Promise<ServerProfile | null>
   getServer: (serverId: string) => Promise<ServerProfile>
   deleteServer: (serverId: string) => Promise<{ success: boolean; error?: string }>
   setDiscordSrvSettings: (serverId: string, partial: DiscordSrvSettings) => Promise<void>
@@ -68,6 +76,21 @@ export interface ElectronAPI {
   ) => Promise<BuildResult>
   showConfigFileDialog: (title: string, defaultPath?: string) => Promise<string | null>
   showOutputDialog: () => Promise<string | null>
+  showFolderDialog: (title: string, defaultPath?: string) => Promise<string | null>
+  comparePluginFolders: (leftRoot: string, rightRoot: string) => Promise<PluginFolderCompareResponse>
+  listComparePresets: () => Promise<ComparePreset[]>
+  saveComparePreset: (input: {
+    name: string
+    leftPath: string
+    rightPath: string
+  }) => Promise<ComparePresetMutationResult>
+  updateComparePreset: (input: {
+    id: string
+    name: string
+    leftPath: string
+    rightPath: string
+  }) => Promise<ComparePresetMutationResult>
+  deleteComparePreset: (id: string) => Promise<ComparePresetDeleteResult>
   exportLoreBooks: (
     serverId: string,
     inputs: { outDir: string; author?: string }
@@ -81,7 +104,10 @@ export interface ElectronAPI {
 // Expose API to renderer
 contextBridge.exposeInMainWorld('electronAPI', {
   listServers: () => ipcRenderer.invoke('list-servers'),
-  createServer: (name: string) => ipcRenderer.invoke('create-server', name),
+  createServer: (name: string, serverName?: string) =>
+    ipcRenderer.invoke('create-server', name, serverName),
+  updateServerIdentity: (serverId: string, partial: { name?: string; serverName?: string }) =>
+    ipcRenderer.invoke('update-server-identity', serverId, partial),
   getServer: (serverId: string) => ipcRenderer.invoke('get-server', serverId),
   deleteServer: (serverId: string) => ipcRenderer.invoke('delete-server', serverId),
   setDiscordSrvSettings: (serverId: string, partial: DiscordSrvSettings) =>
@@ -120,6 +146,16 @@ contextBridge.exposeInMainWorld('electronAPI', {
   showConfigFileDialog: (title: string, defaultPath?: string) =>
     ipcRenderer.invoke('show-config-file-dialog', title, defaultPath),
   showOutputDialog: () => ipcRenderer.invoke('show-output-dialog'),
+  showFolderDialog: (title: string, defaultPath?: string) =>
+    ipcRenderer.invoke('show-folder-dialog', title, defaultPath),
+  comparePluginFolders: (leftRoot: string, rightRoot: string) =>
+    ipcRenderer.invoke('compare-plugin-folders', leftRoot, rightRoot),
+  listComparePresets: () => ipcRenderer.invoke('list-compare-presets'),
+  saveComparePreset: (input: { name: string; leftPath: string; rightPath: string }) =>
+    ipcRenderer.invoke('save-compare-preset', input),
+  updateComparePreset: (input: { id: string; name: string; leftPath: string; rightPath: string }) =>
+    ipcRenderer.invoke('update-compare-preset', input),
+  deleteComparePreset: (id: string) => ipcRenderer.invoke('delete-compare-preset', id),
   exportLoreBooks: (serverId: string, inputs: { outDir: string; author?: string }) =>
     ipcRenderer.invoke('export-lore-books', serverId, inputs),
   readBuildReport: (serverId: string, buildId: string) =>

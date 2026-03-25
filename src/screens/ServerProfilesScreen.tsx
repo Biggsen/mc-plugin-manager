@@ -12,7 +12,19 @@ import {
   ActionIcon,
   Center,
 } from '@mantine/core'
-import { IconPlus, IconSearch, IconServer, IconTrash, IconMap2, IconBuildingCommunity, IconHeart, IconFlame, IconStack } from '@tabler/icons-react'
+import {
+  IconPlus,
+  IconSearch,
+  IconServer,
+  IconTrash,
+  IconMap2,
+  IconBuildingCommunity,
+  IconHeart,
+  IconHeartFilled,
+  IconFlame,
+  IconBuilding,
+  IconStack,
+} from '@tabler/icons-react'
 import type { ServerProfile, ServerSummaryWithStats } from '../types'
 import classes from './ServerProfilesScreen.module.css'
 
@@ -25,6 +37,7 @@ export function ServerProfilesScreen({
 }: ServerProfilesScreenProps) {
   const [servers, setServers] = useState<ServerSummaryWithStats[]>([])
   const [newServerName, setNewServerName] = useState('')
+  const [newConfigName, setNewConfigName] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
   const [isCreating, setIsCreating] = useState(false)
   const [addServerModalOpen, setAddServerModalOpen] = useState(false)
@@ -45,7 +58,12 @@ export function ServerProfilesScreen({
     const n = filteredServers.length
     const regions = filteredServers.reduce((a, s) => a + (s.regionCount ?? 0), 0)
     const villages = filteredServers.reduce((a, s) => a + (s.villageCount ?? 0), 0)
-    return { n, regions, villages }
+    const hearts = filteredServers.reduce((a, s) => a + (s.heartCount ?? 0), 0)
+    const netherRegions = filteredServers.reduce((a, s) => a + (s.netherRegionCount ?? 0), 0)
+    const netherHearts = filteredServers.reduce((a, s) => a + (s.netherHeartCount ?? 0), 0)
+    const structures = filteredServers.reduce((a, s) => a + (s.structureCount ?? 0), 0)
+    const totalWorldData = regions + villages + hearts + netherRegions + netherHearts
+    return { n, regions, villages, hearts, netherRegions, netherHearts, structures, totalWorldData }
   }, [filteredServers])
 
   function normalizeServer(s: Partial<ServerSummaryWithStats> & { id: string; name: string }): ServerSummaryWithStats {
@@ -56,6 +74,8 @@ export function ServerProfilesScreen({
       villageCount: typeof s.villageCount === 'number' ? s.villageCount : 0,
       heartCount: typeof s.heartCount === 'number' ? s.heartCount : 0,
       netherRegionCount: typeof s.netherRegionCount === 'number' ? s.netherRegionCount : 0,
+      netherHeartCount: typeof s.netherHeartCount === 'number' ? s.netherHeartCount : 0,
+      structureCount: typeof s.structureCount === 'number' ? s.structureCount : 0,
       lastImportIso: s.lastImportIso ?? null,
     }
   }
@@ -73,9 +93,14 @@ export function ServerProfilesScreen({
     if (!newServerName.trim()) return
     setIsCreating(true)
     try {
-      const newServer = await window.electronAPI.createServer(newServerName.trim())
+      const cn = newConfigName.trim()
+      const newServer = await window.electronAPI.createServer(
+        newServerName.trim(),
+        cn.length > 0 ? cn : undefined
+      )
       await loadServers()
       setNewServerName('')
+      setNewConfigName('')
       setAddServerModalOpen(false)
       onSelectServer(newServer)
     } catch (error) {
@@ -140,6 +165,7 @@ export function ServerProfilesScreen({
         onClose={() => {
           setAddServerModalOpen(false)
           setNewServerName('')
+          setNewConfigName('')
         }}
       >
         <Stack gap="md">
@@ -151,7 +177,15 @@ export function ServerProfilesScreen({
               if (e.key === 'Enter') handleCreateServer()
             }}
             leftSection={<IconServer size={16} />}
-            label="Server name"
+            label="Profile name"
+            description="Shown on the home screen and in this app"
+          />
+          <TextInput
+            placeholder="e.g. charidh (optional)"
+            value={newConfigName}
+            onChange={(e) => setNewConfigName(e.currentTarget.value)}
+            label="Name in generated configs"
+            description="If set, used for {SERVER_NAME} and TAB instead of the profile name"
           />
           <Group justify="flex-end" gap="sm">
             <Button
@@ -216,7 +250,9 @@ export function ServerProfilesScreen({
 
       {filteredServers.length > 0 && (
         <Text size="sm" c="dimmed">
-          {summary.n} server{summary.n !== 1 ? 's' : ''} • {summary.regions} total regions • {summary.villages} total villages
+          {summary.n} server{summary.n !== 1 ? 's' : ''} • {summary.regions} regions • {summary.villages} villages •{' '}
+          {summary.hearts} hearts • {summary.netherRegions} nether regions • {summary.netherHearts} nether hearts •{' '}
+          {summary.structures} structures • {summary.totalWorldData} total
         </Text>
       )}
 
@@ -249,6 +285,8 @@ const STAT_ICONS = [
   { key: 'villages', label: (n: number) => `${n} villages`, Icon: IconBuildingCommunity },
   { key: 'hearts', label: (n: number) => `${n} hearts`, Icon: IconHeart },
   { key: 'nether', label: (n: number) => `${n} nether regions`, Icon: IconFlame },
+  { key: 'netherHearts', label: (n: number) => `${n} nether hearts`, Icon: IconHeartFilled },
+  { key: 'structures', label: (n: number) => `${n} structures`, Icon: IconBuilding },
   { key: 'total', label: (n: number) => `${n} total regions`, Icon: IconStack },
 ] as const
 
@@ -265,19 +303,28 @@ function ServerCard({
   const villageCount = server.villageCount ?? 0
   const heartCount = server.heartCount ?? 0
   const netherRegionCount = server.netherRegionCount ?? 0
+  const netherHeartCount = server.netherHeartCount ?? 0
+  const structureCount = server.structureCount ?? 0
   const lastImportLabel = server.lastImportIso
     ? new Date(server.lastImportIso).toLocaleDateString(undefined, {
         dateStyle: 'medium',
       })
     : 'Never'
 
-  const totalRegions = regionCount + villageCount + heartCount + netherRegionCount
+  const coreCounts = [regionCount, villageCount, heartCount, netherRegionCount, netherHeartCount]
+  const totalRegions = coreCounts.reduce((a, b) => a + b, 0)
+  const rowCounts = [...coreCounts, structureCount]
   const stats = [
-    { key: 'regions', label: STAT_ICONS[0].label(regionCount), Icon: STAT_ICONS[0].Icon },
-    { key: 'villages', label: STAT_ICONS[1].label(villageCount), Icon: STAT_ICONS[1].Icon },
-    { key: 'hearts', label: STAT_ICONS[2].label(heartCount), Icon: STAT_ICONS[2].Icon },
-    { key: 'nether', label: STAT_ICONS[3].label(netherRegionCount), Icon: STAT_ICONS[3].Icon },
-    { key: 'total', label: STAT_ICONS[4].label(totalRegions), Icon: STAT_ICONS[4].Icon },
+    ...STAT_ICONS.slice(0, 6).map((s, i) => ({
+      key: s.key,
+      label: s.label(rowCounts[i]!),
+      Icon: s.Icon,
+    })),
+    {
+      key: STAT_ICONS[6].key,
+      label: STAT_ICONS[6].label(totalRegions),
+      Icon: STAT_ICONS[6].Icon,
+    },
   ]
 
   return (

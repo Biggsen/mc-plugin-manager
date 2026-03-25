@@ -17,6 +17,7 @@ const { validateAADiff, validateCEDiff, validateTABDiff, validateLMDiff } = requ
 const { prependGeneratorVersionHeader } = require('../utils/generatorVersionHeader')
 
 import type { PluginType, ServerProfile } from '../types'
+import { resolveConfigServerName } from '../utils/resolveConfigServerName'
 
 export interface BuildInputs {
   generateAA?: boolean
@@ -85,6 +86,7 @@ export function buildPluginContent(
     : inputs.cwPath
   const configPath = resolveConfigPath(type, pathInput)
   const isDefault = isDefaultPath(pathInput)
+  const configServerName = resolveConfigServerName(profile)
 
   switch (type) {
     case 'aa': {
@@ -107,7 +109,7 @@ export function buildPluginContent(
         profile.regionsMeta?.structureFamilies
       )
       let content = mergeCEConfig(configPath, ownedEvents)
-      content = content.replace(/\{SERVER_NAME\}/g, profile.name)
+      content = content.replace(/\{SERVER_NAME\}/g, configServerName)
       content = content.replace(/\{START_REGION_AACH\}/g, getStartRegionAachId(profile.onboarding, profile.regions))
       return { content, configPath, isDefault }
     }
@@ -115,7 +117,7 @@ export function buildPluginContent(
       const discordInvite = resolveDiscordInviteUrl(profile)
       const ownedTABSections = generateOwnedTABSections(
         profile.regions,
-        profile.name,
+        configServerName,
         profile.regionsMeta?.levelledMobs?.regionBands,
         discordInvite,
         profile.regionsMeta?.structureFamilies
@@ -130,7 +132,7 @@ export function buildPluginContent(
     }
     case 'mc': {
       const hasLore = serverProfileHasLore(profile)
-      const content = generateMCConfig(configPath, profile.name, profile.regions || [], hasLore)
+      const content = generateMCConfig(configPath, configServerName, profile.regions || [], hasLore)
       return { content, configPath, isDefault }
     }
     case 'cw': {

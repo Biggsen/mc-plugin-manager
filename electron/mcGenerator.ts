@@ -10,7 +10,7 @@ const LORE_GUIDES_LINE = '&e> Lore; &d/guidelore;/guidelore'
  * Generate MyCommand commands.yml by substituting placeholders in the template
  *
  * Placeholders:
- * - {SERVER_NAME} -> profile.name
+ * - {SERVER_NAME} -> resolved config server name (see resolveConfigServerName)
  *
  * Any `discord` command block is removed (DiscordSRV owns /discord).
  *

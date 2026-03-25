@@ -3,7 +3,11 @@
 // Extend Window interface for electronAPI
 interface ElectronAPI {
   listServers: () => Promise<ServerSummaryWithStats[]>
-  createServer: (name: string) => Promise<ServerProfile>
+  createServer: (name: string, serverName?: string) => Promise<ServerProfile>
+  updateServerIdentity: (
+    serverId: string,
+    partial: { name?: string; serverName?: string }
+  ) => Promise<ServerProfile | null>
   getServer: (serverId: string) => Promise<ServerProfile | null>
   deleteServer: (serverId: string) => Promise<{ success: boolean; error?: string }>
   setDiscordSrvSettings: (serverId: string, partial: import('./types').DiscordSrvSettings) => Promise<void>
@@ -51,6 +55,24 @@ interface ElectronAPI {
   ) => Promise<BuildResult>
   showConfigFileDialog: (title: string, defaultPath?: string) => Promise<string | null>
   showOutputDialog: () => Promise<string | null>
+  showFolderDialog: (title: string, defaultPath?: string) => Promise<string | null>
+  comparePluginFolders: (
+    leftRoot: string,
+    rightRoot: string
+  ) => Promise<import('./types').PluginFolderCompareResponse>
+  listComparePresets: () => Promise<import('./types').ComparePreset[]>
+  saveComparePreset: (input: {
+    name: string
+    leftPath: string
+    rightPath: string
+  }) => Promise<import('./types').ComparePresetMutationResult>
+  updateComparePreset: (input: {
+    id: string
+    name: string
+    leftPath: string
+    rightPath: string
+  }) => Promise<import('./types').ComparePresetMutationResult>
+  deleteComparePreset: (id: string) => Promise<import('./types').ComparePresetDeleteResult>
   exportLoreBooks: (
     serverId: string,
     inputs: { outDir: string; author?: string }

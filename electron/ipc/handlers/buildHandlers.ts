@@ -20,19 +20,8 @@ const {
 const { prependGeneratorVersionHeader } = require('../../utils/generatorVersionHeader')
 
 import type { BuildResult, BuildReport, DiscordSrvSettings } from '../../types'
-
-function getGuideBooksSourceDir(): string {
-  const electron = require('electron')
-  const isPackaged = electron.app.isPackaged
-  const basePath = isPackaged ? electron.app.getAppPath() : path.join(__dirname, '../..')
-  const guideBooksDir = isPackaged
-    ? path.join(basePath, 'dist-electron', 'assets', 'templates', 'guide-books')
-    : path.join(basePath, 'assets', 'templates', 'guide-books')
-  if (!existsSync(guideBooksDir)) {
-    throw new Error(`Bundled BookGUI guide books not found at: ${guideBooksDir}. Run "npm run build:electron" to copy templates.`)
-  }
-  return guideBooksDir
-}
+import { resolveConfigServerName } from '../../utils/resolveConfigServerName'
+import { getGuideBooksSourceDir } from '../../utils/guideBooksDir'
 
 export function registerBuildHandlers(): void {
   ipcMain.handle(
@@ -91,7 +80,8 @@ export function registerBuildHandlers(): void {
         }
 
         const propagate = Boolean(inputs.propagateToPluginFolders)
-        const serverNameSanitized = sanitizeServerName(profile.name)
+        const configServerName = resolveConfigServerName(profile)
+        const serverNameSanitized = sanitizeServerName(configServerName)
         const buildId = `build-${Date.now()}`
         const timestamp = new Date().toISOString()
         const warnings: string[] = []
@@ -284,7 +274,7 @@ export function registerBuildHandlers(): void {
               : bookFiles.filter((f: string) => f !== 'guide_lore.yml')
             const bookGuiOutputDir = path.join(inputs.outDir, 'BookGUI', 'books')
             fs.mkdirSync(bookGuiOutputDir, { recursive: true })
-            const serverName = profile.name
+            const serverName = configServerName
             for (const filename of booksToWrite) {
               const content = fs.readFileSync(path.join(guideBooksDir, filename), 'utf-8')
               const substituted = content.replace(/\{SERVER_NAME\}/g, serverName)

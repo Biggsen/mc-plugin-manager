@@ -45,4 +45,17 @@ export function registerDialogHandlers(): void {
       return result.filePaths[0]
     }
   )
+
+  ipcMain.handle(
+    'show-folder-dialog',
+    async (_event: unknown, title: string, defaultPath?: string): Promise<string | null> => {
+      const result = await dialog.showOpenDialog({
+        title: title || 'Select Folder',
+        defaultPath,
+        properties: ['openDirectory'],
+      })
+      if (result.canceled || result.filePaths.length === 0) return null
+      return result.filePaths[0]
+    }
+  )
 }

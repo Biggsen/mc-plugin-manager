@@ -2,7 +2,7 @@ const { app } = require('electron')
 const { join } = require('path')
 const { existsSync, mkdirSync, readFileSync, writeFileSync, readdirSync, rmSync } = require('fs')
 
-import type { ServerProfile, BuildReport } from './types'
+import type { ServerProfile, BuildReport, ComparePreset } from './types'
 
 const DATA_DIR_NAME = 'mc-plugin-manager-data'
 
@@ -127,6 +127,46 @@ export function loadBuildReport(serverId: string, buildId: string): BuildReport 
   }
 }
 
+export function getComparePresetsPath(): string {
+  return join(getDataDirectory(), 'compare-presets.json')
+}
+
+export function loadComparePresets(): ComparePreset[] {
+  const p = getComparePresetsPath()
+  if (!existsSync(p)) {
+    return []
+  }
+  try {
+    const content = readFileSync(p, 'utf-8')
+    const parsed = JSON.parse(content) as unknown
+    if (!Array.isArray(parsed)) {
+      return []
+    }
+    return parsed.filter(
+      (row): row is ComparePreset =>
+        typeof row === 'object' &&
+        row !== null &&
+        typeof (row as ComparePreset).id === 'string' &&
+        typeof (row as ComparePreset).name === 'string' &&
+        typeof (row as ComparePreset).leftPath === 'string' &&
+        typeof (row as ComparePreset).rightPath === 'string' &&
+        typeof (row as ComparePreset).updatedAt === 'string'
+    )
+  } catch (error) {
+    console.error('Failed to load compare presets:', error)
+    return []
+  }
+}
+
+export function saveComparePresets(presets: ComparePreset[]): void {
+  const dataDir = getDataDirectory()
+  if (!existsSync(dataDir)) {
+    mkdirSync(dataDir, { recursive: true })
+  }
+  const p = getComparePresetsPath()
+  writeFileSync(p, JSON.stringify(presets, null, 2), 'utf-8')
+}
+
 export function listBuildIds(serverId: string): string[] {
   const buildsDir = getBuildsDirectory(serverId)
   if (!existsSync(buildsDir)) {
@@ -158,4 +198,7 @@ module.exports = {
   saveBuildReport,
   loadBuildReport,
   listBuildIds,
+  getComparePresetsPath,
+  loadComparePresets,
+  saveComparePresets,
 }

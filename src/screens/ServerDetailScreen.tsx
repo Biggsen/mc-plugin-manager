@@ -10,8 +10,17 @@ import {
   Box,
   Title,
   SegmentedControl,
+  TextInput,
 } from '@mantine/core'
-import { IconArrowLeft, IconFileImport, IconUser, IconHammer, IconMap2, IconBook } from '@tabler/icons-react'
+import {
+  IconArrowLeft,
+  IconFileImport,
+  IconUser,
+  IconHammer,
+  IconMap2,
+  IconBook,
+  IconUserCircle,
+} from '@tabler/icons-react'
 import type { ServerProfile } from '../types'
 import { computeRegionDisplayStats } from '../utils/regionStats'
 import { formatStructureTypeLabel } from '../utils/stringFormatters'
@@ -21,22 +30,35 @@ import { BuildScreen } from './BuildScreen'
 import { RegionsScreen } from './RegionsScreen'
 import { LoreBooksScreen } from './LoreBooksScreen'
 
-type SectionValue = 'import' | 'regions' | 'onboarding' | 'build' | 'loreBooks'
+type SectionValue = 'profile' | 'import' | 'regions' | 'onboarding' | 'build' | 'loreBooks'
 
 type ImportStatRow = { key: string; label: string; value: number; nested?: boolean }
 
 interface ServerDetailScreenProps {
   server: ServerProfile
   onBack: () => void
+  onServerProfileChange?: (server: ServerProfile) => void
 }
 
-export function ServerDetailScreen({ server: initialServer, onBack }: ServerDetailScreenProps) {
+export function ServerDetailScreen({
+  server: initialServer,
+  onBack,
+  onServerProfileChange,
+}: ServerDetailScreenProps) {
   const [server, setServer] = useState<ServerProfile>(initialServer)
   const [activeSection, setActiveSection] = useState<SectionValue>('import')
+  const [profileNameDraft, setProfileNameDraft] = useState(initialServer.name)
+  const [configNameDraft, setConfigNameDraft] = useState(initialServer.serverName ?? '')
+  const [identitySaving, setIdentitySaving] = useState(false)
 
   useEffect(() => {
     loadServer()
   }, [initialServer.id])
+
+  useEffect(() => {
+    setProfileNameDraft(server.name)
+    setConfigNameDraft(server.serverName ?? '')
+  }, [server.id, server.name, server.serverName])
 
   // Reload profile when opening Build so fields (e.g. DiscordSRV) match disk after tab unmount.
   useEffect(() => {
@@ -69,6 +91,29 @@ export function ServerDetailScreen({ server: initialServer, onBack }: ServerDeta
   function handleServerUpdate(updated: ServerProfile) {
     setServer(updated)
   }
+
+  async function saveIdentity() {
+    const name = profileNameDraft.trim()
+    if (!name) return
+    setIdentitySaving(true)
+    try {
+      const updated = await window.electronAPI.updateServerIdentity(server.id, {
+        name,
+        serverName: configNameDraft.trim(),
+      })
+      if (updated) {
+        setServer(updated)
+        onServerProfileChange?.(updated)
+      }
+    } catch (error) {
+      console.error('Failed to save server identity:', error)
+    } finally {
+      setIdentitySaving(false)
+    }
+  }
+
+  const previewConfigName =
+    configNameDraft.trim() || profileNameDraft.trim() || server.name
 
   const stats = computeRegionDisplayStats(server.regions)
   const {
@@ -134,6 +179,7 @@ export function ServerDetailScreen({ server: initialServer, onBack }: ServerDeta
   ]
 
   const navItems: { value: SectionValue; label: string; icon: React.ReactNode }[] = [
+    { value: 'profile', label: 'Profile', icon: <IconUserCircle size={18} /> },
     { value: 'import', label: 'Import Regions', icon: <IconFileImport size={18} /> },
     { value: 'regions', label: 'Regions', icon: <IconMap2 size={18} /> },
     { value: 'onboarding', label: 'Onboarding', icon: <IconUser size={18} /> },
@@ -159,6 +205,10 @@ export function ServerDetailScreen({ server: initialServer, onBack }: ServerDeta
           hiddenFrom="sm"
         />
       </Group>
+
+      <Text size="lg" fw={600} lineClamp={1} hiddenFrom="sm">
+        {server.name}
+      </Text>
 
     <Group align="flex-start" gap="xl" wrap="nowrap" mih="100%">
       <Box
@@ -189,6 +239,7 @@ export function ServerDetailScreen({ server: initialServer, onBack }: ServerDeta
       <Stack gap="xl" flex={1} miw={0} p="md" pt={0} px={0}>
         <div>
           <Title order={1} mb={4}>
+            {activeSection === 'profile' && 'Profile'}
             {activeSection === 'import' && 'Import stats'}
             {activeSection === 'regions' && 'Regions'}
             {activeSection === 'onboarding' && 'Onboarding Config'}
@@ -196,6 +247,33 @@ export function ServerDetailScreen({ server: initialServer, onBack }: ServerDeta
             {activeSection === 'loreBooks' && 'Export Lore Books'}
           </Title>
         </div>
+
+        {activeSection === 'profile' && (
+          <Paper withBorder p="lg" maw={480} bg="dark.6">
+            <Stack gap="md">
+              <Text size="sm" c="dimmed">
+                Display name is shown in this app only. The config name is substituted into generated plugin
+                YAML ({'{SERVER_NAME}'}, TAB header, etc.).
+              </Text>
+              <TextInput
+                label="Display name"
+                description="Home screen and server list"
+                value={profileNameDraft}
+                onChange={(e) => setProfileNameDraft(e.currentTarget.value)}
+              />
+              <TextInput
+                label="Name in generated configs"
+                description={`Preview: ${previewConfigName}`}
+                placeholder="Leave blank to use display name"
+                value={configNameDraft}
+                onChange={(e) => setConfigNameDraft(e.currentTarget.value)}
+              />
+              <Button onClick={saveIdentity} loading={identitySaving} disabled={!profileNameDraft.trim()}>
+                Save
+              </Button>
+            </Stack>
+          </Paper>
+        )}
 
         {activeSection === 'import' && (
           <>

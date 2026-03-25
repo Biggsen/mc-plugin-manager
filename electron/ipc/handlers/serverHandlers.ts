@@ -24,6 +24,8 @@ export function registerServerHandlers(): void {
       const villageCount = regions.filter((r) => r.world === 'overworld' && r.kind === 'village').length
       const heartCount = regions.filter((r) => r.world === 'overworld' && r.kind === 'heart').length
       const netherRegionCount = regions.filter((r) => r.world === 'nether' && r.kind === 'region').length
+      const netherHeartCount = regions.filter((r) => r.world === 'nether' && r.kind === 'heart').length
+      const structureCount = regions.filter((r) => r.kind === 'structure').length
 
       const dates = [
         profile.sources?.overworld?.importedAtIso,
@@ -39,6 +41,8 @@ export function registerServerHandlers(): void {
         villageCount,
         heartCount,
         netherRegionCount,
+        netherHeartCount,
+        structureCount,
         lastImportIso,
       })
     }
@@ -48,7 +52,7 @@ export function registerServerHandlers(): void {
 
   ipcMain.handle(
     'create-server',
-    async (_event: unknown, name: string): Promise<ServerProfile> => {
+    async (_event: unknown, name: string, serverName?: string | null): Promise<ServerProfile> => {
       const id = sanitizeServerName(name)
       const serverId = `${id}-${randomUUID().substring(0, 8)}`
 
@@ -68,6 +72,13 @@ export function registerServerHandlers(): void {
         build: {},
       }
 
+      if (serverName != null) {
+        const t = serverName.trim()
+        if (t.length > 0) {
+          profile.serverName = t
+        }
+      }
+
       saveServerProfile(profile)
       return profile
     }
@@ -77,6 +88,31 @@ export function registerServerHandlers(): void {
     'get-server',
     async (_event: unknown, serverId: string): Promise<ServerProfile | null> => {
       return loadServerProfile(serverId)
+    }
+  )
+
+  ipcMain.handle(
+    'update-server-identity',
+    async (
+      _event: unknown,
+      serverId: string,
+      partial: { name?: string; serverName?: string }
+    ): Promise<ServerProfile | null> => {
+      const profile = loadServerProfile(serverId)
+      if (!profile) return null
+      if (partial.name !== undefined) {
+        const n = partial.name.trim()
+        if (n.length === 0) {
+          throw new Error('Profile name cannot be empty')
+        }
+        profile.name = n
+      }
+      if (partial.serverName !== undefined) {
+        const s = partial.serverName.trim()
+        profile.serverName = s.length > 0 ? s : undefined
+      }
+      saveServerProfile(profile)
+      return profile
     }
   )
 
