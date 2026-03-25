@@ -3,11 +3,17 @@ const { existsSync, statSync, readFileSync } = require('fs')
 const { createTwoFilesPatch } = require('diff')
 import type { PluginFolderCompareFileResult, PluginFolderCompareResult } from '../types'
 import type { PmGeneratedEntry } from './pmGeneratedPaths'
+import { stripGeneratorVersionCommentLines } from './generatorVersionHeader'
 
 const MAX_BYTES = 6 * 1024 * 1024
 
 function normalizeText(s: string): string {
   return s.replace(/\r\n/g, '\n')
+}
+
+/** Line endings normalized; leading `# mc-plugin-manager:` line(s) stripped so compare/diffs ignore generator metadata. */
+function normalizeForCompare(s: string): string {
+  return normalizeText(stripGeneratorVersionCommentLines(normalizeText(s)))
 }
 
 export function comparePmPluginFolders(
@@ -123,8 +129,8 @@ export function comparePmPluginFolders(
       continue
     }
 
-    const a = normalizeText(leftContent)
-    const b = normalizeText(rightContent)
+    const a = normalizeForCompare(leftContent)
+    const b = normalizeForCompare(rightContent)
     if (a === b) {
       files.push({
         id: entry.id,
