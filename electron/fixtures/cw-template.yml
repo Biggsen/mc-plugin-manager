@@ -7,5 +7,7 @@ groups:
     - guideregions
     - sb
     - bookgui
+    - structures
+    - main
     subcommands:
     - aach reload

@@ -50,7 +50,7 @@ export function generateCWConfig(
 
   if (hasInvite) {
     const replaced = content.replace(
-      /(\r?\n    - bookgui)(\r?\n    subcommands:)/,
+      /(\r?\n    - bookgui)(\r?\n    - structures)/,
       (_m: string, before: string, after: string) => {
         const nl = after.startsWith('\r\n') ? '\r\n' : '\n'
         return `${before}${nl}    - discord${after}`
@@ -58,7 +58,7 @@ export function generateCWConfig(
     )
     if (replaced === content) {
       throw new Error(
-        'CommandWhitelist template: could not find "    - bookgui" followed by "    subcommands:"'
+        'CommandWhitelist template: could not find "    - bookgui" followed by "    - structures"'
       )
     }
     content = replaced

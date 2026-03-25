@@ -39,12 +39,28 @@ groups:
     - guideregions
     - guidedeath
     - guidemaps
+    - guidestructures
     - guidecrates
     - guideprotection
     - tab
     - sb
     - lore
     - bookgui
+    - structures
+    - main
+    - abandonclaim
+    - trust
+    - untrust
+    - accesstrust
+    - containertrust
+    - trustlist
+    - subdivideclaims
+    - restrictsubclaim
+    - basicclaims
+    - permissiontrust
+    - abandonallclaims
+    - claimslist
+    - trapped
     subcommands:
     - aach reload
     - aach generate

@@ -21,14 +21,14 @@ describe('generateCWConfig', () => {
 
   it('adds discord after bookgui when invite is provided', () => {
     const out = generateCWConfig(FIXTURE_PATH, 'https://discord.gg/abc', true)
-    expect(out).toMatch(/- bookgui\r?\n    - discord\r?\n    subcommands:/)
+    expect(out).toMatch(/- bookgui\r?\n    - discord\r?\n    - structures/)
   })
 
   it('removes duplicate discord then adds one when invite provided', () => {
     const tmp = path.join(os.tmpdir(), `cw-gen-test-${Date.now()}.yml`)
     const base = fs.readFileSync(FIXTURE_PATH, 'utf-8')
     const withDup = base.replace(
-      /(\n    - bookgui)(\n    subcommands:)/,
+      /(\n    - bookgui)(\n    - structures)/,
       '$1\n    - discord\n    - discord$2'
     )
     fs.writeFileSync(tmp, withDup, 'utf-8')
@@ -83,7 +83,7 @@ describe('generateCWConfig', () => {
 
   it('with invite and no lore: discord only, no guidelore or lore', () => {
     const out = generateCWConfig(FIXTURE_PATH, 'https://discord.gg/z', false)
-    expect(out).toMatch(/- bookgui\r?\n    - discord\r?\n    subcommands:/)
+    expect(out).toMatch(/- bookgui\r?\n    - discord\r?\n    - structures/)
     expect(out).not.toMatch(/\n    - guidelore\r?\n/)
     expect(out).not.toMatch(/\n    - lore\r?\n/)
   })
