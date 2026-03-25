@@ -9,6 +9,13 @@ interface AACommand {
   Name: string
   DisplayName: string
   Type: string
+  Reward?: {
+    Experience: number
+    Command?: {
+      Execute: string[]
+      Display: string
+    }
+  }
 }
 
 type AACommandsSection = {
@@ -38,6 +45,66 @@ const REGIONS_TEMPLATE: TierTemplate = {
 const HEARTS_TEMPLATE: TierTemplate = {
   tiers: [1, 'half', 'all'],
   category: 'hearts_discovered',
+}
+
+const STRUCTURE_DISCOVERY_XP: Record<string, number> = {
+  pillager_outpost: 80,
+  desert_pyramid: 100,
+  desert_well: 110,
+  buried_treasure: 130,
+  jungle_temple: 150,
+  igloo: 180,
+  trail_ruins: 200,
+  ancient_city: 500,
+}
+
+/** Per-structure claimblocks (AdvancedAchievements Reward.Command); PLAYER is substituted by AA */
+const STRUCTURE_DISCOVERY_CLAIM_BLOCKS: Record<string, number> = {
+  pillager_outpost: 10,
+  desert_pyramid: 12,
+  desert_well: 13,
+  buried_treasure: 15,
+  jungle_temple: 18,
+  igloo: 22,
+  trail_ruins: 25,
+  ancient_city: 50,
+}
+
+const STRUCTURE_SET_DIFFICULTY: Record<string, number> = {
+  pillager_outpost: 1.0,
+  desert_pyramid: 1.1,
+  desert_well: 1.2,
+  buried_treasure: 1.35,
+  jungle_temple: 1.5,
+  igloo: 1.8,
+  trail_ruins: 2.0,
+  ancient_city: 3.5,
+}
+
+const STRUCTURE_SET_XP_BASE = 250
+
+/** Same scaling as set XP (difficulty × √n); tuned for claimblock magnitudes */
+const STRUCTURE_SET_CLAIM_BLOCKS_BASE = 20
+
+function getStructureSetDifficulty(structureType: string): number {
+  if (!(structureType in STRUCTURE_SET_DIFFICULTY)) {
+    throw new Error(`Unknown structure type: ${structureType}`)
+  }
+  return STRUCTURE_SET_DIFFICULTY[structureType]
+}
+
+function calculateStructureSetXP(structureType: string, quantity: number): number {
+  if (quantity <= 0) return 0
+  const difficulty = getStructureSetDifficulty(structureType)
+  const xp = STRUCTURE_SET_XP_BASE * difficulty * Math.sqrt(quantity)
+  return Math.round(xp)
+}
+
+function calculateStructureSetClaimBlocks(structureType: string, quantity: number): number {
+  if (quantity <= 0) return 0
+  const difficulty = getStructureSetDifficulty(structureType)
+  const blocks = STRUCTURE_SET_CLAIM_BLOCKS_BASE * difficulty * Math.sqrt(quantity)
+  return Math.round(blocks)
 }
 
 const HALF_COLLISION_THRESHOLD = 5
@@ -247,13 +314,27 @@ export function generateAACommands(regions: RegionRecord[]): AACommandsSection {
     }
     
     // Flat structure - no level "1" nesting
-    commands[commandId] = {
+    const entry: AACommand = {
       Goal: goal,
       Message: message,
       Name: nameSnakeCase,
       DisplayName: displayName,
       Type: 'normal',
     }
+    if (region.kind === 'structure' && region.structureType) {
+      const xp = STRUCTURE_DISCOVERY_XP[region.structureType]
+      const claimBlocks = STRUCTURE_DISCOVERY_CLAIM_BLOCKS[region.structureType]
+      if (typeof xp === 'number') {
+        entry.Reward = { Experience: xp }
+        if (typeof claimBlocks === 'number') {
+          entry.Reward.Command = {
+            Execute: [`acb PLAYER +${claimBlocks}`],
+            Display: `${claimBlocks} claimblocks`,
+          }
+        }
+      }
+    }
+    commands[commandId] = entry
   }
   
   return commands
@@ -457,13 +538,21 @@ export function generateAACustom(
       const fam = structureFamilies[structureType]
       if (!fam?.counter || !fam.label) continue
       const { counter, label } = fam
+      const setXp = calculateStructureSetXP(structureType, n)
+      const setClaimBlocks = calculateStructureSetClaimBlocks(structureType, n)
       result[counter] = {
         [n]: {
           Message: `All ${label} Found!`,
           Name: `${counter}_${n}`,
           DisplayName: `${label} Wanderer`,
           Type: 'normal',
-          Reward: { Experience: 1000 },
+          Reward: {
+            Experience: setXp,
+            Command: {
+              Execute: [`acb PLAYER +${setClaimBlocks}`],
+              Display: `${setClaimBlocks} claimblocks`,
+            },
+          },
         },
       }
     }

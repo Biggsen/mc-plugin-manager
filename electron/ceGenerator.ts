@@ -154,14 +154,19 @@ function generateDiscoverOnceEvent(
 
 function generateStructureDiscoverOnceEvent(region: RegionRecord, customCounter: string): CEEvent {
   const cmd = getAACommandId(region)
+  const displayName = formatRegionDisplayName(region)
   return {
     type: 'wgevents_region_enter',
     one_time: true,
     conditions: [`%region% == ${region.id}`],
     actions: {
       default: [
+        'wait: 3',
         `console_command: aach give ${cmd} %player%`,
+        `console_message: [EXPMETRIC] server={SERVER_NAME} type=discovery entity=structure player=%player% uuid=%player_uuid% region=${displayName} diff=0`,
+        'wait: 6',
         `console_command: aach add 1 Custom.${customCounter} %player%`,
+        `console_message: [EXPMETRIC] server={SERVER_NAME} type=state entity=structure player=%player% uuid=%player_uuid% ${customCounter}=%aach_custom_${customCounter}%`,
       ],
     },
   }

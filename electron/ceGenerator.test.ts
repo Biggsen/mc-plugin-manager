@@ -131,7 +131,7 @@ describe('generateOwnedCEEvents', () => {
     expect(events['inner_core_discover_once']).toBeUndefined()
   })
 
-  it('emits structure discover_once with aach give + family counter only', () => {
+  it('emits structure discover_once with waits and metrics for family counter only', () => {
     const families = {
       ancient_city: { label: 'Ancient Cities', counter: 'ancient_cities_found' },
     }
@@ -153,9 +153,14 @@ describe('generateOwnedCEEvents', () => {
     expect(ev?.conditions).toEqual(['%region% == inner_core'])
     const actions = ev!.actions!.default as string[]
     expect(actions).toEqual([
+      'wait: 3',
       'console_command: aach give discoverInnerCore %player%',
+      'console_message: [EXPMETRIC] server={SERVER_NAME} type=discovery entity=structure player=%player% uuid=%player_uuid% region=Inner Core diff=0',
+      'wait: 6',
       'console_command: aach add 1 Custom.ancient_cities_found %player%',
+      'console_message: [EXPMETRIC] server={SERVER_NAME} type=state entity=structure player=%player% uuid=%player_uuid% ancient_cities_found=%aach_custom_ancient_cities_found%',
     ])
+    expect(actions.some((a) => a.includes('cc give virtual'))).toBe(false)
     expect(actions.some((a) => a.includes('total_discovered'))).toBe(false)
   })
 })
