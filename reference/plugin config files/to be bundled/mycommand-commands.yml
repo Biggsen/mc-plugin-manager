@@ -1,5 +1,21 @@
 # Exploration Server Commands
 
+structures:
+  command: /structures
+  type: RUN_CONSOLE
+  permission-required: false
+  register: true
+  runcmd:
+  - tab scoreboard show structures-overworld $player
+
+mainstats:
+  command: /main
+  type: RUN_CONSOLE
+  permission-required: false
+  register: true
+  runcmd:
+  - tab scoreboard show main-overworld $player
+
 server_help:
   command: /help
   type: TEXT
@@ -23,10 +39,11 @@ server_guides:
   - '&e> Discovery & progression; &d/guidediscovery;/guidediscovery'
   - '&e> Lore; &d/guidelore;/guidelore'
   - '&e> Regions & difficulty; &d/guideregions;/guideregions'
+  - '&e> Structures & rewards; &d/guidestructures;/guidestructures'
   - '&e> Death & keep-inventory; &d/guidedeath;/guidedeath'
   - '&e> Navigation & maps; &d/guidemaps;/guidemaps'
   - '&e> Crates & keys; &d/guidecrates;/guidecrates'
-  - '&e> Protection; &d/guideprotection;/guideprotection'
+  - '&e> Protection & claims; &d/guideprotection;/guideprotection'
 
 server_guide_intro:
   command: /guideintro
@@ -59,6 +76,14 @@ server_guide_regions:
   register: true
   runcmd:
   - '/bookgui guide_regions'
+
+server_guide_structures:
+  command: /guidestructures
+  type: RUN_COMMAND
+  permission-required: false
+  register: true
+  runcmd:
+  - '/bookgui guide_structures'
 
 server_guide_death:
   command: /guidedeath
