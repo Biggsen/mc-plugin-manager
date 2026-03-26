@@ -1766,41 +1766,41 @@ Events:
     type: call
     actions:
       default:
-        - "console_command: give %player% enchanted_book[enchantments={depth_strider:3}]"
+        - "console_command: give %player% enchanted_book[stored_enchantments={depth_strider:3}]"
   get_book_efficiency_5:
     type: call
     actions:
       default:
-        - "console_command: give %player% enchanted_book[enchantments={efficiency:5}]"
+        - "console_command: give %player% enchanted_book[stored_enchantments={efficiency:5}]"
   get_book_fire_protection_4:
     type: call
     actions:
       default:
-        - "console_command: give %player% enchanted_book[enchantments={fire_protection:4}]"
+        - "console_command: give %player% enchanted_book[stored_enchantments={fire_protection:4}]"
   get_book_fortune_3:
     type: call
     actions:
       default:
-        - "console_command: give %player% enchanted_book[enchantments={fortune:3}]"
+        - "console_command: give %player% enchanted_book[stored_enchantments={fortune:3}]"
   get_book_mending:
     type: call
     actions:
       default:
-        - "console_command: give %player% enchanted_book[enchantments={mending:1}]"
+        - "console_command: give %player% enchanted_book[stored_enchantments={mending:1}]"
   get_book_protection_5:
     type: call
     actions:
       default:
-        - "console_command: give %player% enchanted_book[enchantments={protection:5}]"
+        - "console_command: give %player% enchanted_book[stored_enchantments={protection:5}]"
   get_book_respiration_3:
     type: call
     actions:
       default:
-        - "console_command: give %player% enchanted_book[enchantments={respiration:3}]"
+        - "console_command: give %player% enchanted_book[stored_enchantments={respiration:3}]"
   get_book_unbreaking_3:
     type: call
     actions:
       default:
-        - "console_command: give %player% enchanted_book[enchantments={unbreaking:3}]"
+        - "console_command: give %player% enchanted_book[stored_enchantments={unbreaking:3}]"
 
 
