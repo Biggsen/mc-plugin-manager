@@ -5,10 +5,20 @@
 const fs = require('fs')
 const path = require('path')
 const yaml = require('yaml')
-const { resolveConfigPath, getPluginOutputPaths } = require('../utils/configPathResolver')
+const {
+  resolveConfigPath,
+  getPluginOutputPaths,
+  getCEEventFragmentPropagatedRelativePath,
+  getCEEventFragmentFlatName,
+} = require('../utils/configPathResolver')
 const { ensureBuildDirectory } = require('../storage')
 const { generateAACommands, generateAACustom, mergeAAConfig } = require('../aaGenerator')
-const { generateOwnedCEEvents, mergeCEConfig, getStartRegionAachId } = require('../ceGenerator')
+const {
+  generateOwnedCEEvents,
+  buildCEConfigBundle,
+  getStartRegionAachId,
+  CE_EVENT_FRAGMENT_BASENAMES,
+} = require('../ceGenerator')
 const { generateOwnedTABSections, mergeTABConfig } = require('../tabGenerator')
 const { generateOwnedLMRules, mergeLMConfig } = require('../lmGenerator')
 const { generateMCConfig } = require('../mcGenerator')
@@ -72,12 +82,18 @@ function serverProfileHasLore(profile: ServerProfile): boolean {
 
 /**
  * Generate config content for a single plugin. Does not validate or write.
+ * CE also returns `ceEventFragments` for `ConditionalEvents/events/*.yml`.
  */
 export function buildPluginContent(
   type: PluginType,
   profile: ServerProfile,
   inputs: BuildInputs
-): { content: string; configPath: string; isDefault: boolean } {
+): {
+  content: string
+  configPath: string
+  isDefault: boolean
+  ceEventFragments?: Record<string, string>
+} {
   const pathInput = type === 'aa' ? inputs.aaPath
     : type === 'ce' ? inputs.cePath
     : type === 'tab' ? inputs.tabPath
@@ -108,10 +124,19 @@ export function buildPluginContent(
         profile.regionsMeta?.levelledMobs?.regionBands,
         profile.regionsMeta?.structureFamilies
       )
-      let content = mergeCEConfig(configPath, ownedEvents)
+      const bundle = buildCEConfigBundle(configPath, ownedEvents, profile.regions || [])
+      let content = bundle.mainYaml
+      const ceEventFragments: Record<string, string> = {}
+      const startAach = getStartRegionAachId(profile.onboarding, profile.regions)
+      for (const basename of CE_EVENT_FRAGMENT_BASENAMES) {
+        let body = bundle.eventFragmentYamls[basename]
+        body = body.replace(/\{SERVER_NAME\}/g, configServerName)
+        body = body.replace(/\{START_REGION_AACH\}/g, startAach)
+        ceEventFragments[basename] = body
+      }
       content = content.replace(/\{SERVER_NAME\}/g, configServerName)
-      content = content.replace(/\{START_REGION_AACH\}/g, getStartRegionAachId(profile.onboarding, profile.regions))
-      return { content, configPath, isDefault }
+      content = content.replace(/\{START_REGION_AACH\}/g, startAach)
+      return { content, configPath, isDefault, ceEventFragments }
     }
     case 'tab': {
       const discordInvite = resolveDiscordInviteUrl(profile)
@@ -183,7 +208,7 @@ export function runPluginBuild(
   context: BuildPluginContext
 ): { success: true; configSource: ConfigSource } | { success: false; error: string } {
   try {
-    const { content, configPath, isDefault } = buildPluginContent(type, profile, inputs)
+    const { content, configPath, isDefault, ceEventFragments } = buildPluginContent(type, profile, inputs)
     const validation = validatePluginDiff(type, configPath, content)
     if (!validation.valid) {
       return { success: false, error: validation.error || `${type.toUpperCase()} diff validation failed` }
@@ -191,13 +216,14 @@ export function runPluginBuild(
     const nextRaw = context.nextGeneratorVersion
     const nextVersion =
       typeof nextRaw === 'number' && Number.isInteger(nextRaw) && nextRaw >= 1 ? nextRaw : 1
-    const contentToWrite = prependGeneratorVersionHeader(content, {
+    const headerArgs = {
       plugin: type,
       profileId: context.profileId ?? context.serverId,
       buildId: context.buildId,
       nextVersion,
       generatedAt: context.generatedAt ?? new Date().toISOString(),
-    })
+    }
+    const contentToWrite = prependGeneratorVersionHeader(content, headerArgs)
     const buildDir = ensureBuildDirectory(context.serverId, context.buildId)
     const { outputPath, buildPath } = getPluginOutputPaths(
       type,
@@ -211,6 +237,22 @@ export function runPluginBuild(
     }
     fs.writeFileSync(outputPath, contentToWrite, 'utf-8')
     fs.writeFileSync(buildPath, contentToWrite, 'utf-8')
+
+    if (type === 'ce' && ceEventFragments) {
+      const sn = context.serverNameSanitized
+      for (const basename of CE_EVENT_FRAGMENT_BASENAMES) {
+        const fragBody = ceEventFragments[basename]
+        const fragToWrite = prependGeneratorVersionHeader(fragBody, headerArgs)
+        const fragBuildPath = path.join(buildDir, getCEEventFragmentFlatName(sn, basename))
+        const fragOutputPath = context.propagate
+          ? path.join(inputs.outDir, getCEEventFragmentPropagatedRelativePath(basename))
+          : path.join(inputs.outDir, getCEEventFragmentFlatName(sn, basename))
+        fs.mkdirSync(path.dirname(fragOutputPath), { recursive: true })
+        fs.writeFileSync(fragOutputPath, fragToWrite, 'utf-8')
+        fs.writeFileSync(fragBuildPath, fragToWrite, 'utf-8')
+      }
+    }
+
     return {
       success: true,
       configSource: { path: configPath, isDefault },

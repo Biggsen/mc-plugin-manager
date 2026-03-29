@@ -6,7 +6,8 @@ const path = require('path')
 const { readdirSync } = require('fs')
 import type { PluginType } from '../types'
 import { PLUGIN_TYPES } from '../types'
-import { PLUGIN_OUTPUT_RELATIVE } from './configPathResolver'
+import { PLUGIN_OUTPUT_RELATIVE, getCEEventFragmentPropagatedRelativePath } from './configPathResolver'
+import { CE_EVENT_FRAGMENT_BASENAMES } from '../ceGenerator'
 import { getGuideBooksSourceDir } from './guideBooksDir'
 
 export interface PmGeneratedEntry {
@@ -37,6 +38,15 @@ export function getPmGeneratedEntries(): { entries: PmGeneratedEntry[]; bookGuiW
       label: PLUGIN_LABELS[id],
       relativePath: PLUGIN_OUTPUT_RELATIVE[id],
     })
+    if (id === 'ce') {
+      for (const basename of CE_EVENT_FRAGMENT_BASENAMES) {
+        entries.push({
+          id: `ce-events-${basename}`,
+          label: `ConditionalEvents (events/${basename}.yml)`,
+          relativePath: getCEEventFragmentPropagatedRelativePath(basename),
+        })
+      }
+    }
   }
 
   entries.push(

@@ -41,6 +41,16 @@ export function getPluginOutputPaths(
   return { outputPath, buildPath }
 }
 
+/** Relative path from plugins root: `ConditionalEvents/events/<basename>.yml`. */
+export function getCEEventFragmentPropagatedRelativePath(basename: string): string {
+  return path.join('ConditionalEvents', 'events', `${basename}.yml`)
+}
+
+/** Flat build/output filename for one CE event fragment when not propagating. */
+export function getCEEventFragmentFlatName(serverNameSanitized: string, basename: string): string {
+  return `${serverNameSanitized}-ce-events-${basename}.yml`
+}
+
 /**
  * Resolve config path for a plugin: use user-provided path if set, otherwise bundled default.
  */

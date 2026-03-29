@@ -46,14 +46,17 @@ function removeOwnedCESections(config: Record<string, unknown>): Record<string, 
       // - first_join
       // - join_log
       // - leave_log
+      // Relocated to `events/enchantments.yml`:
+      // - get_book_* (CALL enchanted book rewards)
       const isOwned =
         key.endsWith('_discover_once') ||
         key === 'region_heart_discover_once' ||
         key === 'first_join' ||
         key === 'join_log' ||
         key === 'leave_log'
-      
-      if (!isOwned) {
+      const isEnchantmentFragment = key.startsWith('get_book_')
+
+      if (!isOwned && !isEnchantmentFragment) {
         cleanedEvents[key] = value
       }
     }

@@ -264,6 +264,95 @@ function generateFirstJoinEvent(
   }
 }
 
+/** Generator-owned splits under `plugins/ConditionalEvents/events/<name>.yml` (excludes enchantments). */
+export const CE_OWNED_FRAGMENT_BASENAMES = [
+  'server-core',
+  'overworld-regions',
+  'overworld-villages',
+  'overworld-hearts',
+  'overworld-structures',
+  'nether-regions',
+  'nether-hearts',
+] as const
+
+export type CEOwnedFragmentBasename = (typeof CE_OWNED_FRAGMENT_BASENAMES)[number]
+
+/** All event fragment files written on CE build (includes `enchantments` from template `get_book_*` keys). */
+export const CE_EVENT_FRAGMENT_BASENAMES = [
+  ...CE_OWNED_FRAGMENT_BASENAMES,
+  'enchantments',
+] as const
+
+export type CEEventFragmentBasename = (typeof CE_EVENT_FRAGMENT_BASENAMES)[number]
+
+export function isEnchantmentCallEventKey(key: string): boolean {
+  return key.startsWith('get_book_')
+}
+
+function sortEventsKeys(events: CEEventsSection): CEEventsSection {
+  const sorted: CEEventsSection = {}
+  for (const k of Object.keys(events).sort()) {
+    sorted[k] = events[k]
+  }
+  return sorted
+}
+
+function discoverOnceRegionIdFromKey(key: string): string | null {
+  const suffix = '_discover_once'
+  if (!key.endsWith(suffix)) return null
+  return key.slice(0, -suffix.length)
+}
+
+function classifyOwnedEventFragment(key: string, regions: RegionRecord[]): CEOwnedFragmentBasename {
+  if (key === 'first_join' || key === 'join_log' || key === 'leave_log') {
+    return 'server-core'
+  }
+  if (key === 'region_heart_discover_once') {
+    return 'overworld-regions'
+  }
+
+  const rid = discoverOnceRegionIdFromKey(key)
+  if (!rid) {
+    return 'overworld-regions'
+  }
+
+  const region = regions.find((r) => r.id === rid)
+  if (!region) {
+    return 'overworld-regions'
+  }
+
+  if (region.kind === 'structure') {
+    return region.world === 'nether' ? 'nether-regions' : 'overworld-structures'
+  }
+  if (region.kind === 'village') {
+    return region.world === 'nether' ? 'nether-regions' : 'overworld-villages'
+  }
+  if (region.kind === 'heart') {
+    return region.world === 'nether' ? 'nether-hearts' : 'overworld-hearts'
+  }
+
+  return region.world === 'nether' ? 'nether-regions' : 'overworld-regions'
+}
+
+/**
+ * Splits generator-owned events into `events/*.yml` buckets (not including enchantment call events).
+ */
+export function partitionOwnedCEEventsForFragments(
+  owned: CEEventsSection,
+  regions: RegionRecord[]
+): Record<CEOwnedFragmentBasename, CEEventsSection> {
+  const buckets = Object.fromEntries(
+    CE_OWNED_FRAGMENT_BASENAMES.map((b) => [b, {} as CEEventsSection])
+  ) as Record<CEOwnedFragmentBasename, CEEventsSection>
+
+  for (const key of Object.keys(owned).sort()) {
+    const fragment = classifyOwnedEventFragment(key, regions)
+    buckets[fragment][key] = owned[key]!
+  }
+
+  return buckets
+}
+
 /**
  * Returns the AA command ID for the start region (used for first_join placeholder substitution).
  */
@@ -333,29 +422,79 @@ export function generateOwnedCEEvents(
   return owned
 }
 
-function isOwnedEventKey(key: string): boolean {
-  return key === 'first_join' || key === 'join_log' || key === 'leave_log' || key === 'region_heart_discover_once' || key.endsWith('_discover_once')
+export function isOwnedEventKey(key: string): boolean {
+  return (
+    key === 'first_join' ||
+    key === 'join_log' ||
+    key === 'leave_log' ||
+    key === 'region_heart_discover_once' ||
+    key.endsWith('_discover_once')
+  )
 }
 
-export function mergeCEConfig(existingConfigPath: string, ownedEvents: CEEventsSection): string {
+export interface CEConfigBundle {
+  /** Main `config.yml` body: Config, Messages, Events (preserved only — no owned, no `get_book_*`). */
+  mainYaml: string
+  /** `events/<basename>.yml` bodies, each with a top-level `Events` map. */
+  eventFragmentYamls: Record<CEEventFragmentBasename, string>
+}
+
+/**
+ * Merge template with generator-owned events split across `ConditionalEvents/events/*.yml`;
+ * main file keeps only preserved non-enchantment events.
+ */
+export function buildCEConfigBundle(
+  existingConfigPath: string,
+  ownedEvents: CEEventsSection,
+  regions: RegionRecord[]
+): CEConfigBundle {
   const fs = require('fs')
   const content = fs.readFileSync(existingConfigPath, 'utf-8')
   const config = yaml.parse(content) || {}
 
-  const existingEvents = (config.Events || {}) as Record<string, any>
-  const preserved: Record<string, any> = {}
-  for (const key of Object.keys(existingEvents)) {
-    if (!isOwnedEventKey(key)) {
-      preserved[key] = existingEvents[key]
+  const ownedByFragment = partitionOwnedCEEventsForFragments(ownedEvents, regions)
+  const enchantmentEvents: Record<string, CEEvent> = {}
+
+  const existingEvents = (config.Events || {}) as Record<string, unknown>
+  const preservedMain: Record<string, unknown> = {}
+
+  for (const key of Object.keys(existingEvents).sort()) {
+    if (isOwnedEventKey(key)) {
+      continue
     }
+    if (isEnchantmentCallEventKey(key)) {
+      enchantmentEvents[key] = existingEvents[key] as CEEvent
+      continue
+    }
+    preservedMain[key] = existingEvents[key]
   }
 
-  // Deterministic: owned first (first_join, region_heart..., then sorted discover_once), then preserved.
-  const mergedEvents: Record<string, any> = { ...ownedEvents, ...preserved }
-  config.Events = mergedEvents
+  config.Events = preservedMain
+  const mainYaml = yaml.stringify(config, YAML_STRINGIFY_OPTIONS)
 
-  return yaml.stringify(config, YAML_STRINGIFY_OPTIONS)
+  const eventFragmentYamls = {} as Record<CEEventFragmentBasename, string>
+  for (const basename of CE_OWNED_FRAGMENT_BASENAMES) {
+    eventFragmentYamls[basename] = yaml.stringify(
+      { Events: sortEventsKeys(ownedByFragment[basename]) },
+      YAML_STRINGIFY_OPTIONS
+    )
+  }
+  eventFragmentYamls.enchantments = yaml.stringify(
+    { Events: sortEventsKeys(enchantmentEvents) },
+    YAML_STRINGIFY_OPTIONS
+  )
+
+  return { mainYaml, eventFragmentYamls }
 }
 
-module.exports = { generateOwnedCEEvents, mergeCEConfig, getStartRegionAachId }
+module.exports = {
+  generateOwnedCEEvents,
+  buildCEConfigBundle,
+  getStartRegionAachId,
+  partitionOwnedCEEventsForFragments,
+  CE_EVENT_FRAGMENT_BASENAMES,
+  CE_OWNED_FRAGMENT_BASENAMES,
+  isEnchantmentCallEventKey,
+  isOwnedEventKey,
+}
 

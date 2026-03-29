@@ -1,5 +1,13 @@
+import fs from 'fs'
+import os from 'os'
+import path from 'path'
 import { describe, it, expect } from 'vitest'
-import { getStartRegionAachId, generateOwnedCEEvents } from './ceGenerator'
+import {
+  getStartRegionAachId,
+  generateOwnedCEEvents,
+  partitionOwnedCEEventsForFragments,
+  buildCEConfigBundle,
+} from './ceGenerator'
 
 import type { RegionRecord, OnboardingConfig } from './types'
 
@@ -162,5 +170,70 @@ describe('generateOwnedCEEvents', () => {
     ])
     expect(actions.some((a) => a.includes('cc give virtual'))).toBe(false)
     expect(actions.some((a) => a.includes('total_discovered'))).toBe(false)
+  })
+})
+
+describe('partitionOwnedCEEventsForFragments', () => {
+  it('places first_join, join_log, leave_log in server-core; region heart tip in overworld-regions', () => {
+    const regions: RegionRecord[] = [region('cherrybrook', 'region', 'overworld', 'first_join')]
+    const owned = generateOwnedCEEvents(regions, onboarding)
+    const parts = partitionOwnedCEEventsForFragments(owned, regions)
+    expect(parts['server-core'].first_join).toBeDefined()
+    expect(parts['server-core'].join_log).toBeDefined()
+    expect(parts['server-core'].leave_log).toBeDefined()
+    expect(parts['overworld-regions'].region_heart_discover_once).toBeDefined()
+  })
+
+  it('splits discover_once by kind and world', () => {
+    const regions: RegionRecord[] = [
+      region('cherrybrook', 'region', 'overworld', 'first_join'),
+      region('v1', 'village', 'overworld', 'on_enter'),
+      region('h1', 'heart', 'overworld', 'on_enter'),
+      region('h2', 'heart', 'nether', 'on_enter'),
+      region('r1', 'region', 'overworld', 'on_enter'),
+      region('r2', 'region', 'nether', 'on_enter'),
+    ]
+    const owned = generateOwnedCEEvents(regions, onboarding)
+    const parts = partitionOwnedCEEventsForFragments(owned, regions)
+    expect(parts['overworld-villages'].v1_discover_once).toBeDefined()
+    expect(parts['overworld-hearts'].h1_discover_once).toBeDefined()
+    expect(parts['nether-hearts'].h2_discover_once).toBeDefined()
+    expect(parts['overworld-regions'].r1_discover_once).toBeDefined()
+    expect(parts['nether-regions'].r2_discover_once).toBeDefined()
+  })
+})
+
+describe('buildCEConfigBundle', () => {
+  it('keeps get_book_* only in enchantments fragment', () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ce-bundle-'))
+    const tpl = path.join(dir, 'tpl.yml')
+    fs.writeFileSync(
+      tpl,
+      [
+        'Config:',
+        '  x: 1',
+        'Messages:',
+        '  p: hi',
+        'Events:',
+        '  get_book_mending:',
+        '    type: call',
+        '    actions:',
+        '      default: []',
+        '  keep_me:',
+        '    type: player_join',
+        '    one_time: false',
+        '    actions:',
+        '      default: []',
+        '',
+      ].join('\n'),
+      'utf-8'
+    )
+    const regions: RegionRecord[] = [region('cherrybrook', 'region', 'overworld', 'first_join')]
+    const owned = generateOwnedCEEvents(regions, onboarding)
+    const bundle = buildCEConfigBundle(tpl, owned, regions)
+    expect(bundle.mainYaml).toContain('keep_me')
+    expect(bundle.mainYaml).not.toContain('get_book_mending')
+    expect(bundle.eventFragmentYamls.enchantments).toContain('get_book_mending')
+    expect(bundle.eventFragmentYamls['server-core']).toContain('first_join')
   })
 })
