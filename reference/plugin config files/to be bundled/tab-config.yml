@@ -83,7 +83,7 @@ scoreboard:
   hidden-by-default: false
   delay-on-join-milliseconds: 0
   scoreboards:
-    scoreboard-nether:
+    main-nether:
       title: <#E0B11E>Charidh</#FF0000>
       display-condition: '%player-version-id%>=765;%bedrock%=false;%world%=world_nether'
       lines:

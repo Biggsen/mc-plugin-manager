@@ -6,7 +6,7 @@ structures:
   permission-required: false
   register: true
   runcmd:
-  - tab scoreboard show structures-overworld $player
+  - $world=%world%/tab scoreboard show structures-overworld $player
 
 mainstats:
   command: /main
@@ -14,7 +14,8 @@ mainstats:
   permission-required: false
   register: true
   runcmd:
-  - tab scoreboard show main-overworld $player
+  - $world=%world%/tab scoreboard show main-overworld $player
+  - $world=%world_nether%/tab scoreboard show main-nether $player
 
 server_help:
   command: /help

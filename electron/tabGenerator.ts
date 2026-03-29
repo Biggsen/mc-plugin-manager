@@ -375,7 +375,7 @@ export function generateOwnedTABSections(
     )
   }
   if (counts.netherRegions > 0 || counts.netherHearts > 0) {
-    scoreboards['scoreboard-nether'] = generateNetherScoreboard(
+    scoreboards['main-nether'] = generateNetherScoreboard(
       serverName,
       counts,
       useDifficultyColour
@@ -425,7 +425,7 @@ function isOwnedScoreboardKey(key: string): boolean {
   return (
     key === 'main-overworld' ||
     key === 'structures-overworld' ||
-    key === 'scoreboard-nether' ||
+    key === 'main-nether' ||
     key === 'scoreboard-end'
   )
 }

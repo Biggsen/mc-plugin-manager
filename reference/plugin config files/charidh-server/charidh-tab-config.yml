@@ -111,7 +111,7 @@ scoreboard:
         - ""
         - "&bRegion Hearts"
         - "* &eDiscovered&7:||%aach_custom_hearts_discovered%/30"
-    scoreboard-nether:
+    main-nether:
       title: "<#E0B11E>Charidh</#FF0000>"
       display-condition: "%player-version-id%>=765;%bedrock%=false;%world%=world_nether" # Only display it to players using 1.20.3+ AND NOT bedrock edition
       lines:
