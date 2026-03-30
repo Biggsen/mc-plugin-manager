@@ -75,6 +75,27 @@ describe('computeRegionCounts', () => {
   })
 })
 
+describe('scoreboard discovery totals', () => {
+  it('adds Overworld Total math line with sum of region, village, and heart counts', () => {
+    const regions = [
+      region('region'),
+      region('region'),
+      region('village'),
+      region('heart'),
+    ]
+    const owned = generateOwnedTABSections(regions, 'Srv')
+    const lines = owned.scoreboards['main-overworld'].lines as string[]
+    expect(lines.some((l) => l.includes('Overworld Total') && l.includes('/4*100'))).toBe(true)
+  })
+
+  it('adds Nether Total math line with sum of nether region and heart counts', () => {
+    const regions = [region('region', 'nether'), region('heart', 'nether')]
+    const owned = generateOwnedTABSections(regions, 'Srv')
+    const lines = owned.scoreboards['main-nether'].lines as string[]
+    expect(lines.some((l) => l.includes('Nether Total') && l.includes('/2*100'))).toBe(true)
+  })
+})
+
 describe('structures TAB section', () => {
   const families = {
     ancient_city: { label: 'Ancient Cities', counter: 'ancient_cities_found' },

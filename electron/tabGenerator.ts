@@ -205,6 +205,12 @@ function generateOverworldScoreboard(
   const currentRegionLine = useDifficultyColour
     ? REGION_CURRENT_LINE_WITH_DIFFICULTY
     : '&eCurrent&7:||%condition:region-name%'
+  const overworldDiscoveryTotal =
+    counts.overworldRegions + counts.villages + counts.overworldHearts
+  const overworldTotalLine =
+    overworldDiscoveryTotal > 0
+      ? `&eOverworld Total&7:||%math_0_round(({aach_custom_regions_discovered}+{aach_custom_villages_discovered}+{aach_custom_hearts_discovered})/${overworldDiscoveryTotal}*100,0)%%`
+      : null
   return {
     title: `<#E0B11E>${serverName}</#FF0000>`,
     'display-condition': '%player-version-id%>=765;%bedrock%=false;%world%=world',
@@ -220,6 +226,7 @@ function generateOverworldScoreboard(
       '',
       '&bRegion Hearts',
       `&eDiscovered&7:||%aach_custom_hearts_discovered%/${counts.overworldHearts}`,
+      ...(overworldTotalLine ? ['', overworldTotalLine] : []),
       '%animation:MyAnimation1%',
       '&2🧭 %player_direction%||&7%player_x% %player_y% %player_z%',
     ],
@@ -254,6 +261,11 @@ function generateNetherScoreboard(
   const currentRegionLine = useDifficultyColour
     ? REGION_CURRENT_LINE_WITH_DIFFICULTY
     : '&eCurrent&7:||%condition:region-name%'
+  const netherDiscoveryTotal = counts.netherRegions + counts.netherHearts
+  const netherTotalLine =
+    netherDiscoveryTotal > 0
+      ? `&eNether Total&7:||%math_0_round(({aach_custom_nether_regions_discovered}+{aach_custom_nether_hearts_discovered})/${netherDiscoveryTotal}*100,0)%%`
+      : null
   return {
     title: `<#E0B11E>${serverName}</#FF0000>`,
     'display-condition': '%player-version-id%>=765;%bedrock%=false;%world%=world_nether',
@@ -265,6 +277,7 @@ function generateNetherScoreboard(
       '',
       '&bNether Region Hearts',
       `&eDiscovered&7:||%aach_custom_nether_hearts_discovered%/${counts.netherHearts}`,
+      ...(netherTotalLine ? ['', netherTotalLine] : []),
       '%animation:MyAnimation1%',
       '&2🧭 %player_direction%||&7%player_x% %player_y% %player_z%',
     ],
