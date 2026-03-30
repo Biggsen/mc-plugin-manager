@@ -63,6 +63,7 @@ export interface ElectronAPI {
       generateMC?: boolean
       generateCW?: boolean
       generateDiscordSRV?: boolean
+      generateGriefPrevention?: boolean
       discordSrv?: DiscordSrvSettings
       aaPath?: string
       cePath?: string
@@ -132,6 +133,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
       generateMC?: boolean
       generateCW?: boolean
       generateDiscordSRV?: boolean
+      generateGriefPrevention?: boolean
       discordSrv?: DiscordSrvSettings
       aaPath?: string
       cePath?: string

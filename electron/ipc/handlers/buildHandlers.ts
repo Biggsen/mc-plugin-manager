@@ -22,6 +22,7 @@ const { prependGeneratorVersionHeader } = require('../../utils/generatorVersionH
 import type { BuildResult, BuildReport, DiscordSrvSettings } from '../../types'
 import { resolveConfigServerName } from '../../utils/resolveConfigServerName'
 import { getGuideBooksSourceDir } from '../../utils/guideBooksDir'
+import { getGriefPreventionBundledConfigPath } from '../../utils/griefPreventionBundledConfig'
 
 export function registerBuildHandlers(): void {
   ipcMain.handle(
@@ -38,6 +39,7 @@ export function registerBuildHandlers(): void {
         generateMC?: boolean
         generateCW?: boolean
         generateDiscordSRV?: boolean
+        generateGriefPrevention?: boolean
         discordSrv?: DiscordSrvSettings
         aaPath?: string
         cePath?: string
@@ -62,12 +64,13 @@ export function registerBuildHandlers(): void {
           !inputs.generateLM &&
           !inputs.generateMC &&
           !inputs.generateCW &&
-          !inputs.generateDiscordSRV
+          !inputs.generateDiscordSRV &&
+          !inputs.generateGriefPrevention
         ) {
           return {
             success: false,
             error:
-              'At least one plugin (AA, BookGUI, CE, TAB, LM, MC, CommandWhitelist, or DiscordSRV) must be selected',
+              'At least one plugin (AA, BookGUI, CE, TAB, LM, MC, CommandWhitelist, DiscordSRV, or GriefPreventionData) must be selected',
           }
         }
         if (!inputs.outDir || inputs.outDir.trim().length === 0) {
@@ -96,6 +99,7 @@ export function registerBuildHandlers(): void {
         let mcGenerated = false
         let cwGenerated = false
         let discordsrvGenerated = false
+        let griefPreventionGenerated = false
         const configSources: BuildResult['configSources'] = {}
 
         const regionCountsForTAB = computeRegionCounts(profile.regions)
@@ -305,6 +309,47 @@ export function registerBuildHandlers(): void {
           }
         }
 
+        if (inputs.generateGriefPrevention) {
+          try {
+            const bundledPath = getGriefPreventionBundledConfigPath()
+            const nextGeneratorVersion = (profile.generatorVersions?.griefprevention ?? 0) + 1
+            const rawBody = fs.readFileSync(bundledPath, 'utf-8')
+            const content = prependGeneratorVersionHeader(rawBody, {
+              plugin: 'griefprevention',
+              profileId: serverId,
+              buildId,
+              nextVersion: nextGeneratorVersion,
+              generatedAt: timestamp,
+            })
+            const flatName = `${serverNameSanitized}-griefpreventiondata-config.yml`
+            const buildDir = ensureBuildDirectory(serverId, buildId)
+            if (propagate) {
+              const dataRoot = path.join(inputs.outDir, 'GriefPreventionData')
+              fs.mkdirSync(dataRoot, { recursive: true })
+              fs.writeFileSync(path.join(dataRoot, 'config.yml'), content, 'utf-8')
+            } else {
+              fs.writeFileSync(path.join(inputs.outDir, flatName), content, 'utf-8')
+            }
+            fs.writeFileSync(path.join(buildDir, flatName), content, 'utf-8')
+            profile.generatorVersions = {
+              ...(profile.generatorVersions ?? {}),
+              griefprevention: nextGeneratorVersion,
+            }
+            griefPreventionGenerated = true
+            configSources.griefprevention = {
+              path: 'Bundled GriefPreventionData template',
+              isDefault: true,
+            }
+          } catch (error: unknown) {
+            const err = error as Error
+            return {
+              success: false,
+              error: err.message || 'GriefPreventionData config copy failed',
+              buildId,
+            }
+          }
+        }
+
         const gvSnap = profile.generatorVersions
         const report: BuildReport = {
           buildId,
@@ -320,6 +365,7 @@ export function registerBuildHandlers(): void {
             mc: mcGenerated,
             cw: cwGenerated,
             discordsrv: discordsrvGenerated,
+            griefprevention: griefPreventionGenerated,
           },
           configSources,
           warnings,

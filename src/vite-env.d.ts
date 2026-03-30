@@ -42,6 +42,7 @@ interface ElectronAPI {
       generateMC?: boolean
       generateCW?: boolean
       generateDiscordSRV?: boolean
+      generateGriefPrevention?: boolean
       discordSrv?: import('./types').DiscordSrvSettings
       aaPath?: string
       cePath?: string

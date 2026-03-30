@@ -25,6 +25,7 @@ const BUILD_PLUGINS = [
   { id: 'lm', label: 'LevelledMobs', overrideLabel: 'LevelledMobs rules.yml (optional override)', dialogTitle: 'Select LevelledMobs rules.yml', generateKey: 'generateLM', pathKey: 'lmPath' },
   { id: 'mc', label: 'MyCommand', overrideLabel: 'MyCommand commands.yml (optional override)', dialogTitle: 'Select MyCommand commands.yml', generateKey: 'generateMC', pathKey: 'mcPath' },
   { id: 'tab', label: 'TAB', overrideLabel: 'TAB config.yml (optional override)', dialogTitle: 'Select TAB config.yml', generateKey: 'generateTAB', pathKey: 'tabPath' },
+  { id: 'griefprevention', label: 'GriefPreventionData', generateKey: 'generateGriefPrevention', overrideLabel: undefined, dialogTitle: undefined, pathKey: undefined },
 ] as const
 
 type BuildPluginId = (typeof BUILD_PLUGINS)[number]['id']

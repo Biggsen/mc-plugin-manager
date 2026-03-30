@@ -20,6 +20,7 @@ const templates = [
   'conditionalevents-config.yml',
   'discordsrv-config.yml',
   'discordsrv-messages.yml',
+  'griefprevention-config.yml',
   'levelledmobs-rules.yml',
   'mycommand-commands.yml',
   'tab-config.yml'

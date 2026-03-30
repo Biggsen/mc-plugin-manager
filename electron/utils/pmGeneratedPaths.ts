@@ -59,6 +59,11 @@ export function getPmGeneratedEntries(): { entries: PmGeneratedEntry[]; bookGuiW
       id: 'discordsrv-messages',
       label: 'DiscordSRV (messages.yml)',
       relativePath: 'DiscordSRV/messages.yml',
+    },
+    {
+      id: 'griefprevention',
+      label: 'GriefPreventionData (config.yml)',
+      relativePath: 'GriefPreventionData/config.yml',
     }
   )
 

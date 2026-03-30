@@ -21,7 +21,7 @@ export type RewardRecipeId =
   | 'village'
 
 /** Keys stored in `generatorVersions` (plugin YAML emit serial). */
-export type GeneratorVersionKey = PluginType | 'discordsrv' | 'bookgui'
+export type GeneratorVersionKey = PluginType | 'discordsrv' | 'bookgui' | 'griefprevention'
 
 export interface ServerProfile {
   id: ServerId
@@ -163,6 +163,7 @@ export interface BuildResult {
     mc?: { path: string; isDefault: boolean }
     cw?: { path: string; isDefault: boolean }
     discordsrv?: { path: string; isDefault: boolean }
+    griefprevention?: { path: string; isDefault: boolean }
   }
 }
 
@@ -196,6 +197,8 @@ export interface BuildReport {
     cw: boolean
     /** Present from builds that include DiscordSRV support; treat absent as false. */
     discordsrv?: boolean
+    /** Bundled GriefPreventionData/config.yml copy; treat absent as false. */
+    griefprevention?: boolean
   }
   configSources?: {
     aa?: { path: string; isDefault: boolean }
@@ -206,6 +209,7 @@ export interface BuildReport {
     mc?: { path: string; isDefault: boolean }
     cw?: { path: string; isDefault: boolean }
     discordsrv?: { path: string; isDefault: boolean }
+    griefprevention?: { path: string; isDefault: boolean }
   }
   warnings: string[]
   errors: string[]
