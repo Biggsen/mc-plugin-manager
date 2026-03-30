@@ -21,7 +21,7 @@ export type RewardRecipeId =
   | 'village'
 
 /** Keys stored in `generatorVersions` (plugin YAML emit serial). */
-export type GeneratorVersionKey = PluginType | 'discordsrv'
+export type GeneratorVersionKey = PluginType | 'discordsrv' | 'bookgui'
 
 export interface ServerProfile {
   id: ServerId

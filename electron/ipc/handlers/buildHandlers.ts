@@ -263,6 +263,14 @@ export function registerBuildHandlers(): void {
 
         if (inputs.generateBookGUI) {
           try {
+            const nextGeneratorVersion = (profile.generatorVersions?.bookgui ?? 0) + 1
+            const bookGuiHeaderArgs = {
+              plugin: 'bookgui' as const,
+              profileId: serverId,
+              buildId,
+              nextVersion: nextGeneratorVersion,
+              generatedAt: timestamp,
+            }
             const hasLore = (profile.regions || []).some(
               (r: { loreBookDescription?: string; description?: string }) =>
                 Boolean((r.loreBookDescription ?? r.description)?.trim())
@@ -278,7 +286,12 @@ export function registerBuildHandlers(): void {
             for (const filename of booksToWrite) {
               const content = fs.readFileSync(path.join(guideBooksDir, filename), 'utf-8')
               const substituted = content.replace(/\{SERVER_NAME\}/g, serverName)
-              writeFileSync(path.join(bookGuiOutputDir, filename), substituted, 'utf-8')
+              const toWrite = prependGeneratorVersionHeader(substituted, bookGuiHeaderArgs)
+              writeFileSync(path.join(bookGuiOutputDir, filename), toWrite, 'utf-8')
+            }
+            profile.generatorVersions = {
+              ...(profile.generatorVersions ?? {}),
+              bookgui: nextGeneratorVersion,
             }
             bookGuiGenerated = true
             configSources.bookgui = { path: 'Bundled guide books', isDefault: true }
