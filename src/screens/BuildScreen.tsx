@@ -15,7 +15,13 @@ import {
   UnstyledButton,
   List,
 } from '@mantine/core'
-import type { ServerProfile, BuildResult, BuildReport, DiscordSrvSettings } from '../types'
+import type {
+  ServerProfile,
+  BuildResult,
+  BuildReport,
+  DiscordSrvSettings,
+  GeneratorVersionKey,
+} from '../types'
 
 const OUTPUT_PATH_PRESETS_KEY = 'mcpm.outputPathPresets.v1'
 
@@ -62,6 +68,18 @@ const BUILD_PLUGINS = [
 ] as const
 
 type BuildPluginId = (typeof BUILD_PLUGINS)[number]['id']
+
+const PLUGIN_VERSION_KEY_BY_ID: Record<BuildPluginId, GeneratorVersionKey> = {
+  aa: 'aa',
+  bookgui: 'bookgui',
+  discordsrv: 'discordsrv',
+  cw: 'cw',
+  ce: 'ce',
+  lm: 'lm',
+  mc: 'mc',
+  tab: 'tab',
+  griefprevention: 'griefprevention',
+}
 
 function getInitialPluginOptions(): Record<BuildPluginId, { generate: boolean; path: string }> {
   return BUILD_PLUGINS.reduce(
@@ -280,6 +298,12 @@ export function BuildScreen({ server, onServerUpdate }: BuildScreenProps) {
     updateSavedOutputPaths(savedOutputPaths.filter((preset) => preset.path !== path))
   }
 
+  function getLastGeneratedVersionLabel(id: BuildPluginId): string {
+    const versionKey = PLUGIN_VERSION_KEY_BY_ID[id]
+    const version = server.generatorVersions?.[versionKey]
+    return Number.isFinite(version) ? `v${version}` : 'not generated yet'
+  }
+
   return (
     <Stack gap="xl">
       <Text size="sm" c="dimmed">
@@ -294,7 +318,14 @@ export function BuildScreen({ server, onServerUpdate }: BuildScreenProps) {
             {BUILD_PLUGINS.map((p) => (
             <Checkbox
               key={p.id}
-              label={p.label}
+              label={
+                <Group gap={8} wrap="wrap">
+                  <Text size="sm">{p.label}</Text>
+                  <Text size="xs" c="dimmed">
+                    Last generated: {getLastGeneratedVersionLabel(p.id)}
+                  </Text>
+                </Group>
+              }
               checked={pluginOptions[p.id].generate}
               onChange={() =>
                 setPluginOptions((prev) => ({
