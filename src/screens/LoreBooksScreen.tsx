@@ -10,6 +10,7 @@ import {
   Paper,
   Divider,
 } from '@mantine/core'
+import { IconFolderOpen } from '@tabler/icons-react'
 import type { ServerProfile } from '../types'
 import { LoreBookPreview } from '../components/LoreBookPreview'
 import { formatRegionLabel } from '../utils/stringFormatters'
@@ -28,10 +29,15 @@ export function LoreBooksScreen({ server, onServerUpdate }: LoreBooksScreenProps
   const [isExporting, setIsExporting] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [result, setResult] = useState<{ success: boolean; count?: number; error?: string } | null>(null)
+  const [openFolderError, setOpenFolderError] = useState<string | null>(null)
 
   useEffect(() => {
     setOutDir(server.build?.loreBooksOutputDirectory || '')
   }, [server.id, server.build?.loreBooksOutputDirectory])
+
+  useEffect(() => {
+    setOpenFolderError(null)
+  }, [outDir])
 
   const regionsWithDescription = server.regions.filter((r) =>
     (r.loreBookDescription ?? r.description)?.trim()
@@ -54,6 +60,16 @@ export function LoreBooksScreen({ server, onServerUpdate }: LoreBooksScreenProps
   async function handleSelectOutputDir() {
     const path = await window.electronAPI.showOutputDialog()
     if (path) setOutDir(path)
+  }
+
+  async function handleOpenOutputFolder() {
+    const path = outDir.trim()
+    if (!path) return
+    setOpenFolderError(null)
+    const res = await window.electronAPI.openPathInExplorer(path)
+    if (!res.success && res.error) {
+      setOpenFolderError(res.error)
+    }
   }
 
   async function handleSave() {
@@ -191,7 +207,20 @@ export function LoreBooksScreen({ server, onServerUpdate }: LoreBooksScreenProps
           <Button variant="default" onClick={handleSelectOutputDir}>
             Browse...
           </Button>
+          <Button
+            variant="default"
+            leftSection={<IconFolderOpen size={16} />}
+            onClick={handleOpenOutputFolder}
+            disabled={!outDir.trim()}
+          >
+            Open folder
+          </Button>
         </Group>
+        {openFolderError && (
+          <Alert color="red" title="Could not open folder" onClose={() => setOpenFolderError(null)} withCloseButton>
+            {openFolderError}
+          </Alert>
+        )}
       </Stack>
 
       <Stack gap="xs">

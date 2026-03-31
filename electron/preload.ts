@@ -78,6 +78,7 @@ export interface ElectronAPI {
   showConfigFileDialog: (title: string, defaultPath?: string) => Promise<string | null>
   showOutputDialog: () => Promise<string | null>
   showFolderDialog: (title: string, defaultPath?: string) => Promise<string | null>
+  openPathInExplorer: (path: string) => Promise<{ success: boolean; error?: string }>
   comparePluginFolders: (leftRoot: string, rightRoot: string) => Promise<PluginFolderCompareResponse>
   listComparePresets: () => Promise<ComparePreset[]>
   saveComparePreset: (input: {
@@ -150,6 +151,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   showOutputDialog: () => ipcRenderer.invoke('show-output-dialog'),
   showFolderDialog: (title: string, defaultPath?: string) =>
     ipcRenderer.invoke('show-folder-dialog', title, defaultPath),
+  openPathInExplorer: (path: string) => ipcRenderer.invoke('open-path-in-explorer', path),
   comparePluginFolders: (leftRoot: string, rightRoot: string) =>
     ipcRenderer.invoke('compare-plugin-folders', leftRoot, rightRoot),
   listComparePresets: () => ipcRenderer.invoke('list-compare-presets'),

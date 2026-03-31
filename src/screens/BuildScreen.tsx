@@ -15,6 +15,7 @@ import {
   UnstyledButton,
   List,
 } from '@mantine/core'
+import { IconFolderOpen } from '@tabler/icons-react'
 import type {
   ServerProfile,
   BuildResult,
@@ -118,6 +119,7 @@ export function BuildScreen({ server, onServerUpdate }: BuildScreenProps) {
   const [validationError, setValidationError] = useState<string | null>(null)
   const [showOverrides, setShowOverrides] = useState(false)
   const [showDiscordSrvSettings, setShowDiscordSrvSettings] = useState(false)
+  const [openFolderError, setOpenFolderError] = useState<string | null>(null)
 
   async function handleSelectPluginFile(id: BuildPluginId) {
     const plugin = BUILD_PLUGINS.find((p) => p.id === id)
@@ -139,6 +141,16 @@ export function BuildScreen({ server, onServerUpdate }: BuildScreenProps) {
     if (path) {
       setOutDir(path)
       upsertSavedOutputPath(path)
+    }
+  }
+
+  async function handleOpenOutputFolder() {
+    const path = outDir.trim()
+    if (!path) return
+    setOpenFolderError(null)
+    const res = await window.electronAPI.openPathInExplorer(path)
+    if (!res.success && res.error) {
+      setOpenFolderError(res.error)
     }
   }
 
@@ -246,6 +258,10 @@ export function BuildScreen({ server, onServerUpdate }: BuildScreenProps) {
     server.discordSrv?.consoleChannelId,
     server.discordSrv?.discordInviteUrl,
   ])
+
+  useEffect(() => {
+    setOpenFolderError(null)
+  }, [outDir])
 
   useEffect(() => {
     setSavedOutputPaths(loadOutputPathPresets())
@@ -483,7 +499,20 @@ export function BuildScreen({ server, onServerUpdate }: BuildScreenProps) {
           <Button variant="default" onClick={handleSelectOutputDir}>
             Browse...
           </Button>
+          <Button
+            variant="default"
+            leftSection={<IconFolderOpen size={16} />}
+            onClick={handleOpenOutputFolder}
+            disabled={!outDir.trim()}
+          >
+            Open folder
+          </Button>
         </Group>
+        {openFolderError && (
+          <Alert color="red" title="Could not open folder" onClose={() => setOpenFolderError(null)} withCloseButton>
+            {openFolderError}
+          </Alert>
+        )}
         <Group gap="sm" align="end">
           <Select
             label="Saved paths"

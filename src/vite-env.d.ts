@@ -57,6 +57,7 @@ interface ElectronAPI {
   showConfigFileDialog: (title: string, defaultPath?: string) => Promise<string | null>
   showOutputDialog: () => Promise<string | null>
   showFolderDialog: (title: string, defaultPath?: string) => Promise<string | null>
+  openPathInExplorer: (path: string) => Promise<{ success: boolean; error?: string }>
   comparePluginFolders: (
     leftRoot: string,
     rightRoot: string
