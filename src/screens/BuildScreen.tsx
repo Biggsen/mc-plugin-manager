@@ -3,6 +3,7 @@ import {
   Title,
   Text,
   TextInput,
+  Select,
   Button,
   Checkbox,
   Group,
@@ -15,6 +16,38 @@ import {
   List,
 } from '@mantine/core'
 import type { ServerProfile, BuildResult, BuildReport, DiscordSrvSettings } from '../types'
+
+const OUTPUT_PATH_PRESETS_KEY = 'mcpm.outputPathPresets.v1'
+
+interface OutputPathPreset {
+  path: string
+  lastUsedAt: string
+}
+
+function loadOutputPathPresets(): OutputPathPreset[] {
+  try {
+    const raw = window.localStorage.getItem(OUTPUT_PATH_PRESETS_KEY)
+    if (!raw) return []
+    const parsed = JSON.parse(raw)
+    if (!Array.isArray(parsed)) return []
+    return parsed
+      .filter(
+        (item): item is OutputPathPreset =>
+          Boolean(item) &&
+          typeof item === 'object' &&
+          typeof item.path === 'string' &&
+          item.path.trim().length > 0 &&
+          typeof item.lastUsedAt === 'string'
+      )
+      .sort((a, b) => Date.parse(b.lastUsedAt) - Date.parse(a.lastUsedAt))
+  } catch {
+    return []
+  }
+}
+
+function saveOutputPathPresets(presets: OutputPathPreset[]): void {
+  window.localStorage.setItem(OUTPUT_PATH_PRESETS_KEY, JSON.stringify(presets))
+}
 
 const BUILD_PLUGINS = [
   { id: 'aa', label: 'AdvancedAchievements', overrideLabel: 'AdvancedAchievements config.yml (optional override)', dialogTitle: 'Select AdvancedAchievements config.yml', generateKey: 'generateAA', pathKey: 'aaPath' },
@@ -52,6 +85,7 @@ export function BuildScreen({ server, onServerUpdate }: BuildScreenProps) {
   const [propagateToPluginFolders, setPropagateToPluginFolders] = useState(
     Boolean(server.build?.propagateToPluginFolders)
   )
+  const [savedOutputPaths, setSavedOutputPaths] = useState<OutputPathPreset[]>([])
   const [discordSrv, setDiscordSrv] = useState<DiscordSrvSettings>(() => ({
     botToken: server.discordSrv?.botToken ?? '',
     globalChannelId: server.discordSrv?.globalChannelId ?? '',
@@ -86,6 +120,7 @@ export function BuildScreen({ server, onServerUpdate }: BuildScreenProps) {
     const path = await window.electronAPI.showOutputDialog()
     if (path) {
       setOutDir(path)
+      upsertSavedOutputPath(path)
     }
   }
 
@@ -148,6 +183,9 @@ export function BuildScreen({ server, onServerUpdate }: BuildScreenProps) {
       )
 
       setBuildResult(result)
+      if (result.success) {
+        upsertSavedOutputPath(outDir)
+      }
 
       if (result.success && onServerUpdate) {
         const updated = await window.electronAPI.getServer(server.id)
@@ -192,6 +230,10 @@ export function BuildScreen({ server, onServerUpdate }: BuildScreenProps) {
   ])
 
   useEffect(() => {
+    setSavedOutputPaths(loadOutputPathPresets())
+  }, [])
+
+  useEffect(() => {
     loadPastBuilds()
   }, [server.id])
 
@@ -219,6 +261,23 @@ export function BuildScreen({ server, onServerUpdate }: BuildScreenProps) {
       const updated = await window.electronAPI.getServer(server.id)
       if (updated) onServerUpdate(updated)
     }
+  }
+
+  function updateSavedOutputPaths(next: OutputPathPreset[]) {
+    setSavedOutputPaths(next)
+    saveOutputPathPresets(next)
+  }
+
+  function upsertSavedOutputPath(path: string) {
+    const normalizedPath = path.trim()
+    if (!normalizedPath) return
+    const now = new Date().toISOString()
+    const deduped = savedOutputPaths.filter((preset) => preset.path !== normalizedPath)
+    updateSavedOutputPaths([{ path: normalizedPath, lastUsedAt: now }, ...deduped])
+  }
+
+  function removeSavedOutputPath(path: string) {
+    updateSavedOutputPaths(savedOutputPaths.filter((preset) => preset.path !== path))
   }
 
   return (
@@ -392,6 +451,40 @@ export function BuildScreen({ server, onServerUpdate }: BuildScreenProps) {
           />
           <Button variant="default" onClick={handleSelectOutputDir}>
             Browse...
+          </Button>
+        </Group>
+        <Group gap="sm" align="end">
+          <Select
+            label="Saved paths"
+            placeholder="Select a saved output path..."
+            value={savedOutputPaths.some((preset) => preset.path === outDir) ? outDir : null}
+            data={savedOutputPaths.map((preset) => ({
+              value: preset.path,
+              label: preset.path,
+            }))}
+            onChange={(value) => {
+              if (!value) return
+              setOutDir(value)
+              upsertSavedOutputPath(value)
+            }}
+            clearable
+            searchable
+            flex={1}
+          />
+          <Button
+            variant="default"
+            onClick={() => upsertSavedOutputPath(outDir)}
+            disabled={!outDir.trim()}
+          >
+            Save current
+          </Button>
+          <Button
+            variant="subtle"
+            color="red"
+            onClick={() => removeSavedOutputPath(outDir)}
+            disabled={!savedOutputPaths.some((preset) => preset.path === outDir)}
+          >
+            Remove
           </Button>
         </Group>
         <Checkbox
