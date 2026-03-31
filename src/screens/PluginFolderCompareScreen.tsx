@@ -63,9 +63,98 @@ function statusColor(status: PluginFolderCompareFileResult['status']): string {
   }
 }
 
-/** Renders unified diff with strong contrast: dark panel, red/green rows, blue hunk headers. */
-function UnifiedDiffView({ patch }: { patch: string }) {
+type SplitDiffRow =
+  | {
+      kind: 'hunk'
+      text: string
+    }
+  | {
+      kind: 'code'
+      leftLine: number | null
+      leftText: string
+      leftType: 'context' | 'remove' | 'empty'
+      rightLine: number | null
+      rightText: string
+      rightType: 'context' | 'add' | 'empty'
+    }
+
+function parseUnifiedPatchToSplitRows(patch: string): SplitDiffRow[] {
+  const rows: SplitDiffRow[] = []
   const lines = patch.split(/\r?\n/)
+  let inHunk = false
+  let leftLine = 0
+  let rightLine = 0
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i]
+
+    if (line.startsWith('@@')) {
+      const m = /^@@ -(\d+)(?:,\d+)? \+(\d+)(?:,\d+)? @@/.exec(line)
+      if (m) {
+        leftLine = Number(m[1])
+        rightLine = Number(m[2])
+      }
+      inHunk = true
+      rows.push({ kind: 'hunk', text: line })
+      continue
+    }
+
+    if (!inHunk) continue
+    if (!line || line.startsWith('Index:') || line.startsWith('diff ') || line.startsWith('---') || line.startsWith('+++')) {
+      continue
+    }
+    if (line.startsWith('\\')) continue
+
+    if (line.startsWith(' ')) {
+      const text = line.slice(1)
+      rows.push({
+        kind: 'code',
+        leftLine,
+        leftText: text,
+        leftType: 'context',
+        rightLine,
+        rightText: text,
+        rightType: 'context',
+      })
+      leftLine++
+      rightLine++
+      continue
+    }
+
+    if (line.startsWith('-')) {
+      rows.push({
+        kind: 'code',
+        leftLine,
+        leftText: line.slice(1),
+        leftType: 'remove',
+        rightLine: null,
+        rightText: '',
+        rightType: 'empty',
+      })
+      leftLine++
+      continue
+    }
+
+    if (line.startsWith('+')) {
+      rows.push({
+        kind: 'code',
+        leftLine: null,
+        leftText: '',
+        leftType: 'empty',
+        rightLine,
+        rightText: line.slice(1),
+        rightType: 'add',
+      })
+      rightLine++
+    }
+  }
+
+  return rows
+}
+
+/** Renders split (side-by-side) diff from a unified patch payload. */
+function SplitDiffView({ patch }: { patch: string }) {
+  const rows = parseUnifiedPatchToSplitRows(patch)
   return (
     <Box
       p="md"
@@ -79,9 +168,9 @@ function UnifiedDiffView({ patch }: { patch: string }) {
         lineHeight: 1.45,
       }}
     >
-      {lines.map((line, i) => {
+      {rows.map((row, i) => {
         const key = `diff-${i}`
-        if (line.startsWith('@@')) {
+        if (row.kind === 'hunk') {
           return (
             <Box
               key={key}
@@ -93,66 +182,62 @@ function UnifiedDiffView({ patch }: { patch: string }) {
                 borderLeft: '3px solid #89b4fa',
               }}
             >
-              {line}
+              {row.text}
             </Box>
           )
         }
-        if (line.startsWith('---') || line.startsWith('+++') || line.startsWith('diff ') || line.startsWith('Index:')) {
-          return (
-            <Box key={key} py={2} px={8} style={{ color: '#a6adc8' }}>
-              {line}
-            </Box>
-          )
-        }
-        if (line.startsWith('=======')) {
-          return (
-            <Box key={key} py={2} px={8} style={{ color: '#6c7086' }}>
-              {line}
-            </Box>
-          )
-        }
-        if (line.startsWith('-') && !line.startsWith('---')) {
-          return (
-            <Box
-              key={key}
-              py={2}
-              px={8}
-              style={{
-                backgroundColor: 'rgba(243, 139, 168, 0.18)',
-                color: '#f5c2e0',
-                borderLeft: '3px solid #f38ba8',
-              }}
-            >
-              {line}
-            </Box>
-          )
-        }
-        if (line.startsWith('+') && !line.startsWith('+++')) {
-          return (
-            <Box
-              key={key}
-              py={2}
-              px={8}
-              style={{
-                backgroundColor: 'rgba(166, 227, 161, 0.16)',
-                color: '#c8f5c9',
-                borderLeft: '3px solid #a6e3a1',
-              }}
-            >
-              {line}
-            </Box>
-          )
-        }
-        if (line.startsWith('\\')) {
-          return (
-            <Box key={key} py={2} px={8} style={{ color: '#fab387', fontStyle: 'italic' }}>
-              {line}
-            </Box>
-          )
-        }
+        const leftBg =
+          row.leftType === 'remove'
+            ? 'rgba(243, 139, 168, 0.18)'
+            : row.leftType === 'context'
+              ? 'transparent'
+              : 'rgba(108, 112, 134, 0.10)'
+        const rightBg =
+          row.rightType === 'add'
+            ? 'rgba(166, 227, 161, 0.16)'
+            : row.rightType === 'context'
+              ? 'transparent'
+              : 'rgba(108, 112, 134, 0.10)'
+
         return (
-          <Box key={key} py={2} px={8} style={{ color: '#cdd6f4' }}>
-            {line || ' '}
+          <Box key={key} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr' }}>
+            <Box
+              py={2}
+              px={8}
+              style={{
+                backgroundColor: leftBg,
+                borderRight: '1px solid #313244',
+                color: row.leftType === 'remove' ? '#f5c2e0' : '#cdd6f4',
+                display: 'grid',
+                gridTemplateColumns: '56px minmax(0, 1fr)',
+                gap: 8,
+              }}
+            >
+              <Text size="xs" c="dimmed" ff="monospace">
+                {row.leftLine ?? ''}
+              </Text>
+              <Text size="xs" ff="monospace" style={{ whiteSpace: 'pre-wrap' }}>
+                {row.leftText || ' '}
+              </Text>
+            </Box>
+            <Box
+              py={2}
+              px={8}
+              style={{
+                backgroundColor: rightBg,
+                color: row.rightType === 'add' ? '#c8f5c9' : '#cdd6f4',
+                display: 'grid',
+                gridTemplateColumns: '56px minmax(0, 1fr)',
+                gap: 8,
+              }}
+            >
+              <Text size="xs" c="dimmed" ff="monospace">
+                {row.rightLine ?? ''}
+              </Text>
+              <Text size="xs" ff="monospace" style={{ whiteSpace: 'pre-wrap' }}>
+                {row.rightText || ' '}
+              </Text>
+            </Box>
           </Box>
         )
       })}
@@ -559,7 +644,7 @@ export function PluginFolderCompareScreen({ onBack }: PluginFolderCompareScreenP
                       <Table.Tr>
                         <Table.Td colSpan={3} style={{ verticalAlign: 'top', background: 'var(--mantine-color-body)' }}>
                           <ScrollArea.Autosize mah={420} type="auto">
-                            <UnifiedDiffView patch={row.unifiedDiff} />
+                            <SplitDiffView patch={row.unifiedDiff} />
                           </ScrollArea.Autosize>
                         </Table.Td>
                       </Table.Tr>
@@ -571,7 +656,7 @@ export function PluginFolderCompareScreen({ onBack }: PluginFolderCompareScreenP
           </ScrollArea.Autosize>
           {result.files.some((f) => f.unifiedDiff) && (
             <Text size="xs" c="dimmed">
-              Click a row with status &quot;Different&quot; to show a unified diff.
+              Click a row with status &quot;Different&quot; to show a split diff.
             </Text>
           )}
         </Stack>
