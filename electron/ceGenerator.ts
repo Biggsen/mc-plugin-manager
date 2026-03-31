@@ -277,16 +277,25 @@ export const CE_OWNED_FRAGMENT_BASENAMES = [
 
 export type CEOwnedFragmentBasename = (typeof CE_OWNED_FRAGMENT_BASENAMES)[number]
 
-/** All event fragment files written on CE build (includes `enchantments` from template `get_book_*` keys). */
+/** All event fragment files written on CE build (includes preserved call-event packs from template keys). */
 export const CE_EVENT_FRAGMENT_BASENAMES = [
   ...CE_OWNED_FRAGMENT_BASENAMES,
   'enchantments',
+  'potions',
 ] as const
 
 export type CEEventFragmentBasename = (typeof CE_EVENT_FRAGMENT_BASENAMES)[number]
 
 export function isEnchantmentCallEventKey(key: string): boolean {
   return key.startsWith('get_book_')
+}
+
+export function isPotionCallEventKey(key: string): boolean {
+  return key.startsWith('get_potion_')
+}
+
+export function isServerCoreRelocatedEventKey(key: string): boolean {
+  return key === 'world_change'
 }
 
 function sortEventsKeys(events: CEEventsSection): CEEventsSection {
@@ -433,7 +442,7 @@ export function isOwnedEventKey(key: string): boolean {
 }
 
 export interface CEConfigBundle {
-  /** Main `config.yml` body: Config, Messages, Events (preserved only — no owned, no `get_book_*`). */
+  /** Main `config.yml` body: Config, Messages, Events (preserved only — no owned/relocated keys). */
   mainYaml: string
   /** `events/<basename>.yml` bodies, each with a top-level `Events` map. */
   eventFragmentYamls: Record<CEEventFragmentBasename, string>
@@ -441,7 +450,7 @@ export interface CEConfigBundle {
 
 /**
  * Merge template with generator-owned events split across `ConditionalEvents/events/*.yml`;
- * main file keeps only preserved non-enchantment events.
+ * main file keeps only preserved non-fragment events.
  */
 export function buildCEConfigBundle(
   existingConfigPath: string,
@@ -454,6 +463,7 @@ export function buildCEConfigBundle(
 
   const ownedByFragment = partitionOwnedCEEventsForFragments(ownedEvents, regions)
   const enchantmentEvents: Record<string, CEEvent> = {}
+  const potionEvents: Record<string, CEEvent> = {}
 
   const existingEvents = (config.Events || {}) as Record<string, unknown>
   const preservedMain: Record<string, unknown> = {}
@@ -464,6 +474,14 @@ export function buildCEConfigBundle(
     }
     if (isEnchantmentCallEventKey(key)) {
       enchantmentEvents[key] = existingEvents[key] as CEEvent
+      continue
+    }
+    if (isPotionCallEventKey(key)) {
+      potionEvents[key] = existingEvents[key] as CEEvent
+      continue
+    }
+    if (isServerCoreRelocatedEventKey(key)) {
+      ownedByFragment['server-core'][key] = existingEvents[key] as CEEvent
       continue
     }
     preservedMain[key] = existingEvents[key]
@@ -483,6 +501,10 @@ export function buildCEConfigBundle(
     { Events: sortEventsKeys(enchantmentEvents) },
     YAML_STRINGIFY_OPTIONS
   )
+  eventFragmentYamls.potions = yaml.stringify(
+    { Events: sortEventsKeys(potionEvents) },
+    YAML_STRINGIFY_OPTIONS
+  )
 
   return { mainYaml, eventFragmentYamls }
 }
@@ -495,6 +517,8 @@ module.exports = {
   CE_EVENT_FRAGMENT_BASENAMES,
   CE_OWNED_FRAGMENT_BASENAMES,
   isEnchantmentCallEventKey,
+  isPotionCallEventKey,
+  isServerCoreRelocatedEventKey,
   isOwnedEventKey,
 }
 

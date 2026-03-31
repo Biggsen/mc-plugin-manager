@@ -204,7 +204,7 @@ describe('partitionOwnedCEEventsForFragments', () => {
 })
 
 describe('buildCEConfigBundle', () => {
-  it('keeps get_book_* only in enchantments fragment', () => {
+  it('keeps call event packs only in their CE fragments', () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ce-bundle-'))
     const tpl = path.join(dir, 'tpl.yml')
     fs.writeFileSync(
@@ -217,6 +217,14 @@ describe('buildCEConfigBundle', () => {
         'Events:',
         '  get_book_mending:',
         '    type: call',
+        '    actions:',
+        '      default: []',
+        '  get_potion_fire_resistance:',
+        '    type: call',
+        '    actions:',
+        '      default: []',
+        '  world_change:',
+        '    type: player_world_change',
         '    actions:',
         '      default: []',
         '  keep_me:',
@@ -233,7 +241,11 @@ describe('buildCEConfigBundle', () => {
     const bundle = buildCEConfigBundle(tpl, owned, regions)
     expect(bundle.mainYaml).toContain('keep_me')
     expect(bundle.mainYaml).not.toContain('get_book_mending')
+    expect(bundle.mainYaml).not.toContain('get_potion_fire_resistance')
+    expect(bundle.mainYaml).not.toContain('world_change')
     expect(bundle.eventFragmentYamls.enchantments).toContain('get_book_mending')
+    expect(bundle.eventFragmentYamls.potions).toContain('get_potion_fire_resistance')
+    expect(bundle.eventFragmentYamls['server-core']).toContain('world_change')
     expect(bundle.eventFragmentYamls['server-core']).toContain('first_join')
   })
 })

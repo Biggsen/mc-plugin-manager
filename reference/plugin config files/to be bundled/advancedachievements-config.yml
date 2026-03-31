@@ -2108,6 +2108,38 @@ Custom:
       Reward:
         Experience: 100
         Item: netherite_scrap 1
+    4:
+      Message: You discovered half of all Nether regions!
+      Name: nether_regions_discovered_4
+      DisplayName: Nether Trailblazer
+      Type: rare
+      Reward:
+        Experience: 400
+        Item:
+          - crying_obsidian 16
+          - blue_shulker_box 1
+        Command:
+          Execute:
+            - ce call get_book_soul_speed_3 player:PLAYER
+            - ce call get_potion_fire_resistance_long player:PLAYER
+          Display: Soul Speed III and Potion of Fire Resistance
+    8:
+      Message: You discovered all Nether regions!
+      Name: nether_regions_discovered_8
+      DisplayName: Nether Legend
+      Type: rare
+      Reward:
+        Experience: 800
+        Item:
+          - netherite_ingot 2
+          - ancient_debris 2
+          - black_shulker_box 2
+          - respawn_anchor 1
+        Command:
+          Execute:
+            - ce call get_book_mending player:PLAYER
+            - ce call get_book_fire_protection_4 player:PLAYER
+          Display: Mending and Fire Protection IV
   nether_hearts_discovered:
     1:
       Message: You discovered a Heart of a Nether region!
@@ -2120,6 +2152,40 @@ Custom:
           - diamond 4
           - netherite_scrap 1
           - compass 1
+    4:
+      Message: You discovered half of all Nether Hearts!
+      Name: nether_hearts_discovered_4
+      DisplayName: Nether Heart Trailblazer
+      Type: rare
+      Reward:
+        Experience: 1000
+        Item:
+          - netherite_boots 1
+          - red_shulker_box 1
+          - respawn_anchor 1
+        Command:
+          Execute:
+            - ce call get_book_mending player:PLAYER
+            - ce call get_potion_fire_resistance_2 player:PLAYER
+          Display: Mending and 2 Potions of Fire Resistance
+    8:
+      Message: You discovered all Nether Hearts!
+      Name: nether_hearts_discovered_8
+      DisplayName: Nether Heart Legend
+      Type: rare
+      Reward:
+        Experience: 1500
+        Item:
+          - netherite_boots 1
+          - netherite_helmet 1
+          - ancient_debris 4
+          - black_shulker_box 2
+        Command:
+          Execute:
+            - ce call get_book_mending player:PLAYER
+            - ce call get_book_unbreaking_3 player:PLAYER
+            - ce call get_book_efficiency_5 player:PLAYER
+          Display: Mending, Unbreaking III and Efficiency V
 
 #======================================================================================================================#
 #                                                  FUTURE PAREMETERS                                                   #

@@ -72,6 +72,16 @@ Events:
         - 'console_command: cc give virtual RegionCrate 1 %player%'
         - 'wait: 15'
         - 'message: &bFor help on how to play use &e/guides'
+  world_change:
+    type: player_world_change
+    conditions:
+      - '%world_to% == world execute overworld'
+      - '%world_to% == world_nether execute nether'
+    actions:
+      overworld:
+        - 'console_command: tab scoreboard show main-overworld %player%'
+      nether:
+        - 'console_command: tab scoreboard show main-nether %player%'
   region_heart_discover_once:
     type: wgevents_region_enter
     conditions:
@@ -1802,5 +1812,25 @@ Events:
     actions:
       default:
         - "console_command: give %player% enchanted_book[stored_enchantments={unbreaking:3}]"
+  get_book_soul_speed_3:
+    type: call
+    actions:
+      default:
+        - "console_command: give %player% enchanted_book[stored_enchantments={soul_speed:3}]"
+  get_potion_fire_resistance:
+    type: call
+    actions:
+      default:
+        - "console_command: give %player% potion[potion_contents={potion:\"minecraft:fire_resistance\"}]"
+  get_potion_fire_resistance_2:
+    type: call
+    actions:
+      default:
+        - "console_command: give %player% potion[potion_contents={potion:\"minecraft:fire_resistance\"}] 2"
+  get_potion_fire_resistance_long:
+    type: call
+    actions:
+      default:
+        - "console_command: give %player% potion[potion_contents={potion:\"minecraft:long_fire_resistance\"}]"
 
 
