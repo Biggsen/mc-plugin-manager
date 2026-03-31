@@ -2147,11 +2147,15 @@ Custom:
       DisplayName: Nether Heart Wanderer
       Type: normal
       Reward:
-        Experience: 100
+        Experience: 500
         Item:
-          - diamond 4
-          - netherite_scrap 1
-          - compass 1
+          - diamond 6
+          - netherite_scrap 2
+          - crying_obsidian 6
+        Command:
+          Execute:
+            - ce call get_potion_fire_resistance player:PLAYER
+          Display: Potion of Fire Resistance
     4:
       Message: You discovered half of all Nether Hearts!
       Name: nether_hearts_discovered_4
