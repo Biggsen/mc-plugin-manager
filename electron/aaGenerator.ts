@@ -110,6 +110,84 @@ function calculateStructureSetClaimBlocks(structureType: string, quantity: numbe
 const HALF_COLLISION_THRESHOLD = 5
 const ALL_COLLISION_THRESHOLD = 4
 
+/** Roman numerals I–X for enchant / potion stack labels */
+function toRomanLevel(n: number): string {
+  const r = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X']
+  if (n >= 1 && n <= 10) return r[n]
+  return String(n)
+}
+
+function extractCeCallToken(line: string): string | null {
+  const m = String(line).match(/ce\s+call\s+(\S+)/i)
+  return m ? m[1] : null
+}
+
+function normalizeExecuteToLines(execute: unknown): string[] {
+  if (Array.isArray(execute)) return execute.map(String)
+  if (typeof execute === 'string') return [execute]
+  return []
+}
+
+function displayFromBookToken(token: string): string | null {
+  if (!token.startsWith('get_book_')) return null
+  let rest = token.slice('get_book_'.length)
+  const levelMatch = rest.match(/_(\d+)$/)
+  let level: number | null = null
+  if (levelMatch) {
+    level = parseInt(levelMatch[1], 10)
+    rest = rest.slice(0, -(levelMatch[0].length))
+  }
+  const title = snakeToTitleCase(rest)
+  if (level !== null) {
+    return `${title} ${toRomanLevel(level)}`
+  }
+  return title
+}
+
+function displayFromPotionToken(token: string): string | null {
+  if (!token.startsWith('get_potion_')) return null
+  let rest = token.slice('get_potion_'.length)
+  const stackMatch = rest.match(/^(.+)_(\d+)$/)
+  if (stackMatch && !rest.endsWith('_long')) {
+    const base = stackMatch[1]
+    const count = parseInt(stackMatch[2], 10)
+    const baseTitle = snakeToTitleCase(base)
+    return `${count} Potions of ${baseTitle}`
+  }
+  rest = rest.replace(/_long$/, '')
+  const baseTitle = snakeToTitleCase(rest)
+  return `Potion of ${baseTitle}`
+}
+
+/**
+ * Human-readable Reward.Command.Display for one `ce call ...` line (get_book_* / get_potion_*).
+ * Exported for tests.
+ */
+export function rewardDisplayFromCeExecuteLine(line: string): string | null {
+  const token = extractCeCallToken(line)
+  if (!token) return null
+  return displayFromBookToken(token) ?? displayFromPotionToken(token)
+}
+
+/**
+ * When template Reward.Command has Execute but no Display, derive Display from CE call lines.
+ * Skips if Display is already set, or if any Execute line is not a recognized ce call pattern.
+ */
+function ensureRewardCommandDisplayFromCeCalls(entry: any): void {
+  const cmd = entry?.Reward?.Command
+  if (!cmd?.Execute) return
+  if (cmd.Display != null && String(cmd.Display).trim() !== '') return
+  const lines = normalizeExecuteToLines(cmd.Execute)
+  if (lines.length === 0) return
+  const parts: string[] = []
+  for (const line of lines) {
+    const d = rewardDisplayFromCeExecuteLine(line)
+    if (d == null) return
+    parts.push(d)
+  }
+  cmd.Display = parts.join(' and ')
+}
+
 /**
  * Calculate actual tier numbers from a template and total count
  * Rules:
@@ -438,6 +516,8 @@ function generateCustomCategory(
         }
       }
     }
+
+    ensureRewardCommandDisplayFromCeCalls(entry)
     
     result[tierValue] = entry
   }
@@ -612,4 +692,5 @@ module.exports = {
   REGIONS_TEMPLATE,
   HEARTS_TEMPLATE,
   structureTypeToSingularTitle,
+  rewardDisplayFromCeExecuteLine,
 }

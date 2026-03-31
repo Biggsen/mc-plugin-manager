@@ -7,6 +7,7 @@ import {
   structureTypeToSingularTitle,
   generateAACommands,
   generateAACustom,
+  rewardDisplayFromCeExecuteLine,
 } from './aaGenerator'
 
 import type { RegionRecord } from './types'
@@ -50,6 +51,65 @@ describe('structureTypeToSingularTitle', () => {
     expect(structureTypeToSingularTitle('ancient_city')).toBe('Ancient City')
     expect(structureTypeToSingularTitle('buried_treasure')).toBe('Buried Treasure')
     expect(structureTypeToSingularTitle('pillager_outpost')).toBe('Pillager Outpost')
+  })
+})
+
+describe('rewardDisplayFromCeExecuteLine', () => {
+  it('maps get_book_* to enchant labels with Roman levels', () => {
+    expect(rewardDisplayFromCeExecuteLine('ce call get_book_respiration_3 player:PLAYER')).toBe('Respiration III')
+    expect(rewardDisplayFromCeExecuteLine('ce call get_book_blast_protection_4 player:PLAYER')).toBe('Blast Protection IV')
+    expect(rewardDisplayFromCeExecuteLine('ce call get_book_protection_5 player:PLAYER')).toBe('Protection V')
+  })
+
+  it('maps get_book_* without a numeric level', () => {
+    expect(rewardDisplayFromCeExecuteLine('ce call get_book_mending player:PLAYER')).toBe('Mending')
+  })
+
+  it('maps get_potion_*', () => {
+    expect(rewardDisplayFromCeExecuteLine('ce call get_potion_fire_resistance_long player:PLAYER')).toBe(
+      'Potion of Fire Resistance'
+    )
+    expect(rewardDisplayFromCeExecuteLine('ce call get_potion_fire_resistance player:PLAYER')).toBe(
+      'Potion of Fire Resistance'
+    )
+    expect(rewardDisplayFromCeExecuteLine('ce call get_potion_fire_resistance_2 player:PLAYER')).toBe(
+      '2 Potions of Fire Resistance'
+    )
+  })
+
+  it('returns null for non-ce lines', () => {
+    expect(rewardDisplayFromCeExecuteLine('acb PLAYER +10')).toBeNull()
+  })
+})
+
+describe('generateAACustom CE Display', () => {
+  it('fills Reward.Command.Display from Execute when missing', () => {
+    const regions: RegionRecord[] = Array.from({ length: 20 }, (_, i) => ({
+      world: 'overworld' as const,
+      id: `v${i}`,
+      kind: 'village' as const,
+      discover: { method: 'on_enter' as const, recipeId: 'none' as const },
+    }))
+    const template = {
+      Custom: {
+        villages_discovered: {
+          10: {
+            Message: 'You discovered 10 villages!',
+            Name: 'villages_discovered_10',
+            DisplayName: 'Test',
+            Type: 'normal',
+            Reward: {
+              Command: {
+                Execute: ['ce call get_book_mending player:PLAYER', 'ce call get_book_efficiency_5 player:PLAYER'],
+              },
+            },
+          },
+        },
+      },
+    }
+    const custom = generateAACustom(regions, template)
+    const tier = custom.villages_discovered?.[10]
+    expect(tier?.Reward?.Command?.Display).toBe('Mending and Efficiency V')
   })
 })
 
