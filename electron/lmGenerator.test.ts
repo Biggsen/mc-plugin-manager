@@ -5,16 +5,27 @@ import type { RegionRecord } from './types'
 
 function region(
   id: string,
-  kind: 'region' | 'village' | 'heart',
+  kind: 'region' | 'village' | 'heart' | 'water',
   world: 'overworld' | 'nether' | 'end' = 'overworld'
 ): RegionRecord {
   const recipeId =
-    kind === 'village' ? 'region' : kind === 'heart' ? (world === 'nether' ? 'nether_heart' : 'heart') : world === 'nether' ? 'nether_region' : 'region'
+    kind === 'village'
+      ? 'village'
+      : kind === 'heart'
+        ? world === 'nether'
+          ? 'nether_heart'
+          : 'heart'
+        : kind === 'water'
+          ? 'none'
+          : world === 'nether'
+            ? 'nether_region'
+            : 'region'
+  const method: RegionRecord['discover']['method'] = kind === 'water' ? 'passive' : 'on_enter'
   return {
     world,
     id,
     kind,
-    discover: { method: 'on_enter', recipeId: recipeId as RegionRecord['discover']['recipeId'] },
+    discover: { method, recipeId: recipeId as RegionRecord['discover']['recipeId'] },
   }
 }
 
@@ -79,6 +90,18 @@ describe('generateOwnedLMRules', () => {
     const ice = result.regionBandRules.find((r) => r.conditions['worldguard-regions'] === 'ice_cave')
     expect(desert?.['use-preset']).toBe('lvlstrategy-severe')
     expect(ice?.['use-preset']).toBe('lvlstrategy-easy')
+  })
+
+  it('water regions get region-band rules from regionBands', () => {
+    const regions: RegionRecord[] = [region('cold_sea', 'water')]
+    const result = generateOwnedLMRules(regions, {
+      regionBands: { cold_sea: 'deadly' },
+    })
+    expect(result.regionBandRules).toHaveLength(1)
+    const rule = result.regionBandRules[0]
+    expect(rule.conditions['worldguard-regions']).toBe('cold_sea')
+    expect(rule['use-preset']).toBe('lvlstrategy-deadly')
+    expect(rule.conditions.worlds).toBe('world')
   })
 
   it('regionBandRules are sorted by custom-rule name', () => {

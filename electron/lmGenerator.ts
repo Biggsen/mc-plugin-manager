@@ -66,12 +66,14 @@ export function generateOwnedLMRules(
     }
   }
 
-  // 2. Generate region-band rules for all regions/hearts in profile (overworld + nether)
+  // 2. Generate region-band rules for regions, hearts, and water bodies (overworld + nether + end)
   const validDifficulties = ['easy', 'normal', 'hard', 'severe', 'deadly']
   const defaultDifficulty = 'normal'
   const regionBands = levelledMobs?.regionBands ?? {}
 
-  const bandRegions = regions.filter((r) => r.kind === 'region' || r.kind === 'heart')
+  const bandRegions = regions.filter(
+    (r) => r.kind === 'region' || r.kind === 'heart' || r.kind === 'water'
+  )
   for (const region of bandRegions) {
     const difficultyRaw = regionBands[region.id] ?? defaultDifficulty
     const difficulty = validDifficulties.includes(difficultyRaw.toLowerCase())
