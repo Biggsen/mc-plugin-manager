@@ -104,6 +104,7 @@ export function BuildScreen({ server, onServerUpdate }: BuildScreenProps) {
   const [propagateToPluginFolders, setPropagateToPluginFolders] = useState(
     Boolean(server.build?.propagateToPluginFolders)
   )
+  const [bypassVersioning, setBypassVersioning] = useState(false)
   const [savedOutputPaths, setSavedOutputPaths] = useState<OutputPathPreset[]>([])
   const [discordSrv, setDiscordSrv] = useState<DiscordSrvSettings>(() => ({
     botToken: server.discordSrv?.botToken ?? '',
@@ -191,6 +192,7 @@ export function BuildScreen({ server, onServerUpdate }: BuildScreenProps) {
       const payload = {
         outDir,
         propagateToPluginFolders,
+        bypassVersioning,
       } as Record<string, unknown>
       for (const p of BUILD_PLUGINS) {
         payload[p.generateKey] = pluginOptions[p.id].generate
@@ -556,6 +558,15 @@ export function BuildScreen({ server, onServerUpdate }: BuildScreenProps) {
           {propagateToPluginFolders
             ? 'Files will be written to plugin subfolders under the output directory (e.g. output/AdvancedAchievements/config.yml).'
             : 'Generated files will be written to this directory with server-prefixed names.'}
+        </Text>
+        <Checkbox
+          label="Bypass versioning"
+          checked={bypassVersioning}
+          onChange={(e) => setBypassVersioning(e.currentTarget.checked)}
+        />
+        <Text size="xs" c="dimmed">
+          Reuse the current generator version in config headers and do not bump stored versions—useful for
+          iterative testing without advancing serials.
         </Text>
       </Stack>
 

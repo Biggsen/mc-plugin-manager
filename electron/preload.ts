@@ -73,6 +73,7 @@ export interface ElectronAPI {
       cwPath?: string
       outDir: string
       propagateToPluginFolders?: boolean
+      bypassVersioning?: boolean
     }
   ) => Promise<BuildResult>
   showConfigFileDialog: (title: string, defaultPath?: string) => Promise<string | null>
@@ -144,6 +145,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
       cwPath?: string
       outDir: string
       propagateToPluginFolders?: boolean
+      bypassVersioning?: boolean
     }
   ) => ipcRenderer.invoke('build-configs', serverId, inputs),
   showConfigFileDialog: (title: string, defaultPath?: string) =>

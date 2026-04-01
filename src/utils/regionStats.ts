@@ -28,12 +28,14 @@ export interface RegionDisplayStats {
   overworldRegions: number
   overworldVillages: number
   overworldHearts: number
+  overworldWater: number
   overworldStructures: number
   structureTypesOverworld: StructureTypeCount[]
   netherRegions: number
   netherHearts: number
   netherStructures: number
   structureTypesNether: StructureTypeCount[]
+  /** All non-system regions except water (includes villages, hearts, structures, land regions). */
   totalRegions: number
   totalStructures: number
   structureTypesAll: StructureTypeCount[]
@@ -43,16 +45,18 @@ export function computeRegionDisplayStats(regions: RegionRecord[]): RegionDispla
   const overworldRegions = regions.filter((r) => r.world === 'overworld' && r.kind === 'region').length
   const overworldVillages = regions.filter((r) => r.world === 'overworld' && r.kind === 'village').length
   const overworldHearts = regions.filter((r) => r.world === 'overworld' && r.kind === 'heart').length
+  const overworldWater = regions.filter((r) => r.world === 'overworld' && r.kind === 'water').length
   const overworldStructures = regions.filter((r) => r.world === 'overworld' && r.kind === 'structure').length
   const netherRegions = regions.filter((r) => r.world === 'nether' && r.kind === 'region').length
   const netherHearts = regions.filter((r) => r.world === 'nether' && r.kind === 'heart').length
   const netherStructures = regions.filter((r) => r.world === 'nether' && r.kind === 'structure').length
-  const totalRegions = regions.filter((r) => r.kind !== 'system').length
+  const totalRegions = regions.filter((r) => r.kind !== 'system' && r.kind !== 'water').length
   const totalStructures = regions.filter((r) => r.kind === 'structure').length
   return {
     overworldRegions,
     overworldVillages,
     overworldHearts,
+    overworldWater,
     overworldStructures,
     structureTypesOverworld: structureTypeBreakdown(regions, 'overworld'),
     netherRegions,

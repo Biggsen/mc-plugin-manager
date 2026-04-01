@@ -52,6 +52,7 @@ interface ElectronAPI {
       cwPath?: string
       outDir: string
       propagateToPluginFolders?: boolean
+      bypassVersioning?: boolean
     }
   ) => Promise<BuildResult>
   showConfigFileDialog: (title: string, defaultPath?: string) => Promise<string | null>

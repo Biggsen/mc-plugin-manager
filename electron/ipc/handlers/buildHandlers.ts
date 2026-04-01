@@ -19,7 +19,7 @@ const {
 } = require('../../discordSrvGenerator')
 const { prependGeneratorVersionHeader } = require('../../utils/generatorVersionHeader')
 
-import type { BuildResult, BuildReport, DiscordSrvSettings } from '../../types'
+import type { BuildResult, BuildReport, DiscordSrvSettings, GeneratorVersionKey } from '../../types'
 import { resolveConfigServerName } from '../../utils/resolveConfigServerName'
 import { getGuideBooksSourceDir } from '../../utils/guideBooksDir'
 import { getGriefPreventionBundledConfigPath } from '../../utils/griefPreventionBundledConfig'
@@ -49,6 +49,8 @@ export function registerBuildHandlers(): void {
         cwPath?: string
         outDir: string
         propagateToPluginFolders?: boolean
+        /** When true, emit configs with the current stored version (min 1) and do not bump profile.generatorVersions. */
+        bypassVersioning?: boolean
       }
     ): Promise<BuildResult> => {
       try {
@@ -83,6 +85,19 @@ export function registerBuildHandlers(): void {
         }
 
         const propagate = Boolean(inputs.propagateToPluginFolders)
+        const bypassVersioning = Boolean(inputs.bypassVersioning)
+
+        function versionForEmit(key: GeneratorVersionKey): number {
+          const cur = profile.generatorVersions?.[key] ?? 0
+          if (bypassVersioning) return Math.max(1, cur)
+          return cur + 1
+        }
+
+        function persistGeneratorVersion(key: GeneratorVersionKey, emittedVersion: number): void {
+          if (bypassVersioning) return
+          profile.generatorVersions = { ...(profile.generatorVersions ?? {}), [key]: emittedVersion }
+        }
+
         const configServerName = resolveConfigServerName(profile)
         const serverNameSanitized = sanitizeServerName(configServerName)
         const buildId = `build-${Date.now()}`
@@ -113,24 +128,24 @@ export function registerBuildHandlers(): void {
         }
 
         if (inputs.generateAA) {
-          const nextGeneratorVersion = (profile.generatorVersions?.aa ?? 0) + 1
+          const nextGeneratorVersion = versionForEmit('aa')
           const result = runPluginBuild('aa', profile, inputs, {
             ...buildContextBase,
             nextGeneratorVersion,
           })
           if (!result.success) return { success: false, error: result.error, buildId }
-          profile.generatorVersions = { ...(profile.generatorVersions ?? {}), aa: nextGeneratorVersion }
+          persistGeneratorVersion('aa', nextGeneratorVersion)
           aaGenerated = true
           configSources.aa = result.configSource
         }
         if (inputs.generateCE) {
-          const nextGeneratorVersion = (profile.generatorVersions?.ce ?? 0) + 1
+          const nextGeneratorVersion = versionForEmit('ce')
           const result = runPluginBuild('ce', profile, inputs, {
             ...buildContextBase,
             nextGeneratorVersion,
           })
           if (!result.success) return { success: false, error: result.error, buildId }
-          profile.generatorVersions = { ...(profile.generatorVersions ?? {}), ce: nextGeneratorVersion }
+          persistGeneratorVersion('ce', nextGeneratorVersion)
           ceGenerated = true
           configSources.ce = result.configSource
         }
@@ -165,7 +180,7 @@ export function registerBuildHandlers(): void {
           try {
             const { configPath: srvConfigTpl, messagesPath: srvMessagesTpl } =
               readDiscordSrvTemplatePaths()
-            const nextGeneratorVersion = (profile.generatorVersions?.discordsrv ?? 0) + 1
+            const nextGeneratorVersion = versionForEmit('discordsrv')
             const headerCtx = {
               ...buildContextBase,
               nextGeneratorVersion,
@@ -200,10 +215,7 @@ export function registerBuildHandlers(): void {
             }
             fs.writeFileSync(path.join(buildDir, configFlat), configContent, 'utf-8')
             fs.writeFileSync(path.join(buildDir, messagesFlat), messagesContent, 'utf-8')
-            profile.generatorVersions = {
-              ...(profile.generatorVersions ?? {}),
-              discordsrv: nextGeneratorVersion,
-            }
+            persistGeneratorVersion('discordsrv', nextGeneratorVersion)
             profile.discordSrv = { ...merged }
             discordsrvGenerated = true
             configSources.discordsrv = {
@@ -221,53 +233,53 @@ export function registerBuildHandlers(): void {
         }
 
         if (inputs.generateTAB) {
-          const nextGeneratorVersion = (profile.generatorVersions?.tab ?? 0) + 1
+          const nextGeneratorVersion = versionForEmit('tab')
           const result = runPluginBuild('tab', profile, inputs, {
             ...buildContextBase,
             nextGeneratorVersion,
           })
           if (!result.success) return { success: false, error: result.error, buildId }
-          profile.generatorVersions = { ...(profile.generatorVersions ?? {}), tab: nextGeneratorVersion }
+          persistGeneratorVersion('tab', nextGeneratorVersion)
           tabGenerated = true
           configSources.tab = result.configSource
         }
         if (inputs.generateLM) {
-          const nextGeneratorVersion = (profile.generatorVersions?.lm ?? 0) + 1
+          const nextGeneratorVersion = versionForEmit('lm')
           const result = runPluginBuild('lm', profile, inputs, {
             ...buildContextBase,
             nextGeneratorVersion,
           })
           if (!result.success) return { success: false, error: result.error, buildId }
-          profile.generatorVersions = { ...(profile.generatorVersions ?? {}), lm: nextGeneratorVersion }
+          persistGeneratorVersion('lm', nextGeneratorVersion)
           lmGenerated = true
           configSources.lm = result.configSource
         }
         if (inputs.generateMC) {
-          const nextGeneratorVersion = (profile.generatorVersions?.mc ?? 0) + 1
+          const nextGeneratorVersion = versionForEmit('mc')
           const result = runPluginBuild('mc', profile, inputs, {
             ...buildContextBase,
             nextGeneratorVersion,
           })
           if (!result.success) return { success: false, error: result.error, buildId }
-          profile.generatorVersions = { ...(profile.generatorVersions ?? {}), mc: nextGeneratorVersion }
+          persistGeneratorVersion('mc', nextGeneratorVersion)
           mcGenerated = true
           configSources.mc = result.configSource
         }
         if (inputs.generateCW) {
-          const nextGeneratorVersion = (profile.generatorVersions?.cw ?? 0) + 1
+          const nextGeneratorVersion = versionForEmit('cw')
           const result = runPluginBuild('cw', profile, inputs, {
             ...buildContextBase,
             nextGeneratorVersion,
           })
           if (!result.success) return { success: false, error: result.error, buildId }
-          profile.generatorVersions = { ...(profile.generatorVersions ?? {}), cw: nextGeneratorVersion }
+          persistGeneratorVersion('cw', nextGeneratorVersion)
           cwGenerated = true
           configSources.cw = result.configSource
         }
 
         if (inputs.generateBookGUI) {
           try {
-            const nextGeneratorVersion = (profile.generatorVersions?.bookgui ?? 0) + 1
+            const nextGeneratorVersion = versionForEmit('bookgui')
             const bookGuiHeaderArgs = {
               plugin: 'bookgui' as const,
               profileId: serverId,
@@ -293,10 +305,7 @@ export function registerBuildHandlers(): void {
               const toWrite = prependGeneratorVersionHeader(substituted, bookGuiHeaderArgs)
               writeFileSync(path.join(bookGuiOutputDir, filename), toWrite, 'utf-8')
             }
-            profile.generatorVersions = {
-              ...(profile.generatorVersions ?? {}),
-              bookgui: nextGeneratorVersion,
-            }
+            persistGeneratorVersion('bookgui', nextGeneratorVersion)
             bookGuiGenerated = true
             configSources.bookgui = { path: 'Bundled guide books', isDefault: true }
           } catch (error: unknown) {
@@ -312,7 +321,7 @@ export function registerBuildHandlers(): void {
         if (inputs.generateGriefPrevention) {
           try {
             const bundledPath = getGriefPreventionBundledConfigPath()
-            const nextGeneratorVersion = (profile.generatorVersions?.griefprevention ?? 0) + 1
+            const nextGeneratorVersion = versionForEmit('griefprevention')
             const rawBody = fs.readFileSync(bundledPath, 'utf-8')
             const content = prependGeneratorVersionHeader(rawBody, {
               plugin: 'griefprevention',
@@ -331,10 +340,7 @@ export function registerBuildHandlers(): void {
               fs.writeFileSync(path.join(inputs.outDir, flatName), content, 'utf-8')
             }
             fs.writeFileSync(path.join(buildDir, flatName), content, 'utf-8')
-            profile.generatorVersions = {
-              ...(profile.generatorVersions ?? {}),
-              griefprevention: nextGeneratorVersion,
-            }
+            persistGeneratorVersion('griefprevention', nextGeneratorVersion)
             griefPreventionGenerated = true
             configSources.griefprevention = {
               path: 'Bundled GriefPreventionData template',

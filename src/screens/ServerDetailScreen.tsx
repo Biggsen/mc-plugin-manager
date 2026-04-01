@@ -120,6 +120,7 @@ export function ServerDetailScreen({
     overworldRegions,
     overworldVillages,
     overworldHearts,
+    overworldWater,
     overworldStructures,
     structureTypesOverworld,
     netherRegions,
@@ -128,7 +129,6 @@ export function ServerDetailScreen({
     structureTypesNether,
     totalRegions,
     totalStructures,
-    structureTypesAll,
   } = stats
   const spawnConfigured = server.spawnCenter != null || (server.onboarding?.teleport != null) ? 1 : 0
 
@@ -151,6 +151,7 @@ export function ServerDetailScreen({
         { key: 'ow-reg', label: 'Regions', value: overworldRegions },
         { key: 'ow-vil', label: 'Villages', value: overworldVillages },
         { key: 'ow-hrt', label: 'Hearts', value: overworldHearts },
+        { key: 'ow-wat', label: 'Water', value: overworldWater },
         { key: 'ow-st-sum', label: 'Structures', value: overworldStructures },
         ...structureBreakdownRows('ow', structureTypesOverworld),
       ],
@@ -169,7 +170,6 @@ export function ServerDetailScreen({
       stats: [
         { key: 'tot-reg', label: 'Region total', value: totalRegions },
         { key: 'tot-st-sum', label: 'Structures', value: totalStructures },
-        ...structureBreakdownRows('tot', structureTypesAll),
       ],
     },
     {

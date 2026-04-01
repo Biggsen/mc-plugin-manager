@@ -4,12 +4,24 @@ import type { RegionRecord } from '../types'
 
 function region(kind: RegionRecord['kind'], world: RegionRecord['world']): RegionRecord {
   const recipeId =
-    kind === 'village' ? 'region' : kind === 'heart' ? (world === 'nether' ? 'nether_heart' : 'heart') : kind === 'region' ? (world === 'nether' ? 'nether_region' : 'region') : 'none'
+    kind === 'village'
+      ? 'village'
+      : kind === 'heart'
+        ? world === 'nether'
+          ? 'nether_heart'
+          : 'heart'
+        : kind === 'region'
+          ? world === 'nether'
+            ? 'nether_region'
+            : 'region'
+          : 'none'
+  const method: RegionRecord['discover']['method'] =
+    kind === 'water' ? 'passive' : kind === 'system' ? 'disabled' : 'on_enter'
   return {
     world,
     id: 'test',
     kind,
-    discover: { method: 'on_enter', recipeId: recipeId as RegionRecord['discover']['recipeId'] },
+    discover: { method, recipeId: recipeId as RegionRecord['discover']['recipeId'] },
   }
 }
 
@@ -19,6 +31,7 @@ describe('computeRegionDisplayStats', () => {
       overworldRegions: 0,
       overworldVillages: 0,
       overworldHearts: 0,
+      overworldWater: 0,
       overworldStructures: 0,
       structureTypesOverworld: [],
       netherRegions: 0,
@@ -53,6 +66,19 @@ describe('computeRegionDisplayStats', () => {
     expect(stats.structureTypesOverworld).toEqual([])
     expect(stats.structureTypesNether).toEqual([])
     expect(stats.structureTypesAll).toEqual([])
+    expect(stats.overworldWater).toBe(0)
+  })
+
+  it('counts overworld water and excludes water from region total', () => {
+    const regions: RegionRecord[] = [
+      region('region', 'overworld'),
+      { ...region('water', 'overworld'), id: 'lake_a' },
+      { ...region('water', 'overworld'), id: 'lake_b' },
+      region('village', 'overworld'),
+    ]
+    const stats = computeRegionDisplayStats(regions)
+    expect(stats.overworldWater).toBe(2)
+    expect(stats.totalRegions).toBe(2)
   })
 
   it('counts structures by world and in total', () => {
