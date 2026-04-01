@@ -166,7 +166,9 @@ describe('generateOwnedCEEvents', () => {
       'console_message: [EXPMETRIC] server={SERVER_NAME} type=discovery entity=structure player=%player% uuid=%player_uuid% region=Inner Core diff=0',
       'wait: 6',
       'console_command: aach add 1 Custom.ancient_cities_found %player%',
-      'console_message: [EXPMETRIC] server={SERVER_NAME} type=state entity=structure player=%player% uuid=%player_uuid% ancient_cities_found=%aach_custom_ancient_cities_found%',
+      'wait: 6',
+      'console_command: aach add 1 Custom.structures_found %player%',
+      'console_message: [EXPMETRIC] server={SERVER_NAME} type=state entity=structure player=%player% uuid=%player_uuid% ancient_cities_found=%aach_custom_ancient_cities_found% structures_found=%aach_custom_structures_found%',
     ])
     expect(actions.some((a) => a.includes('cc give virtual'))).toBe(false)
     expect(actions.some((a) => a.includes('total_discovered'))).toBe(false)

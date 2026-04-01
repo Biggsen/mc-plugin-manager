@@ -120,6 +120,8 @@ describe('structures TAB section', () => {
     expect(lines.some((l) => l.includes('Ancient Cities') && l.includes('ancient_cities_found'))).toBe(
       true
     )
+    expect(lines.some((l) => l.includes('Structures Total') && l.includes('/1*100'))).toBe(true)
+    expect(lines.some((l) => l.includes('{aach_custom_structures_found}'))).toBe(true)
     const sn = owned.structureConditions?.['structure-name'] as Record<string, unknown>
     expect(sn?.type).toBe('OR')
     expect(sn?.conditions).toEqual(['%worldguard_region_name_1%=inner_core'])

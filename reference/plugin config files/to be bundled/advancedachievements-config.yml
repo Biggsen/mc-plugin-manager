@@ -2100,6 +2100,87 @@ Custom:
       Name: total_discovered_1
       DisplayName: ''
       Type: normal
+  structures_found:
+    10:
+      Message: You found 10 structures!
+      Name: structures_found_10
+      DisplayName: Structure Wanderer
+      Type: normal
+    20:
+      Message: You found 20 structures!
+      Name: structures_found_20
+      DisplayName: Structure Scout
+      Type: normal
+    30:
+      Message: You found 30 structures!
+      Name: structures_found_30
+      DisplayName: Structure Pathfinder
+      Type: normal
+    40:
+      Message: You found 40 structures!
+      Name: structures_found_40
+      DisplayName: Structure Pioneer
+      Type: normal
+    50:
+      Message: You found 50 structures!
+      Name: structures_found_50
+      DisplayName: Structure Wayfarer
+      Type: normal
+    60:
+      Message: You found 60 structures!
+      Name: structures_found_60
+      DisplayName: Structure Seeker
+      Type: rare
+    70:
+      Message: You found 70 structures!
+      Name: structures_found_70
+      DisplayName: Structure Vanguard
+      Type: rare
+    80:
+      Message: You found 80 structures!
+      Name: structures_found_80
+      DisplayName: Structure Outrider
+      Type: rare
+    90:
+      Message: You found 90 structures!
+      Name: structures_found_90
+      DisplayName: Structure Surveyor
+      Type: rare
+    100:
+      Message: You found 100 structures!
+      Name: structures_found_100
+      DisplayName: Structure Cartographer
+      Type: rare
+    110:
+      Message: You found 110 structures!
+      Name: structures_found_110
+      DisplayName: Structure Delver
+      Type: rare
+    120:
+      Message: You found 120 structures!
+      Name: structures_found_120
+      DisplayName: Structure Frontier
+      Type: rare
+    130:
+      Message: You found 130 structures!
+      Name: structures_found_130
+      DisplayName: Structure Chronicler
+      Type: rare
+    _quarter:
+      Message: You found a quarter of all structures!
+      Name: structures_found_quarter
+      DisplayName: Structure Meridian
+      Type: rare
+    _half:
+      Message: You found half of all structures!
+      Name: structures_found_half
+      DisplayName: Structure Trailblazer
+      Type: rare
+    _all:
+      Message: You found every structure!
+      Name: structures_found_all
+      DisplayName: Structure Legend
+      Type: rare
   nether_regions_discovered:
     1:
       Message: You discovered a Nether region!

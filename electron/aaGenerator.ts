@@ -576,6 +576,111 @@ function generateCustomCategory(
   return result
 }
 
+type StructuresFoundSource = 'ten' | 'quarter' | 'half' | 'all'
+
+const STRUCTURES_FOUND_PRIORITY: Record<StructuresFoundSource, number> = {
+  ten: 1,
+  quarter: 2,
+  half: 3,
+  all: 4,
+}
+
+/** Tier values and template source for Custom.structures_found (named milestones beat every-10 on collision). */
+export function structuresFoundTierSpecs(
+  total: number
+): Array<{ value: number; source: StructuresFoundSource }> {
+  if (total <= 0) return []
+  const best = new Map<number, StructuresFoundSource>()
+  const set = (v: number, src: StructuresFoundSource) => {
+    if (v <= 0 || v > total) return
+    const prev = best.get(v)
+    if (!prev || STRUCTURES_FOUND_PRIORITY[src] > STRUCTURES_FOUND_PRIORITY[prev]) {
+      best.set(v, src)
+    }
+  }
+
+  set(total, 'all')
+  const halfTh = Math.floor(total / 2)
+  if (halfTh > 0 && halfTh < total) set(halfTh, 'half')
+  const quarterTh = Math.max(1, Math.ceil(total * 0.25))
+  if (quarterTh < total) set(quarterTh, 'quarter')
+
+  for (let k = 10; k < total; k += 10) {
+    set(k, 'ten')
+  }
+
+  return [...best.entries()]
+    .sort((a, b) => a[0] - b[0])
+    .map(([value, source]) => ({ value, source }))
+}
+
+function pickStructuresFoundTemplateEntry(
+  templateCategory: Record<string, any>,
+  value: number,
+  source: StructuresFoundSource
+): any {
+  if (source === 'quarter' && templateCategory._quarter) return templateCategory._quarter
+  if (source === 'half' && templateCategory._half) return templateCategory._half
+  if (source === 'all' && templateCategory._all) return templateCategory._all
+
+  const numericKeys = Object.keys(templateCategory)
+    .filter(k => !Number.isNaN(Number(k)))
+    .map(Number)
+    .sort((a, b) => a - b)
+  if (numericKeys.length === 0) {
+    return templateCategory._all ?? templateCategory._half ?? templateCategory._quarter
+  }
+  const key = numericKeys.includes(value)
+    ? value
+    : numericKeys.reduce((prev, curr) =>
+        Math.abs(curr - value) < Math.abs(prev - value) ? curr : prev
+      )
+  return templateCategory[key]
+}
+
+function generateStructuresFoundCustom(
+  templateCategory: Record<string, any>,
+  total: number
+): { [tier: number]: any } | null {
+  if (total <= 0 || !templateCategory || typeof templateCategory !== 'object') return null
+
+  const specs = structuresFoundTierSpecs(total)
+  if (specs.length === 0) return null
+
+  const result: { [tier: number]: any } = {}
+  const categoryName = 'structures_found'
+
+  for (const { value, source } of specs) {
+    const templateEntry = pickStructuresFoundTemplateEntry(templateCategory, value, source)
+    if (!templateEntry) continue
+
+    const entry = JSON.parse(JSON.stringify(templateEntry))
+    entry.Name = `${categoryName}_${value}`
+
+    const claim =
+      source === 'ten' ? 100 : source === 'quarter' || source === 'half' ? 200 : 500
+    entry.Reward = {
+      Command: {
+        Execute: [`acb PLAYER +${claim}`],
+        Display: `${claim} claimblocks`,
+      },
+    }
+
+    if (entry.Message && typeof entry.Message === 'string') {
+      entry.Message = entry.Message.replace(/\d+ structures\b/gi, `${value} structures`)
+    }
+    if (source === 'ten') {
+      entry.Message = `You found ${value} structures!`
+    }
+
+    ensureRewardCommandDisplayFromCeCalls(entry)
+    appendLegendAlertExecute(entry)
+    result[value] = entry
+  }
+
+  return Object.keys(result).length > 0 ? result : null
+}
+
 export type StructureFamiliesMap = Record<string, { label: string; counter: string }>
 
 function countStructureTotalsByType(regions: RegionRecord[]): Record<string, number> {
@@ -587,6 +692,14 @@ function countStructureTotalsByType(regions: RegionRecord[]): Record<string, num
     byType[t] = (byType[t] ?? 0) + 1
   }
   return byType
+}
+
+function countStructureSites(regions: RegionRecord[]): number {
+  let n = 0
+  for (const r of regions) {
+    if (r.kind === 'structure' && r.discover.method !== 'disabled') n += 1
+  }
+  return n
 }
 
 function warnStructureFamiliesMismatch(regions: RegionRecord[], structureFamilies?: StructureFamiliesMap): void {
@@ -658,6 +771,14 @@ export function generateAACustom(
         counts.hearts,
         'hearts_discovered'
       )
+    }
+  }
+
+  const structureSitesTotal = countStructureSites(regions)
+  if (structureSitesTotal > 0 && templateCustom.structures_found) {
+    const sf = generateStructuresFoundCustom(templateCustom.structures_found, structureSitesTotal)
+    if (sf) {
+      result.structures_found = sf
     }
   }
 

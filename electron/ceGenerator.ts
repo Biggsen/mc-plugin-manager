@@ -166,7 +166,9 @@ function generateStructureDiscoverOnceEvent(region: RegionRecord, customCounter:
         `console_message: [EXPMETRIC] server={SERVER_NAME} type=discovery entity=structure player=%player% uuid=%player_uuid% region=${displayName} diff=0`,
         'wait: 6',
         `console_command: aach add 1 Custom.${customCounter} %player%`,
-        `console_message: [EXPMETRIC] server={SERVER_NAME} type=state entity=structure player=%player% uuid=%player_uuid% ${customCounter}=%aach_custom_${customCounter}%`,
+        'wait: 6',
+        'console_command: aach add 1 Custom.structures_found %player%',
+        `console_message: [EXPMETRIC] server={SERVER_NAME} type=state entity=structure player=%player% uuid=%player_uuid% ${customCounter}=%aach_custom_${customCounter}% structures_found=%aach_custom_structures_found%`,
       ],
     },
   }

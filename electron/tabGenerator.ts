@@ -75,6 +75,15 @@ function overworldStructureRegionIds(
     .sort((a, b) => a.localeCompare(b))
 }
 
+/** Matches AA Custom.structures_found denominator: all discoverable structure regions (any world). */
+function countDiscoverableStructureSites(regions: RegionRecord[]): number {
+  let n = 0
+  for (const r of regions) {
+    if (r.kind === 'structure' && r.discover.method !== 'disabled') n += 1
+  }
+  return n
+}
+
 function generateStructureNameCondition(sortedIds: string[]): Record<string, unknown> {
   return {
     conditions: sortedIds.map((id) => `%worldguard_region_name_1%=${id}`),
@@ -235,8 +244,13 @@ function generateOverworldScoreboard(
 
 function generateStructuresOverworldScoreboard(
   serverName: string,
-  structureLines: string[]
+  structureLines: string[],
+  structuresRollupTotal: number
 ): any {
+  const structuresTotalLine =
+    structuresRollupTotal > 0
+      ? `&eStructures Total&7:||%math_0_round(({aach_custom_structures_found})/${structuresRollupTotal}*100,0)%%`
+      : null
   return {
     title: `<#E0B11E>${serverName}</#FF0000>`,
     'display-condition': '%player-version-id%>=765;%bedrock%=false;%world%=world',
@@ -244,6 +258,7 @@ function generateStructuresOverworldScoreboard(
       '%animation:MyAnimation1%',
       '&bStructures',
       ...structureLines,
+      ...(structuresTotalLine ? ['', structuresTotalLine] : []),
       '%animation:MyAnimation1%',
       '&2🧭 %player_direction%||&7%player_x% %player_y% %player_z%',
     ],
@@ -384,7 +399,8 @@ export function generateOwnedTABSections(
   if (hasOverworldStructures) {
     scoreboards['structures-overworld'] = generateStructuresOverworldScoreboard(
       serverName,
-      structureLines
+      structureLines,
+      countDiscoverableStructureSites(regions)
     )
   }
   if (counts.netherRegions > 0 || counts.netherHearts > 0) {

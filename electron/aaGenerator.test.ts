@@ -8,6 +8,7 @@ import {
   generateAACommands,
   generateAACustom,
   rewardDisplayFromCeExecuteLine,
+  structuresFoundTierSpecs,
 } from './aaGenerator'
 
 import type { RegionRecord } from './types'
@@ -271,6 +272,61 @@ describe('structure AA generation', () => {
         },
       },
     })
+  })
+})
+
+describe('structuresFoundTierSpecs', () => {
+  it('total 140: half at 70 beats every-10; quarter at 35', () => {
+    const specs = structuresFoundTierSpecs(140)
+    const byVal = Object.fromEntries(specs.map((s) => [s.value, s.source]))
+    expect(byVal[35]).toBe('quarter')
+    expect(byVal[70]).toBe('half')
+    expect(byVal[140]).toBe('all')
+    expect(byVal[10]).toBe('ten')
+    expect(byVal[130]).toBe('ten')
+    expect(specs.length).toBe(15)
+  })
+
+  it('total 20: half at 10 replaces every-10 at 10', () => {
+    const specs = structuresFoundTierSpecs(20)
+    expect(specs.map((s) => [s.value, s.source])).toEqual([
+      [5, 'quarter'],
+      [10, 'half'],
+      [20, 'all'],
+    ])
+  })
+})
+
+describe('generateAACustom structures_found', () => {
+  const sfTemplate = {
+    10: {
+      Message: 'You found 10 structures!',
+      DisplayName: 'Structure Wanderer',
+      Type: 'normal',
+    },
+    _quarter: { Message: 'Quarter', DisplayName: 'Structure Meridian', Type: 'rare' },
+    _half: { Message: 'Half', DisplayName: 'Structure Trailblazer', Type: 'rare' },
+    _all: { Message: 'All', DisplayName: 'Structure Legend', Type: 'rare' },
+  }
+
+  it('emits claim tiers and legend alert on Structure Legend', () => {
+    const regions: RegionRecord[] = Array.from({ length: 4 }, (_, i) => ({
+      world: 'overworld' as const,
+      id: `st_${i}`,
+      kind: 'structure' as const,
+      structureType: 'ancient_city',
+      discover: { method: 'on_enter' as const, recipeId: 'none' as const },
+    }))
+    const custom = generateAACustom(
+      regions,
+      { Custom: { structures_found: sfTemplate } },
+      { ancient_city: { label: 'Ancient Cities', counter: 'ancient_cities_found' } }
+    )
+    expect(custom.structures_found?.[1].Reward.Command.Execute[0]).toBe('acb PLAYER +200')
+    expect(custom.structures_found?.[2].Reward.Command.Execute[0]).toBe('acb PLAYER +200')
+    expect(custom.structures_found?.[4].Reward.Command.Execute[0]).toBe('acb PLAYER +500')
+    const allExecute = custom.structures_found?.[4].Reward.Command.Execute as string[]
+    expect(allExecute.some((l) => l.includes('LEGEND'))).toBe(true)
   })
 })
 
