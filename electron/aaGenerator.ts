@@ -389,7 +389,12 @@ export function structureTypeToSingularTitle(structureType: string): string {
 export function generateAACommands(regions: RegionRecord[]): AACommandsSection {
   const commands: AACommandsSection = {}
   
-  const activeRegions = regions.filter((r) => r.discover.method !== 'disabled')
+  const activeRegions = regions.filter(
+    (r) =>
+      r.discover.method !== 'disabled' &&
+      r.discover.method !== 'passive' &&
+      r.kind !== 'water'
+  )
   
   // Sort by command ID for deterministic output
   const sortedRegions = [...activeRegions].sort((a, b) => {

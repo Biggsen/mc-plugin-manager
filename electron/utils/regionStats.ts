@@ -20,10 +20,12 @@ export interface BuildReportRegionCounts {
   regions: number
   system: number
   structures: number
+  water: number
 }
 
 /**
  * Compute region counts for TAB (only regions where discover.method !== 'disabled').
+ * Excludes `passive` and `kind: water` from exploration totals (LM/TAB difficulty may still use them).
  */
 export function computeRegionCounts(regions: RegionRecord[]): RegionCounts {
   const counts: RegionCounts = {
@@ -37,7 +39,9 @@ export function computeRegionCounts(regions: RegionRecord[]): RegionCounts {
 
   for (const region of regions) {
     if (region.discover.method === 'disabled') continue
+    if (region.discover.method === 'passive') continue
     if (region.kind === 'structure') continue
+    if (region.kind === 'water') continue
 
     if (region.kind === 'village') {
       counts.villages++
@@ -66,5 +70,6 @@ export function computeRegionStats(regions: RegionRecord[]): BuildReportRegionCo
     regions: regions.filter((r) => r.kind === 'region').length,
     system: regions.filter((r) => r.kind === 'system').length,
     structures: regions.filter((r) => r.kind === 'structure').length,
+    water: regions.filter((r) => r.kind === 'water').length,
   }
 }

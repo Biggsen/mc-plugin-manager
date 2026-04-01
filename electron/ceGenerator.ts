@@ -397,7 +397,8 @@ export function generateOwnedCEEvents(
     (r) =>
       r.discover.method === 'on_enter' &&
       r.id !== startId &&
-      r.kind !== 'structure'
+      r.kind !== 'structure' &&
+      r.kind !== 'water'
   )
 
   const structureDiscoverRegions = regions.filter(

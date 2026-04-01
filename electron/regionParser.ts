@@ -2,7 +2,14 @@ const yaml = require('yaml')
 const { readFileSync, statSync } = require('fs')
 const { createHash } = require('crypto')
 
-import type { RegionRecord, ImportedSource, OnboardingConfig, RegionKind, RewardRecipeId } from './types'
+import type {
+  RegionRecord,
+  ImportedSource,
+  OnboardingConfig,
+  RegionKind,
+  RewardRecipeId,
+  DiscoverMethod,
+} from './types'
 
 type RegionForgeExport = {
   regions: {
@@ -29,7 +36,7 @@ type RegionsMetaExport = {
     kind: RegionKind
     structureType?: string
     discover: {
-      method: 'disabled' | 'on_enter' | 'first_join'
+      method: DiscoverMethod
       recipeId?: string
       commandIdOverride?: string
       displayNameOverride?: string
@@ -305,7 +312,17 @@ function deriveRecipeIdFromKindWorld(kind: RegionKind, world: 'overworld' | 'net
       return 'region'
     case 'structure':
       return 'none'
+    case 'water':
+      return 'none'
   }
+}
+
+const VALID_DISCOVER_METHODS: DiscoverMethod[] = ['disabled', 'on_enter', 'first_join', 'passive']
+
+function parseDiscoverMethod(raw: string | undefined): DiscoverMethod | null {
+  if (!raw || typeof raw !== 'string') return null
+  const m = raw.trim() as DiscoverMethod
+  return VALID_DISCOVER_METHODS.includes(m) ? m : null
 }
 
 /**
@@ -389,6 +406,15 @@ export function importRegionsMeta(
 
   const structureFamilies = parseStructureFamilies(parsed.structureFamilies)
 
+  const VALID_REGION_KINDS: readonly RegionKind[] = [
+    'system',
+    'region',
+    'village',
+    'heart',
+    'structure',
+    'water',
+  ]
+
   // Process regions
   const regions: RegionRecord[] = []
   for (const region of parsed.regions) {
@@ -398,8 +424,14 @@ export function importRegionsMeta(
       continue
     }
 
-    if (!region.discover.method) {
-      console.warn(`Skipping region with missing discover.method: ${region.id}`)
+    if (!VALID_REGION_KINDS.includes(region.kind as RegionKind)) {
+      console.warn(`Skipping region ${region.id}: unknown kind "${region.kind}"`)
+      continue
+    }
+
+    const discoverMethod = parseDiscoverMethod(region.discover.method)
+    if (!discoverMethod) {
+      console.warn(`Skipping region ${region.id}: invalid discover.method "${region.discover.method}"`)
       continue
     }
 
@@ -415,11 +447,28 @@ export function importRegionsMeta(
         )
         continue
       }
-      if (region.discover.method !== 'on_enter') {
+      if (discoverMethod !== 'on_enter') {
         console.warn(
-          `Structure region ${region.id}: discover.method is ${region.discover.method} (generators only emit CE for on_enter)`
+          `Structure region ${region.id}: discover.method is ${discoverMethod} (generators only emit CE for on_enter)`
         )
       }
+    }
+
+    if (region.kind === 'water') {
+      if (discoverMethod === 'disabled') {
+        console.warn(
+          `Water region ${region.id}: discover.method disabled is discouraged; use passive for live water without discovery`
+        )
+      }
+      if (discoverMethod === 'on_enter') {
+        console.warn(
+          `Water region ${region.id}: on_enter is not yet implemented in generators; prefer passive until supported`
+        )
+      }
+    }
+
+    if (discoverMethod === 'passive' && region.kind !== 'water') {
+      console.warn(`Region ${region.id}: discover.method passive is intended for kind: water`)
     }
 
     // Validate region.world matches root world (warn if not)
@@ -439,9 +488,9 @@ export function importRegionsMeta(
     const record: RegionRecord = {
       world: mappedWorld,
       id: canonicalId,
-      kind: region.kind,
+      kind: region.kind as RegionKind,
       discover: {
-        method: region.discover.method,
+        method: discoverMethod,
         recipeId,
         commandIdOverride: region.discover.commandIdOverride,
         displayNameOverride: region.discover.displayNameOverride,

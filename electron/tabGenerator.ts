@@ -107,7 +107,7 @@ const VILLAGE_NAME_WITH_STRUCTURE_GUARD: Record<string, unknown> = {
 
 /**
  * Build map of difficulty -> list of main region IDs (overworld + nether only).
- * Only includes regions with kind === 'region' that appear in regionBands.
+ * Only includes regions with kind === 'region' or kind === 'water' that appear in regionBands.
  */
 function buildDifficultyRegionIds(
   regions: RegionRecord[],
@@ -125,7 +125,11 @@ function buildDifficultyRegionIds(
   }
   const mainRegionIds = new Set(
     regions
-      .filter((r) => r.kind === 'region' && (r.world === 'overworld' || r.world === 'nether'))
+      .filter(
+        (r) =>
+          (r.kind === 'region' || r.kind === 'water') &&
+          (r.world === 'overworld' || r.world === 'nether')
+      )
       .map((r) => r.id)
   )
   for (const [regionId, difficulty] of Object.entries(regionBands)) {

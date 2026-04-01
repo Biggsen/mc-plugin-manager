@@ -39,10 +39,10 @@ Each element describes one region. Order is preserved for display; mc-plugin-man
 |----------|--------|----------|-------------|
 | `id`     | string | **Yes**  | Region ID. Lowercase, snake_case recommended. Must be unique within `world`. |
 | `world`  | string | **Yes**  | World name. Should match the root-level `world` field. Typically `overworld`, `nether`, or `end`; mc-plugin-manager accepts any string. |
-| `kind`   | string | **Yes**  | One of: `system`, `region`, `village`, `heart`, `structure`. See §3.2. |
+| `kind`   | string | **Yes**  | One of: `system`, `region`, `village`, `heart`, `structure`, `water`. See §3.2. |
 | `structureType` | string | **If `kind: structure`** | Which structure family this region belongs to. Must match a key in root `structureFamilies`. See §3.2 and §7. |
-| `discover` | object | **Yes**  | Discovery behaviour. See §3.3. For `kind: structure`, use `method: on_enter` (mc-plugin-manager derives `recipeId` when omitted). |
-| `biomes` | array  | No       | Biome breakdown for this region (from map scan). See §3.6. Only present for `kind: region` when a biome map is available. Omitted for `kind: structure`. |
+| `discover` | object | **Yes**  | Discovery behaviour. See §3.3. For `kind: structure`, use `method: on_enter` (mc-plugin-manager derives `recipeId` when omitted). For `kind: water`, use `method: passive` until optional discovery is implemented (see §3.4). |
+| `biomes` | array  | No       | Biome breakdown for this region (from map scan). See §3.6. Present for `kind: region` or `kind: water` when a biome map is available. Omitted for `kind: structure`. |
 | `category` | string | No     | Minecraft item category (e.g. `ores`, `stone`, `wood`, `food`). Used for economy plugins or discovery rewards. VZ price guide categories. |
 | `items`  | array  | No       | Up to 3 Minecraft items for this region. See §3.7. Used for economy plugins or discovery rewards. VZ price guide item IDs. |
 | `theme`  | array  | No       | Up to 3 theme pairs (A + B) for narrative flavor. See §3.8. Storyteller's Automaton table. |
@@ -59,8 +59,11 @@ Unknown keys on a region object are ignored.
 | `village`| Village. Uses village-specific crates/counters in CE and village band in LevelledMobs. Counts toward main exploration metrics. |
 | `heart`  | Region heart (e.g. `heart_of_xyz`). Uses heart-specific crates/counters. Counts toward main exploration metrics. |
 | `structure` | WorldGen / POI footprint (ancient city, desert well, igloo, etc.). **Does not** count toward main exploration totals. Uses separate AA counters, CE rules, and TAB scoreboard lines defined via `structureFamilies` and `structureType`. Display strings are derived from `id` (unique snake_case ids). |
+| `water` | Large water body (ocean, sea, lake). **Does not** count toward main exploration totals (regions / villages / hearts). Live WorldGuard region for **LevelledMobs** `regionBands` and TAB region-name difficulty coloring when bands are set. Use **`discover.method: passive`** for “no CE discover-once, no AA discovery commands, no progression counters” (see §3.4). Optional metadata (`biomes`, `description`, `theme`, etc.) is allowed. |
 
 When `kind` is `structure`, **`structureType` is required** and must be one of the keys in `structureFamilies` for this export.
+
+When `kind` is `water`, **`structureType` must be omitted.**
 
 **`structureType` — canonical values** (extend in Region Forge if you add families; keep in sync with `structureFamilies`):
 
@@ -79,7 +82,7 @@ When `kind` is `structure`, **`structureType` is required** and must be one of t
 
 | Field               | Type   | Required | Description |
 |---------------------|--------|----------|-------------|
-| `method`            | string | **Yes**  | One of: `disabled`, `on_enter`, `first_join`. See §3.4. |
+| `method`            | string | **Yes**  | One of: `disabled`, `on_enter`, `first_join`, `passive`. See §3.4. |
 | `recipeId`         | string | No (deprecated) | **Omit** in new Region Forge exports. Mc-plugin-manager derives a stored value from `kind` + `world` when absent. If present, must be one of: `none`, `region`, `nether_region`, `end_region`, `heart`, `nether_heart`, `end_heart`, `village`. See §3.5. |
 | `commandIdOverride` | string | No       | Override for AA command ID. If omitted, mc-plugin-manager derives from `id`. |
 | `displayNameOverride` | string | No     | Override for AA display name. If omitted, derived from `id`. |
@@ -88,17 +91,18 @@ When `kind` is `structure`, **`structureType` is required** and must be one of t
 
 | Value       | Meaning |
 |-------------|---------|
-| `disabled`  | No discovery (e.g. spawn). New exports **omit** `recipeId`; mc-plugin-manager derives `none` for `kind: system`. In legacy files, if `recipeId` is present it **must** be `none`. |
+| `disabled`  | No discovery (e.g. spawn). The region is not treated as an active exploration target. New exports **omit** `recipeId`; mc-plugin-manager derives `none` for `kind: system`. In legacy files, if `recipeId` is present it **must** be `none`. |
 | `on_enter`  | Discover when player enters the region. |
 | `first_join`| Discover on first join (only one region per world should use this). |
+| `passive`   | Region remains **active** in the catalogue (WorldGuard id, LM bands, UI). Mc-plugin-manager **does not** emit CE discover-once events, AA discovery commands, or main exploration counters for this row. **Intended for `kind: water`** in v1; other kinds may log a warning. Distinct from `disabled`, which implies system-style exclusion from discovery flows. |
 
-**Region Forge (current exports):** omits `recipeId` on **every** `discover` object (all kinds). Omitting `recipeId` with `method: disabled` matches the importer’s derived `none` for `kind: system`—the same end state as legacy `recipeId: none`.
+**Region Forge (current exports):** omits `recipeId` on **every** `discover` object (all kinds). Omitting `recipeId` with `method: disabled` matches the importer’s derived `none` for `kind: system`—the same end state as legacy `recipeId: none`. For `kind: water`, omit `recipeId`; the importer derives **`none`**.
 
 ### 3.5 `discover.recipeId` — Allowed Values
 
 | Value          | Typical use |
 |----------------|-------------|
-| `none`         | `kind: system`, `method: disabled`. |
+| `none`         | `kind: system`, `method: disabled`; **`kind: water`** (and `kind: structure`). |
 | `region`       | Overworld region. |
 | `nether_region`| Nether region. |
 | `end_region`   | End region. |
@@ -107,11 +111,11 @@ When `kind` is `structure`, **`structureType` is required** and must be one of t
 | `end_heart`    | End heart. |
 | `village`      | Overworld village. (Note: Villages are overworld-only; there is no `nether_village` or `end_village`.) |
 
-When `recipeId` is **omitted**, mc-plugin-manager sets a stored value from `kind` + `world` (e.g. `region` + overworld → `region`; `structure` → `none`). **Generators use `kind` and `world`, not `recipeId`.** When `recipeId` is **present**, it should match `kind` and `world`. The field is deprecated for new exports; it remains documented for older files.
+When `recipeId` is **omitted**, mc-plugin-manager sets a stored value from `kind` + `world` (e.g. `region` + overworld → `region`; `structure` and **`water`** → `none`). **Generators use `kind` and `world`, not `recipeId`.** When `recipeId` is **present**, it should match `kind` and `world`. The field is deprecated for new exports; it remains documented for older files.
 
 ### 3.6 `biomes` (array, optional)
 
-Biome breakdown for a region, derived from sampling the biome map within the region polygon. Region Forge populates this when a biome map is loaded and the map origin is set. Only present for `kind: region` (main regions) in overworld and nether exports. Omitted for spawn, hearts, villages, `kind: structure`, and for End dimension (End has no biome map support).
+Biome breakdown for a region, derived from sampling the biome map within the region polygon. Region Forge populates this when a biome map is loaded and the map origin is set. Present for **`kind: region`** or **`kind: water`** in overworld and nether exports when a biome map is available. Omitted for spawn, hearts, villages, `kind: structure`, and for End dimension (End has no biome map support).
 
 | Field        | Type   | Required | Description |
 |-------------|--------|----------|-------------|
@@ -187,7 +191,7 @@ Per-region difficulty bands and village band strategy for LevelledMobs custom-ru
 ### 6.1 `levelledMobs.regionBands`
 
 - **Type:** Object (map)
-- **Keys:** Region `id` (must exist in `regions` for the rule to be generated)
+- **Keys:** Region `id` (must exist in `regions` for the rule to be generated). May include **`kind: region`** and **`kind: water`** ids (same difficulty band model).
 - **Values:** One of: `easy`, `normal`, `hard`, `severe`, `deadly`
 
 Only include entries for regions that should have a LevelledMobs region-band rule. Omitted regions get no region-band.
@@ -327,6 +331,15 @@ regions:
     discover:
       method: on_enter
 
+  - id: northern_sea
+    world: overworld
+    kind: water
+    discover:
+      method: passive
+    biomes:
+      - biome: cold_ocean
+        percentage: 100
+
   - id: inner_core
     world: overworld
     kind: structure
@@ -346,6 +359,7 @@ levelledMobs:
     elfdonia: deadly
     firekeep: easy
     laraethia: normal
+    northern_sea: severe
 ```
 
 ---
@@ -381,7 +395,14 @@ regions:
   - `regions[].world` should match the root-level `world` field. Mc-plugin-manager may warn if they differ.
 
 - **`discover.method` / `recipeId`**  
-  - If `method` is `disabled`, legacy `recipeId` (when present) should be `none`; mc-plugin-manager may warn otherwise. When `recipeId` is omitted, the importer derives stored values from `kind` + `world` (`none` for `kind: system` and `structure`, and the appropriate recipe for regions, hearts, and villages).
+  - If `method` is `disabled`, legacy `recipeId` (when present) should be `none`; mc-plugin-manager may warn otherwise. When `recipeId` is omitted, the importer derives stored values from `kind` + `world` (`none` for `kind: system`, `structure`, and **`water`**, and the appropriate recipe for regions, hearts, and villages).  
+  - If `method` is not one of `disabled`, `on_enter`, `first_join`, **`passive`**, mc-plugin-manager should skip that region (or reject the file).  
+  - **`passive`** is intended for **`kind: water`**; other kinds may produce an importer warning.  
+  - **`kind: water`** with `method: disabled` or `on_enter` may produce importer warnings (`disabled` discouraged; `on_enter` not yet implemented in generators—prefer `passive` until supported).
+
+- **`kind: water`**  
+  - Does not use `structureType`. Counts toward build-report “water” tallies but not toward TAB exploration totals that mirror main region discovery.  
+  - May appear in `levelledMobs.regionBands` like `kind: region`.
 
 - **`levelledMobs.regionBands`**  
   - Keys that do not match any `regions[].id` (for the same logical world) are ignored; no rule is generated.
@@ -418,6 +439,7 @@ regions:
 | 1.8    | §3.4 `disabled`: clarified that omitting `recipeId` is the preferred new-export shape; explicit `none` remains valid for legacy files. |
 | 1.9    | §10 full example and §12 validation notes aligned with shipped Region Forge export: no `recipeId` in `discover`; `structureFamilies` lists only types referenced in the example. §3.4: note that Forge omits `recipeId` for all kinds. |
 | 1.9    | §7.1: document that unknown keys on each structure family object are ignored (aligns with §3.1). |
+| 2.0    | Added **`kind: water`** (oceans, seas, lakes): live regions for LM/TAB bands, excluded from main exploration metrics; **`discover.method: passive`** for no CE/AA discovery output; importer derives `recipeId: none`. Extended **`biomes`** to `kind: water`. §6.1: `regionBands` may target water ids. §12: validation notes for unknown kinds and invalid `discover.method`. |
 
 ---
 

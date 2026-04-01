@@ -6,9 +6,9 @@ export type PluginType = 'aa' | 'ce' | 'tab' | 'lm' | 'mc' | 'cw'
 
 export const PLUGIN_TYPES: PluginType[] = ['aa', 'ce', 'tab', 'lm', 'mc', 'cw']
 
-export type RegionKind = 'system' | 'region' | 'village' | 'heart' | 'structure'
+export type RegionKind = 'system' | 'region' | 'village' | 'heart' | 'structure' | 'water'
 
-export type DiscoverMethod = 'disabled' | 'on_enter' | 'first_join'
+export type DiscoverMethod = 'disabled' | 'on_enter' | 'first_join' | 'passive'
 
 export type RewardRecipeId =
   | 'region'
@@ -99,7 +99,7 @@ export interface RegionRecord {
     commandIdOverride?: string
     displayNameOverride?: string
   }
-  /** Biome breakdown from map scan. Only for kind: region. */
+  /** Biome breakdown from map scan. For kind: region and kind: water when a biome map is available. */
   biomes?: Array<{ biome: string; percentage: number }>
   /** Minecraft item category (e.g. ores, stone, wood). VZ price guide. */
   category?: string
@@ -178,6 +178,7 @@ export interface BuildReport {
     regions: number
     system: number
     structures: number
+    water: number
   }
   computedCounts?: {
     overworldRegions: number

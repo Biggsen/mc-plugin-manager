@@ -53,6 +53,24 @@ describe('computeRegionCounts', () => {
     expect(counts.netherHearts).toBe(1)
     expect(counts.total).toBe(6)
   })
+
+  it('excludes passive and water from TAB exploration total', () => {
+    const water: RegionRecord = {
+      world: 'overworld',
+      id: 'cold_sea',
+      kind: 'water',
+      discover: { method: 'passive', recipeId: 'none' },
+    }
+    const passiveRegion: RegionRecord = {
+      world: 'overworld',
+      id: 'weird',
+      kind: 'region',
+      discover: { method: 'passive', recipeId: 'region' },
+    }
+    const counts = computeRegionCounts([region('region'), water, passiveRegion])
+    expect(counts.overworldRegions).toBe(1)
+    expect(counts.total).toBe(1)
+  })
 })
 
 describe('computeRegionStats', () => {
@@ -65,6 +83,7 @@ describe('computeRegionStats', () => {
       regions: 0,
       system: 0,
       structures: 0,
+      water: 0,
     })
   })
 
@@ -83,5 +102,18 @@ describe('computeRegionStats', () => {
     expect(stats.villages).toBe(1)
     expect(stats.hearts).toBe(1)
     expect(stats.system).toBe(1)
+    expect(stats.water).toBe(0)
+  })
+
+  it('counts water kind', () => {
+    const regions: RegionRecord[] = [
+      {
+        world: 'overworld',
+        id: 'lake_x',
+        kind: 'water',
+        discover: { method: 'passive', recipeId: 'none' },
+      },
+    ]
+    expect(computeRegionStats(regions).water).toBe(1)
   })
 })

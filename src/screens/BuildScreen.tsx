@@ -623,6 +623,7 @@ export function BuildScreen({ server, onServerUpdate }: BuildScreenProps) {
                 { label: 'Regions', value: buildReport.regionCounts.regions },
                 { label: 'System', value: buildReport.regionCounts.system },
                 { label: 'Structures', value: buildReport.regionCounts.structures },
+                { label: 'Water', value: buildReport.regionCounts.water ?? 0 },
               ].map(({ label, value }) => (
                 <Stack key={label} gap={4}>
                   <Text size="sm" c="dimmed">{label}</Text>

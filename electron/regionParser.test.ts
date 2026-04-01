@@ -147,4 +147,35 @@ regions:
       unlinkSync(filePath)
     }
   })
+
+  it('imports kind water with passive and derives recipeId none', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'regions-meta-'))
+    const filePath = join(dir, 'w.yml')
+    writeFileSync(
+      filePath,
+      `format: 1
+world: overworld
+regions:
+  - id: northern_sea
+    world: overworld
+    kind: water
+    discover:
+      method: passive
+    biomes:
+      - biome: cold_ocean
+        percentage: 100
+`,
+      'utf-8'
+    )
+    try {
+      const result = importRegionsMeta(filePath, 'overworld')
+      const sea = result.regions.find((r) => r.id === 'northern_sea')
+      expect(sea?.kind).toBe('water')
+      expect(sea?.discover.method).toBe('passive')
+      expect(sea?.discover.recipeId).toBe('none')
+      expect(sea?.biomes).toEqual([{ biome: 'cold_ocean', percentage: 100 }])
+    } finally {
+      unlinkSync(filePath)
+    }
+  })
 })
