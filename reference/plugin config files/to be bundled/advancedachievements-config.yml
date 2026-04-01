@@ -556,6 +556,7 @@ Crafts:
       Type: rare
       Reward:
         Experience: 500
+        Execute: "say §7ALERT: §4PLAYER§7 has become a §4BLACKSMITH LEGEND§7!"
 
 # Count specific commands used. Specify command prefixes in lower case without initial slash. For example, command
 # '/petm setcolor red' from the PetMaster plugin matches with subcategory 'petm setcolor'. Aliases of a given command

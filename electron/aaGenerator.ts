@@ -10,7 +10,7 @@ interface AACommand {
   DisplayName: string
   Type: string
   Reward?: {
-    Experience: number
+    Experience?: number
     Command?: {
       Execute: string[]
       Display: string
@@ -126,6 +126,49 @@ function normalizeExecuteToLines(execute: unknown): string[] {
   if (Array.isArray(execute)) return execute.map(String)
   if (typeof execute === 'string') return [execute]
   return []
+}
+
+const LEGEND_ALERT_TEMPLATE =
+  'say §7ALERT: §4PLAYER§7 has become [ARTICLE] §4[DISPLAYNAME]§7!'
+
+function indefiniteArticleFor(displayName: string): 'a' | 'an' {
+  const firstWord = displayName.trim().split(/\s+/u)[0]?.toLowerCase() ?? ''
+  if (firstWord.length === 0) return 'a'
+  return /^[aeiou]/u.test(firstWord) ? 'an' : 'a'
+}
+
+function appendLegendAlertExecute(entry: any): void {
+  const displayName = typeof entry?.DisplayName === 'string' ? entry.DisplayName.trim() : ''
+  if (!displayName || !/\bLegend$/u.test(displayName)) return
+  const article = indefiniteArticleFor(displayName)
+  const alertLine = LEGEND_ALERT_TEMPLATE
+    .replace('[ARTICLE]', article)
+    .replace('[DISPLAYNAME]', displayName.toUpperCase())
+  if (!entry.Reward || typeof entry.Reward !== 'object') {
+    entry.Reward = {}
+  }
+  if (!entry.Reward.Command || typeof entry.Reward.Command !== 'object') {
+    entry.Reward.Command = { Execute: [] }
+  }
+  const execute = normalizeExecuteToLines(entry.Reward.Command.Execute)
+  if (!execute.includes(alertLine)) {
+    execute.push(alertLine)
+  }
+  entry.Reward.Command.Execute = execute
+}
+
+function appendLegendAlertsInCustom(customSection: any): void {
+  if (!customSection || typeof customSection !== 'object') return
+  for (const category of Object.keys(customSection)) {
+    if (category === 'blacksmiths_discovered') continue
+    const categoryEntries = customSection[category]
+    if (!categoryEntries || typeof categoryEntries !== 'object') continue
+    for (const tierKey of Object.keys(categoryEntries)) {
+      const entry = categoryEntries[tierKey]
+      if (!entry || typeof entry !== 'object') continue
+      appendLegendAlertExecute(entry)
+    }
+  }
 }
 
 function displayFromBookToken(token: string): string | null {
@@ -328,6 +371,12 @@ function generateDisplayName(regionId: string): string {
  * DisplayName for structure POI commands: title case each segment of structureType (singular phrase base).
  */
 export function structureTypeToSingularTitle(structureType: string): string {
+  const singularOverrides: Record<string, string> = {
+    trail_ruins: 'Trail Ruin',
+  }
+  if (singularOverrides[structureType]) {
+    return singularOverrides[structureType]
+  }
   return structureType
     .split('_')
     .map((seg) => seg.charAt(0).toUpperCase() + seg.slice(1).toLowerCase())
@@ -412,6 +461,7 @@ export function generateAACommands(regions: RegionRecord[]): AACommandsSection {
         }
       }
     }
+    appendLegendAlertExecute(entry)
     commands[commandId] = entry
   }
   
@@ -518,6 +568,7 @@ function generateCustomCategory(
     }
 
     ensureRewardCommandDisplayFromCeCalls(entry)
+    appendLegendAlertExecute(entry)
     
     result[tierValue] = entry
   }
@@ -618,23 +669,24 @@ export function generateAACustom(
       const fam = structureFamilies[structureType]
       if (!fam?.counter || !fam.label) continue
       const { counter, label } = fam
+      const singularLabel = structureTypeToSingularTitle(structureType)
       const setXp = calculateStructureSetXP(structureType, n)
       const setClaimBlocks = calculateStructureSetClaimBlocks(structureType, n)
-      result[counter] = {
-        [n]: {
-          Message: `All ${label} Found!`,
-          Name: `${counter}_${n}`,
-          DisplayName: `${label} Wanderer`,
-          Type: 'normal',
-          Reward: {
-            Experience: setXp,
-            Command: {
-              Execute: [`acb PLAYER +${setClaimBlocks}`],
-              Display: `${setClaimBlocks} claimblocks`,
-            },
+      const structureEntry: Record<string, unknown> = {
+        Message: `All ${label} Found!`,
+        Name: `${counter}_${n}`,
+        DisplayName: `${singularLabel} Legend`,
+        Type: 'normal',
+        Reward: {
+          Experience: setXp,
+          Command: {
+            Execute: [`acb PLAYER +${setClaimBlocks}`],
+            Display: `${setClaimBlocks} claimblocks`,
           },
         },
       }
+      appendLegendAlertExecute(structureEntry)
+      result[counter] = { [n]: structureEntry }
     }
   }
   
@@ -667,6 +719,7 @@ export function mergeAAConfig(
       config.Custom[category] = newCustom[category]
     }
   }
+  appendLegendAlertsInCustom(config.Custom)
   
   const { YAML_STRINGIFY_OPTIONS } = require('./utils/yamlOptions')
   return yaml.stringify(config, YAML_STRINGIFY_OPTIONS)

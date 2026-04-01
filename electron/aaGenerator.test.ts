@@ -49,7 +49,7 @@ describe('calculateTiers', () => {
 describe('structureTypeToSingularTitle', () => {
   it('title-cases segments', () => {
     expect(structureTypeToSingularTitle('ancient_city')).toBe('Ancient City')
-    expect(structureTypeToSingularTitle('buried_treasure')).toBe('Buried Treasure')
+    expect(structureTypeToSingularTitle('trail_ruins')).toBe('Trail Ruin')
     expect(structureTypeToSingularTitle('pillager_outpost')).toBe('Pillager Outpost')
   })
 })
@@ -111,6 +111,38 @@ describe('generateAACustom CE Display', () => {
     const tier = custom.villages_discovered?.[10]
     expect(tier?.Reward?.Command?.Display).toBe('Mending and Efficiency V')
   })
+
+  it('appends alert Execute line for Legend display names', () => {
+    const regions: RegionRecord[] = Array.from({ length: 20 }, (_, i) => ({
+      world: 'overworld' as const,
+      id: `r${i}`,
+      kind: 'region' as const,
+      discover: { method: 'on_enter' as const, recipeId: 'none' as const },
+    }))
+    const template = {
+      Custom: {
+        regions_discovered: {
+          2: {
+            Message: 'You discovered 2 regions!',
+            Name: 'regions_discovered_2',
+            DisplayName: 'Region Scout',
+            Type: 'normal',
+          },
+          _all: {
+            Message: 'You discovered all the regions!',
+            Name: 'regions_discovered_999',
+            DisplayName: 'Region Legend',
+            Type: 'normal',
+          },
+        },
+      },
+    }
+    const custom = generateAACustom(regions, template)
+    const tier = custom.regions_discovered?.[20]
+    expect(tier?.Reward?.Command?.Execute).toContain(
+      'say §7ALERT: §4PLAYER§7 has become a §4REGION LEGEND§7!'
+    )
+  })
 })
 
 describe('structure AA generation', () => {
@@ -156,7 +188,7 @@ describe('structure AA generation', () => {
       Goal: 'Discover Rootbound Fragment',
       Message: 'You found Rootbound Fragment',
       Name: 'discover_rootbound_fragment',
-      DisplayName: 'Trail Ruins Found',
+      DisplayName: 'Trail Ruin Found',
       Type: 'normal',
       Reward: {
         Experience: 200,
@@ -193,12 +225,15 @@ describe('structure AA generation', () => {
       2: {
         Message: 'All Ancient Cities Found!',
         Name: 'ancient_cities_found_2',
-        DisplayName: 'Ancient Cities Wanderer',
+        DisplayName: 'Ancient City Legend',
         Type: 'normal',
         Reward: {
           Experience: 1237,
           Command: {
-            Execute: ['acb PLAYER +99'],
+            Execute: [
+              'acb PLAYER +99',
+              'say §7ALERT: §4PLAYER§7 has become an §4ANCIENT CITY LEGEND§7!',
+            ],
             Display: '99 claimblocks',
           },
         },
@@ -222,12 +257,15 @@ describe('structure AA generation', () => {
       9: {
         Message: 'All Trail Ruins Found!',
         Name: 'trail_ruins_found_9',
-        DisplayName: 'Trail Ruins Wanderer',
+        DisplayName: 'Trail Ruin Legend',
         Type: 'normal',
         Reward: {
           Experience: 1500,
           Command: {
-            Execute: ['acb PLAYER +120'],
+            Execute: [
+              'acb PLAYER +120',
+              'say §7ALERT: §4PLAYER§7 has become a §4TRAIL RUIN LEGEND§7!',
+            ],
             Display: '120 claimblocks',
           },
         },
@@ -235,3 +273,4 @@ describe('structure AA generation', () => {
     })
   })
 })
+
