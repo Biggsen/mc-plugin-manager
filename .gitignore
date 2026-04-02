@@ -36,3 +36,6 @@ release
 
 # Data directory (contains user data)
 mc-plugin-manager-data/
+
+# Local generated vs live parity snapshots; may contain secrets — never commit
+parity-check/
