@@ -297,7 +297,7 @@ export function isPotionCallEventKey(key: string): boolean {
 }
 
 export function isServerCoreRelocatedEventKey(key: string): boolean {
-  return key === 'world_change'
+  return key === 'world_change' || key === 'store_reminder_on_join'
 }
 
 function sortEventsKeys(events: CEEventsSection): CEEventsSection {

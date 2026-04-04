@@ -229,6 +229,10 @@ describe('buildCEConfigBundle', () => {
         '    type: player_world_change',
         '    actions:',
         '      default: []',
+        '  store_reminder_on_join:',
+        '    type: player_join',
+        '    actions:',
+        '      default: []',
         '  keep_me:',
         '    type: player_join',
         '    one_time: false',
@@ -245,9 +249,11 @@ describe('buildCEConfigBundle', () => {
     expect(bundle.mainYaml).not.toContain('get_book_mending')
     expect(bundle.mainYaml).not.toContain('get_potion_fire_resistance')
     expect(bundle.mainYaml).not.toContain('world_change')
+    expect(bundle.mainYaml).not.toContain('store_reminder_on_join')
     expect(bundle.eventFragmentYamls.enchantments).toContain('get_book_mending')
     expect(bundle.eventFragmentYamls.potions).toContain('get_potion_fire_resistance')
     expect(bundle.eventFragmentYamls['server-core']).toContain('world_change')
+    expect(bundle.eventFragmentYamls['server-core']).toContain('store_reminder_on_join')
     expect(bundle.eventFragmentYamls['server-core']).toContain('first_join')
   })
 })

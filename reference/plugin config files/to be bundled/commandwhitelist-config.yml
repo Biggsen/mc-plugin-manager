@@ -32,6 +32,7 @@ groups:
     - unlock
     - lock
     - help
+    - store
     - guides
     - guideintro
     - guidediscovery
