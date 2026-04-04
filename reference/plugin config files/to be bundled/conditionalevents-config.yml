@@ -82,6 +82,14 @@ Events:
         - 'console_command: tab scoreboard show main-overworld %player%'
       nether:
         - 'console_command: tab scoreboard show main-nether %player%'
+  store_reminder_on_join:
+    type: player_join
+    conditions:
+      - '%random_1_4% == 1'
+    actions:
+      default:
+        - 'wait: 1200'
+        - 'message: &7Support the server and receive claimblocks via &b/store'
   region_heart_discover_once:
     type: wgevents_region_enter
     conditions:

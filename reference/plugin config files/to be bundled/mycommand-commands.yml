@@ -1,5 +1,13 @@
 # Exploration Server Commands
-
+store:
+  command: /store
+  type: RAW_TEXT
+  permission-required: false
+  register: true
+  text:
+  - '&7Support the server and receive claimblocks to help protect your builds:'
+  - '$OPEN_URL$&fcharidh.tebex.io; &eClick to open;https://charidh.tebex.io'
+  
 structures:
   command: /structures
   type: RUN_CONSOLE

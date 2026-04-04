@@ -1,4 +1,5 @@
 import { stripGeneratorVersionCommentLines } from './utils/generatorVersionHeader'
+import { isServerCoreRelocatedEventKey } from './ceGenerator'
 
 const yaml = require('yaml')
 const { readFileSync } = require('fs')
@@ -52,7 +53,7 @@ function removeOwnedCESections(config: Record<string, unknown>): Record<string, 
       // - join_log
       // - leave_log
       // Relocated to event fragments:
-      // - world_change (server-core)
+      // - world_change, store_reminder_on_join (server-core)
       // - get_book_* (CALL enchanted book rewards)
       // - get_potion_* (CALL potion rewards)
       const isOwned =
@@ -63,7 +64,7 @@ function removeOwnedCESections(config: Record<string, unknown>): Record<string, 
         key === 'leave_log'
       const isEnchantmentFragment = key.startsWith('get_book_')
       const isPotionFragment = key.startsWith('get_potion_')
-      const isRelocatedServerCoreEvent = key === 'world_change'
+      const isRelocatedServerCoreEvent = isServerCoreRelocatedEventKey(key)
 
       if (!isOwned && !isEnchantmentFragment && !isPotionFragment && !isRelocatedServerCoreEvent) {
         cleanedEvents[key] = value
