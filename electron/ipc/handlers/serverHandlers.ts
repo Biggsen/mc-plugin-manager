@@ -6,7 +6,7 @@ const {
   deleteServer,
   listServerIds,
 } = require('../../storage')
-const { sanitizeServerName } = require('../../utils/stringFormatters')
+const { sanitizeServerName } = require('../../shared/stringFormatters')
 
 import type { ServerProfile, OnboardingConfig, DiscordSrvSettings } from '../../types'
 

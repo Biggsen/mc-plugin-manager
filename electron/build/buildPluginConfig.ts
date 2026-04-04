@@ -27,7 +27,7 @@ const { validateAADiff, validateCEDiff, validateTABDiff, validateLMDiff } = requ
 const { prependGeneratorVersionHeader } = require('../utils/generatorVersionHeader')
 
 import type { PluginType, ServerProfile } from '../types'
-import { resolveConfigServerName } from '../utils/resolveConfigServerName'
+import { resolveConfigServerName } from '../shared/resolveConfigServerName'
 
 export interface BuildInputs {
   generateAA?: boolean
