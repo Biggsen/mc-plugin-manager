@@ -1,6 +1,7 @@
 import {
   Accordion,
   Badge,
+  Button,
   Stack,
   Text,
   Group,
@@ -17,8 +18,14 @@ import {
   IconList,
   IconBuilding,
   IconDroplet,
+  IconDownload,
 } from '@tabler/icons-react'
 import type { ServerProfile, RegionRecord } from '../types'
+import {
+  buildRegionExportDocument,
+  downloadJsonDocument,
+  suggestedRegionExportFilename,
+} from '../utils/regionExport'
 
 type RegionGroupKey =
   | 'regions'
@@ -273,7 +280,22 @@ export function RegionsScreen({ server }: RegionsScreenProps) {
     )
   }
 
+  function handleExportRegions() {
+    const doc = buildRegionExportDocument(server)
+    downloadJsonDocument(suggestedRegionExportFilename(server), doc)
+  }
+
   return (
+    <Stack gap="md">
+      <Group justify="flex-end">
+        <Button
+          variant="light"
+          leftSection={<IconDownload size={18} />}
+          onClick={handleExportRegions}
+        >
+          Export regions (JSON)
+        </Button>
+      </Group>
     <Tabs defaultValue="all">
       <Tabs.List>
         <Tabs.Tab value="all" leftSection={<IconList size={16} />}>
@@ -319,5 +341,6 @@ export function RegionsScreen({ server }: RegionsScreenProps) {
         </Tabs.Panel>
       ))}
     </Tabs>
+    </Stack>
   )
 }
