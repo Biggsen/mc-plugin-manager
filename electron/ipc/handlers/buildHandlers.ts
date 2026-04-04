@@ -10,7 +10,7 @@ const {
   listBuildIds,
 } = require('../../storage')
 const { computeRegionCounts, computeRegionStats } = require('../../utils/regionStats')
-const { sanitizeServerName } = require('../../utils/stringFormatters')
+const { sanitizeServerName } = require('../../shared/stringFormatters')
 const { runPluginBuild } = require('../../build/buildPluginConfig')
 const {
   readDiscordSrvTemplatePaths,
@@ -20,7 +20,7 @@ const {
 const { prependGeneratorVersionHeader } = require('../../utils/generatorVersionHeader')
 
 import type { BuildResult, BuildReport, DiscordSrvSettings, GeneratorVersionKey } from '../../types'
-import { resolveConfigServerName } from '../../utils/resolveConfigServerName'
+import { resolveConfigServerName } from '../../shared/resolveConfigServerName'
 import { getGuideBooksSourceDir } from '../../utils/guideBooksDir'
 import { getGriefPreventionBundledConfigPath } from '../../utils/griefPreventionBundledConfig'
 

@@ -23,7 +23,7 @@ import {
 } from '@tabler/icons-react'
 import type { ServerProfile } from '../types'
 import { computeRegionDisplayStats } from '../utils/regionStats'
-import { formatStructureTypeLabel } from '../utils/stringFormatters'
+import { formatStructureTypeLabel } from '@shared/stringFormatters'
 import { ImportScreen } from './ImportScreen'
 import { OnboardingScreen } from './OnboardingScreen'
 import { BuildScreen } from './BuildScreen'

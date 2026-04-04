@@ -2,7 +2,7 @@ const yaml = require('yaml')
 const { readFileSync } = require('fs')
 
 import type { RegionRecord } from './types'
-import { snakeToTitleCase } from './utils/stringFormatters'
+import { snakeToTitleCase } from './shared/stringFormatters'
 
 interface LevelledMobsMeta {
   villageBandStrategy?: string

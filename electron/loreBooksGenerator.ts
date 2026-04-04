@@ -5,7 +5,7 @@ function escapeForDoubleQuotedYaml(str: string): string {
 }
 
 import type { RegionRecord } from './types'
-import { formatRegionTitle } from './utils/stringFormatters'
+import { formatRegionTitle } from './shared/stringFormatters'
 
 function paginateDescription(text: string, charsPerPage: number = CHARS_PER_PAGE): string[] {
   const trimmed = text.trim()

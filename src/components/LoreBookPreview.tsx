@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react'
 import { Stack, Text, Box, Button, Group, Textarea, SegmentedControl } from '@mantine/core'
-import { formatRegionTitle } from '../utils/stringFormatters'
+import { formatRegionTitle } from '@shared/stringFormatters'
 
 const ANCHOR_LENGTH = 24
 

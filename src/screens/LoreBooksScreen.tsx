@@ -13,7 +13,7 @@ import {
 import { IconFolderOpen } from '@tabler/icons-react'
 import type { ServerProfile } from '../types'
 import { LoreBookPreview } from '../components/LoreBookPreview'
-import { formatRegionLabel } from '../utils/stringFormatters'
+import { formatRegionLabel } from '@shared/stringFormatters'
 
 interface LoreBooksScreenProps {
   server: ServerProfile

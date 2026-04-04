@@ -1,7 +1,7 @@
 const yaml = require('yaml')
 
 import type { RegionRecord } from './types'
-import { snakeToTitleCase } from './utils/stringFormatters'
+import { snakeToTitleCase } from './shared/stringFormatters'
 
 interface AACommand {
   Goal: string

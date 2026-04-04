@@ -1,6 +1,5 @@
 /**
- * Shared string formatters for electron main process.
- * Used by generators, IPC, and any code that needs consistent region/server naming.
+ * String formatters shared by the Electron main process and the renderer (generators + UI).
  */
 
 /**
@@ -25,6 +24,24 @@ export function snakeToTitleCase(str: string): string {
  */
 export function formatRegionTitle(id: string): string {
   return snakeToTitleCase(id)
+}
+
+/**
+ * Format region for display: use displayNameOverride if set, otherwise formatRegionTitle(id).
+ */
+export function formatRegionLabel(region: { id: string; discover?: { displayNameOverride?: string } }): string {
+  return region.discover?.displayNameOverride ?? formatRegionTitle(region.id)
+}
+
+/**
+ * Label for `structureType` keys (e.g. ancient_city → Ancient City).
+ */
+export function formatStructureTypeLabel(structureType: string): string {
+  if (structureType === 'unknown') return 'Unknown type'
+  return structureType
+    .split('_')
+    .map((seg) => seg.charAt(0).toUpperCase() + seg.slice(1).toLowerCase())
+    .join(' ')
 }
 
 /**
