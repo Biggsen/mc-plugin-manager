@@ -21,7 +21,12 @@ export type RewardRecipeId =
   | 'village'
 
 /** Keys stored in `generatorVersions` (plugin YAML emit serial). */
-export type GeneratorVersionKey = PluginType | 'discordsrv' | 'bookgui' | 'griefprevention'
+export type GeneratorVersionKey =
+  | PluginType
+  | 'discordsrv'
+  | 'bookgui'
+  | 'griefprevention'
+  | 'worldguardregions'
 
 export interface ServerProfile {
   id: ServerId
@@ -59,6 +64,13 @@ export interface ServerProfile {
     outputDirectory?: string
     loreBooksOutputDirectory?: string
     propagateToPluginFolders?: boolean
+    /** Last selected Region Forge / WorldGuard regions.yml source for builds. */
+    worldGuardRegionsSourcePath?: string
+    /**
+     * WorldGuard world folder name under plugins/WorldGuard/worlds/ (e.g. `world`).
+     * Used when "propagate to plugin folders" is on.
+     */
+    worldGuardRegionsWorldFolder?: string
   }
   /** Per-plugin successful emit serial (1-based), keyed by plugin id. */
   generatorVersions?: Partial<Record<GeneratorVersionKey, number>>
@@ -164,6 +176,7 @@ export interface BuildResult {
     cw?: { path: string; isDefault: boolean }
     discordsrv?: { path: string; isDefault: boolean }
     griefprevention?: { path: string; isDefault: boolean }
+    worldguardregions?: { path: string; isDefault: boolean }
   }
 }
 
@@ -200,6 +213,8 @@ export interface BuildReport {
     discordsrv?: boolean
     /** Bundled GriefPreventionData/config.yml copy; treat absent as false. */
     griefprevention?: boolean
+    /** WorldGuard regions.yml from user-provided source (e.g. Region Forge). */
+    worldguardregions?: boolean
   }
   configSources?: {
     aa?: { path: string; isDefault: boolean }
@@ -211,6 +226,7 @@ export interface BuildReport {
     cw?: { path: string; isDefault: boolean }
     discordsrv?: { path: string; isDefault: boolean }
     griefprevention?: { path: string; isDefault: boolean }
+    worldguardregions?: { path: string; isDefault: boolean }
   }
   warnings: string[]
   errors: string[]
