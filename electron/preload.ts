@@ -67,6 +67,9 @@ export interface ElectronAPI {
       generateWorldGuardRegions?: boolean
       worldGuardRegionsPath?: string
       worldGuardRegionsWorldFolder?: string
+      generateWorldGuardRegionsNether?: boolean
+      worldGuardRegionsNetherPath?: string
+      worldGuardRegionsNetherWorldFolder?: string
       discordSrv?: DiscordSrvSettings
       aaPath?: string
       cePath?: string
@@ -142,6 +145,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
       generateWorldGuardRegions?: boolean
       worldGuardRegionsPath?: string
       worldGuardRegionsWorldFolder?: string
+      generateWorldGuardRegionsNether?: boolean
+      worldGuardRegionsNetherPath?: string
+      worldGuardRegionsNetherWorldFolder?: string
       discordSrv?: DiscordSrvSettings
       aaPath?: string
       cePath?: string

@@ -46,6 +46,9 @@ interface ElectronAPI {
       generateWorldGuardRegions?: boolean
       worldGuardRegionsPath?: string
       worldGuardRegionsWorldFolder?: string
+      generateWorldGuardRegionsNether?: boolean
+      worldGuardRegionsNetherPath?: string
+      worldGuardRegionsNetherWorldFolder?: string
       discordSrv?: import('./types').DiscordSrvSettings
       aaPath?: string
       cePath?: string

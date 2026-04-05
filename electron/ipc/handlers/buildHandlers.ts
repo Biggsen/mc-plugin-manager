@@ -51,6 +51,9 @@ export function registerBuildHandlers(): void {
         worldGuardRegionsPath?: string
         /** World folder under WorldGuard/worlds/ when propagating (default world). */
         worldGuardRegionsWorldFolder?: string
+        generateWorldGuardRegionsNether?: boolean
+        worldGuardRegionsNetherPath?: string
+        worldGuardRegionsNetherWorldFolder?: string
         discordSrv?: DiscordSrvSettings
         aaPath?: string
         cePath?: string
@@ -79,12 +82,13 @@ export function registerBuildHandlers(): void {
           !inputs.generateCW &&
           !inputs.generateDiscordSRV &&
           !inputs.generateGriefPrevention &&
-          !inputs.generateWorldGuardRegions
+          !inputs.generateWorldGuardRegions &&
+          !inputs.generateWorldGuardRegionsNether
         ) {
           return {
             success: false,
             error:
-              'At least one plugin (AA, BookGUI, CE, TAB, LM, MC, CommandWhitelist, DiscordSRV, GriefPreventionData, or WorldGuard regions.yml) must be selected',
+              'At least one plugin (AA, BookGUI, CE, TAB, LM, MC, CommandWhitelist, DiscordSRV, GriefPreventionData, WorldGuard overworld regions.yml, or WorldGuard nether regions.yml) must be selected',
           }
         }
         if (!inputs.outDir || inputs.outDir.trim().length === 0) {
@@ -128,6 +132,7 @@ export function registerBuildHandlers(): void {
         let discordsrvGenerated = false
         let griefPreventionGenerated = false
         let worldGuardRegionsGenerated = false
+        let worldGuardRegionsNetherGenerated = false
         const configSources: BuildResult['configSources'] = {}
 
         const regionCountsForTAB = computeRegionCounts(profile.regions)
@@ -374,14 +379,15 @@ export function registerBuildHandlers(): void {
           if (!srcPath) {
             return {
               success: false,
-              error: 'WorldGuard regions.yml requires a source file (browse to your Region Forge export)',
+              error:
+                'WorldGuard overworld regions.yml requires a source file (browse to your Region Forge export)',
               buildId,
             }
           }
           if (!existsSync(srcPath)) {
             return {
               success: false,
-              error: `WorldGuard regions source not found: ${srcPath}`,
+              error: `WorldGuard overworld regions source not found: ${srcPath}`,
               buildId,
             }
           }
@@ -417,7 +423,62 @@ export function registerBuildHandlers(): void {
             const err = error as Error
             return {
               success: false,
-              error: err.message || 'WorldGuard regions.yml copy failed',
+              error: err.message || 'WorldGuard overworld regions.yml copy failed',
+              buildId,
+            }
+          }
+        }
+
+        if (inputs.generateWorldGuardRegionsNether) {
+          const srcPath = (inputs.worldGuardRegionsNetherPath ?? '').trim()
+          if (!srcPath) {
+            return {
+              success: false,
+              error:
+                'WorldGuard nether regions.yml requires a source file (browse to your Region Forge nether export)',
+              buildId,
+            }
+          }
+          if (!existsSync(srcPath)) {
+            return {
+              success: false,
+              error: `WorldGuard nether regions source not found: ${srcPath}`,
+              buildId,
+            }
+          }
+          try {
+            const nextGeneratorVersion = versionForEmit('worldguardregionsnether')
+            const rawBody = fs.readFileSync(srcPath, 'utf-8')
+            const body = stripGeneratorVersionCommentLines(rawBody)
+            const content = prependGeneratorVersionHeader(body, {
+              plugin: 'worldguardregionsnether',
+              profileId: serverId,
+              buildId,
+              nextVersion: nextGeneratorVersion,
+              generatedAt: timestamp,
+            })
+            const flatName = `${serverNameSanitized}-worldguard-regions-nether.yml`
+            const buildDir = ensureBuildDirectory(serverId, buildId)
+            const worldFolder = sanitizeWorldGuardWorldFolder(inputs.worldGuardRegionsNetherWorldFolder)
+            if (propagate) {
+              const rel = getWorldGuardRegionsPropagatedRelativePath(worldFolder)
+              const outPath = path.join(inputs.outDir, rel)
+              fs.mkdirSync(path.dirname(outPath), { recursive: true })
+              fs.writeFileSync(outPath, content, 'utf-8')
+            } else {
+              fs.writeFileSync(path.join(inputs.outDir, flatName), content, 'utf-8')
+            }
+            fs.writeFileSync(path.join(buildDir, flatName), content, 'utf-8')
+            persistGeneratorVersion('worldguardregionsnether', nextGeneratorVersion)
+            worldGuardRegionsNetherGenerated = true
+            configSources.worldguardregionsnether = { path: srcPath, isDefault: false }
+            profile.build.worldGuardRegionsNetherSourcePath = srcPath
+            profile.build.worldGuardRegionsNetherWorldFolder = worldFolder
+          } catch (error: unknown) {
+            const err = error as Error
+            return {
+              success: false,
+              error: err.message || 'WorldGuard nether regions.yml copy failed',
               buildId,
             }
           }
@@ -440,6 +501,7 @@ export function registerBuildHandlers(): void {
             discordsrv: discordsrvGenerated,
             griefprevention: griefPreventionGenerated,
             worldguardregions: worldGuardRegionsGenerated,
+            worldguardregionsnether: worldGuardRegionsNetherGenerated,
           },
           configSources,
           warnings,

@@ -27,6 +27,7 @@ export type GeneratorVersionKey =
   | 'bookgui'
   | 'griefprevention'
   | 'worldguardregions'
+  | 'worldguardregionsnether'
 
 export interface ServerProfile {
   id: ServerId
@@ -71,6 +72,10 @@ export interface ServerProfile {
      * Used when "propagate to plugin folders" is on.
      */
     worldGuardRegionsWorldFolder?: string
+    /** Nether WorldGuard regions.yml source (Region Forge export for nether world). */
+    worldGuardRegionsNetherSourcePath?: string
+    /** Nether world folder under WorldGuard/worlds/ (e.g. `world_nether`). */
+    worldGuardRegionsNetherWorldFolder?: string
   }
   /** Per-plugin successful emit serial (1-based), keyed by plugin id. */
   generatorVersions?: Partial<Record<GeneratorVersionKey, number>>
@@ -177,6 +182,7 @@ export interface BuildResult {
     discordsrv?: { path: string; isDefault: boolean }
     griefprevention?: { path: string; isDefault: boolean }
     worldguardregions?: { path: string; isDefault: boolean }
+    worldguardregionsnether?: { path: string; isDefault: boolean }
   }
 }
 
@@ -215,6 +221,7 @@ export interface BuildReport {
     griefprevention?: boolean
     /** WorldGuard regions.yml from user-provided source (e.g. Region Forge). */
     worldguardregions?: boolean
+    worldguardregionsnether?: boolean
   }
   configSources?: {
     aa?: { path: string; isDefault: boolean }
@@ -227,6 +234,7 @@ export interface BuildReport {
     discordsrv?: { path: string; isDefault: boolean }
     griefprevention?: { path: string; isDefault: boolean }
     worldguardregions?: { path: string; isDefault: boolean }
+    worldguardregionsnether?: { path: string; isDefault: boolean }
   }
   warnings: string[]
   errors: string[]

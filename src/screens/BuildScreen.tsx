@@ -68,11 +68,19 @@ const BUILD_PLUGINS = [
   { id: 'griefprevention', label: 'GriefPreventionData', generateKey: 'generateGriefPrevention', overrideLabel: undefined, dialogTitle: undefined, pathKey: undefined },
   {
     id: 'worldguardregions',
-    label: 'WorldGuard regions.yml',
-    overrideLabel: 'WorldGuard regions.yml (Region Forge export)',
-    dialogTitle: 'Select WorldGuard regions.yml',
+    label: 'WorldGuard regions.yml (overworld)',
+    overrideLabel: 'Overworld regions.yml (Region Forge export)',
+    dialogTitle: 'Select overworld WorldGuard regions.yml',
     generateKey: 'generateWorldGuardRegions',
     pathKey: 'worldGuardRegionsPath',
+  },
+  {
+    id: 'worldguardregionsnether',
+    label: 'WorldGuard regions.yml (nether)',
+    overrideLabel: 'Nether regions.yml (Region Forge export)',
+    dialogTitle: 'Select nether WorldGuard regions.yml',
+    generateKey: 'generateWorldGuardRegionsNether',
+    pathKey: 'worldGuardRegionsNetherPath',
   },
 ] as const
 
@@ -89,6 +97,7 @@ const PLUGIN_VERSION_KEY_BY_ID: Record<BuildPluginId, GeneratorVersionKey> = {
   tab: 'tab',
   griefprevention: 'griefprevention',
   worldguardregions: 'worldguardregions',
+  worldguardregionsnether: 'worldguardregionsnether',
 }
 
 function getInitialPluginOptions(): Record<BuildPluginId, { generate: boolean; path: string }> {
@@ -132,6 +141,9 @@ export function BuildScreen({ server, onServerUpdate }: BuildScreenProps) {
   const [openFolderError, setOpenFolderError] = useState<string | null>(null)
   const [worldGuardWorldFolder, setWorldGuardWorldFolder] = useState(
     () => server.build?.worldGuardRegionsWorldFolder?.trim() || 'world'
+  )
+  const [worldGuardNetherWorldFolder, setWorldGuardNetherWorldFolder] = useState(
+    () => server.build?.worldGuardRegionsNetherWorldFolder?.trim() || 'world_nether'
   )
 
   async function handleSelectPluginFile(id: BuildPluginId) {
@@ -197,7 +209,15 @@ export function BuildScreen({ server, onServerUpdate }: BuildScreenProps) {
     }
 
     if (pluginOptions.worldguardregions.generate && !pluginOptions.worldguardregions.path?.trim()) {
-      setValidationError('WorldGuard regions.yml requires a source file — use Browse under overrides')
+      setValidationError('Overworld WorldGuard regions.yml requires a source file — use Browse under overrides')
+      return
+    }
+
+    if (
+      pluginOptions.worldguardregionsnether.generate &&
+      !pluginOptions.worldguardregionsnether.path?.trim()
+    ) {
+      setValidationError('Nether WorldGuard regions.yml requires a source file — use Browse under overrides')
       return
     }
 
@@ -231,6 +251,9 @@ export function BuildScreen({ server, onServerUpdate }: BuildScreenProps) {
       }
       if (pluginOptions.worldguardregions.generate) {
         payload.worldGuardRegionsWorldFolder = worldGuardWorldFolder.trim() || 'world'
+      }
+      if (pluginOptions.worldguardregionsnether.generate) {
+        payload.worldGuardRegionsNetherWorldFolder = worldGuardNetherWorldFolder.trim() || 'world_nether'
       }
       const result = await window.electronAPI.buildConfigs(
         server.id,
@@ -289,6 +312,12 @@ export function BuildScreen({ server, onServerUpdate }: BuildScreenProps) {
   }, [server.id, server.build?.worldGuardRegionsWorldFolder])
 
   useEffect(() => {
+    setWorldGuardNetherWorldFolder(
+      server.build?.worldGuardRegionsNetherWorldFolder?.trim() || 'world_nether'
+    )
+  }, [server.id, server.build?.worldGuardRegionsNetherWorldFolder])
+
+  useEffect(() => {
     const saved = server.build?.worldGuardRegionsSourcePath?.trim()
     if (!saved) return
     setPluginOptions((prev) => ({
@@ -296,6 +325,15 @@ export function BuildScreen({ server, onServerUpdate }: BuildScreenProps) {
       worldguardregions: { ...prev.worldguardregions, path: saved },
     }))
   }, [server.id, server.build?.worldGuardRegionsSourcePath])
+
+  useEffect(() => {
+    const saved = server.build?.worldGuardRegionsNetherSourcePath?.trim()
+    if (!saved) return
+    setPluginOptions((prev) => ({
+      ...prev,
+      worldguardregionsnether: { ...prev.worldguardregionsnether, path: saved },
+    }))
+  }, [server.id, server.build?.worldGuardRegionsNetherSourcePath])
 
   useEffect(() => {
     setOpenFolderError(null)
@@ -392,7 +430,8 @@ export function BuildScreen({ server, onServerUpdate }: BuildScreenProps) {
         </Stack>
         <Text size="sm" c="dimmed">
           Checked plugins will be generated. For most plugins, leave paths empty to use bundled defaults, or pick
-          custom files under overrides. WorldGuard regions.yml always needs a source file.
+          custom files under overrides. WorldGuard overworld and nether regions.yml each need a source file when
+          enabled.
         </Text>
         {pluginOptions.discordsrv.generate && (
           <Stack gap="xs" mt="sm">
@@ -485,11 +524,11 @@ export function BuildScreen({ server, onServerUpdate }: BuildScreenProps) {
         {pluginOptions.worldguardregions.generate && (
           <Stack gap="xs" mt="sm">
             <Text size="xs" c="dimmed">
-              Pick your Region Forge <Text component="span" fw={600}>regions.yml</Text> under overrides. Output
-              gets the same generator header as other configs; prior PM header lines are stripped from the source.
+              Pick overworld <Text component="span" fw={600}>regions.yml</Text> under overrides. Output gets the
+              same generator header as other configs; prior PM header lines are stripped from the source.
             </Text>
             <TextInput
-              label="World folder name under WorldGuard/worlds/"
+              label="Overworld — folder under WorldGuard/worlds/"
               description={
                 propagateToPluginFolders
                   ? 'regions.yml is written to this folder under the output directory.'
@@ -497,6 +536,24 @@ export function BuildScreen({ server, onServerUpdate }: BuildScreenProps) {
               }
               value={worldGuardWorldFolder}
               onChange={(e) => setWorldGuardWorldFolder(e.currentTarget.value)}
+            />
+          </Stack>
+        )}
+        {pluginOptions.worldguardregionsnether.generate && (
+          <Stack gap="xs" mt="sm">
+            <Text size="xs" c="dimmed">
+              Pick nether <Text component="span" fw={600}>regions.yml</Text> under overrides (separate Region Forge
+              export). Same header behavior as overworld.
+            </Text>
+            <TextInput
+              label="Nether — folder under WorldGuard/worlds/"
+              description={
+                propagateToPluginFolders
+                  ? 'Nether regions.yml is written to this folder (often world_nether).'
+                  : 'Used only when “Propagate to plugin folders” is on (flat file ends with -worldguard-regions-nether.yml).'
+              }
+              value={worldGuardNetherWorldFolder}
+              onChange={(e) => setWorldGuardNetherWorldFolder(e.currentTarget.value)}
             />
           </Stack>
         )}
@@ -534,11 +591,15 @@ export function BuildScreen({ server, onServerUpdate }: BuildScreenProps) {
                   <Text size="xs" c="dimmed">
                     {p.id === 'worldguardregions'
                       ? pluginOptions[p.id].path
-                        ? 'Using selected regions.yml'
-                        : 'Browse to your Region Forge export (required)'
-                      : pluginOptions[p.id].path
-                        ? 'Using custom file'
-                        : 'Will use bundled default template'}
+                        ? 'Using selected overworld regions.yml'
+                        : 'Browse to overworld Region Forge export (required)'
+                      : p.id === 'worldguardregionsnether'
+                        ? pluginOptions[p.id].path
+                          ? 'Using selected nether regions.yml'
+                          : 'Browse to nether Region Forge export (required)'
+                        : pluginOptions[p.id].path
+                          ? 'Using custom file'
+                          : 'Will use bundled default template'}
                   </Text>
                 </Stack>
               ))}

@@ -70,6 +70,11 @@ export function getPmGeneratedEntries(): { entries: PmGeneratedEntry[]; bookGuiW
       id: 'worldguardregions',
       label: 'WorldGuard (worlds/world/regions.yml)',
       relativePath: getWorldGuardRegionsPropagatedRelativePath('world'),
+    },
+    {
+      id: 'worldguardregionsnether',
+      label: 'WorldGuard nether (worlds/world_nether/regions.yml)',
+      relativePath: getWorldGuardRegionsPropagatedRelativePath('world_nether'),
     }
   )
 
