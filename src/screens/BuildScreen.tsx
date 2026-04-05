@@ -66,6 +66,14 @@ const BUILD_PLUGINS = [
   { id: 'mc', label: 'MyCommand', overrideLabel: 'MyCommand commands.yml (optional override)', dialogTitle: 'Select MyCommand commands.yml', generateKey: 'generateMC', pathKey: 'mcPath' },
   { id: 'tab', label: 'TAB', overrideLabel: 'TAB config.yml (optional override)', dialogTitle: 'Select TAB config.yml', generateKey: 'generateTAB', pathKey: 'tabPath' },
   { id: 'griefprevention', label: 'GriefPreventionData', generateKey: 'generateGriefPrevention', overrideLabel: undefined, dialogTitle: undefined, pathKey: undefined },
+  {
+    id: 'worldguardregions',
+    label: 'WorldGuard regions.yml',
+    overrideLabel: 'WorldGuard regions.yml (Region Forge export)',
+    dialogTitle: 'Select WorldGuard regions.yml',
+    generateKey: 'generateWorldGuardRegions',
+    pathKey: 'worldGuardRegionsPath',
+  },
 ] as const
 
 type BuildPluginId = (typeof BUILD_PLUGINS)[number]['id']
@@ -80,6 +88,7 @@ const PLUGIN_VERSION_KEY_BY_ID: Record<BuildPluginId, GeneratorVersionKey> = {
   mc: 'mc',
   tab: 'tab',
   griefprevention: 'griefprevention',
+  worldguardregions: 'worldguardregions',
 }
 
 function getInitialPluginOptions(): Record<BuildPluginId, { generate: boolean; path: string }> {
@@ -121,6 +130,9 @@ export function BuildScreen({ server, onServerUpdate }: BuildScreenProps) {
   const [showOverrides, setShowOverrides] = useState(false)
   const [showDiscordSrvSettings, setShowDiscordSrvSettings] = useState(false)
   const [openFolderError, setOpenFolderError] = useState<string | null>(null)
+  const [worldGuardWorldFolder, setWorldGuardWorldFolder] = useState(
+    () => server.build?.worldGuardRegionsWorldFolder?.trim() || 'world'
+  )
 
   async function handleSelectPluginFile(id: BuildPluginId) {
     const plugin = BUILD_PLUGINS.find((p) => p.id === id)
@@ -184,6 +196,11 @@ export function BuildScreen({ server, onServerUpdate }: BuildScreenProps) {
       }
     }
 
+    if (pluginOptions.worldguardregions.generate && !pluginOptions.worldguardregions.path?.trim()) {
+      setValidationError('WorldGuard regions.yml requires a source file — use Browse under overrides')
+      return
+    }
+
     setIsBuilding(true)
     setBuildResult(null)
 
@@ -196,8 +213,11 @@ export function BuildScreen({ server, onServerUpdate }: BuildScreenProps) {
       } as Record<string, unknown>
       for (const p of BUILD_PLUGINS) {
         payload[p.generateKey] = pluginOptions[p.id].generate
-        if (pluginOptions[p.id].generate && 'pathKey' in p && p.pathKey && pluginOptions[p.id].path) {
-          payload[p.pathKey] = pluginOptions[p.id].path
+        if (pluginOptions[p.id].generate && 'pathKey' in p && p.pathKey) {
+          const filePath = pluginOptions[p.id].path?.trim()
+          if (filePath) {
+            payload[p.pathKey] = filePath
+          }
         }
       }
       if (pluginOptions.discordsrv.generate) {
@@ -208,6 +228,9 @@ export function BuildScreen({ server, onServerUpdate }: BuildScreenProps) {
           consoleChannelId: discordSrv.consoleChannelId ?? '',
           discordInviteUrl: discordSrv.discordInviteUrl ?? '',
         }
+      }
+      if (pluginOptions.worldguardregions.generate) {
+        payload.worldGuardRegionsWorldFolder = worldGuardWorldFolder.trim() || 'world'
       }
       const result = await window.electronAPI.buildConfigs(
         server.id,
@@ -260,6 +283,19 @@ export function BuildScreen({ server, onServerUpdate }: BuildScreenProps) {
     server.discordSrv?.consoleChannelId,
     server.discordSrv?.discordInviteUrl,
   ])
+
+  useEffect(() => {
+    setWorldGuardWorldFolder(server.build?.worldGuardRegionsWorldFolder?.trim() || 'world')
+  }, [server.id, server.build?.worldGuardRegionsWorldFolder])
+
+  useEffect(() => {
+    const saved = server.build?.worldGuardRegionsSourcePath?.trim()
+    if (!saved) return
+    setPluginOptions((prev) => ({
+      ...prev,
+      worldguardregions: { ...prev.worldguardregions, path: saved },
+    }))
+  }, [server.id, server.build?.worldGuardRegionsSourcePath])
 
   useEffect(() => {
     setOpenFolderError(null)
@@ -355,7 +391,8 @@ export function BuildScreen({ server, onServerUpdate }: BuildScreenProps) {
           ))}
         </Stack>
         <Text size="sm" c="dimmed">
-          Checked plugins will be generated. Leave paths empty to use bundled defaults, or provide custom config files.
+          Checked plugins will be generated. For most plugins, leave paths empty to use bundled defaults, or pick
+          custom files under overrides. WorldGuard regions.yml always needs a source file.
         </Text>
         {pluginOptions.discordsrv.generate && (
           <Stack gap="xs" mt="sm">
@@ -445,6 +482,24 @@ export function BuildScreen({ server, onServerUpdate }: BuildScreenProps) {
             </Collapse>
           </Stack>
         )}
+        {pluginOptions.worldguardregions.generate && (
+          <Stack gap="xs" mt="sm">
+            <Text size="xs" c="dimmed">
+              Pick your Region Forge <Text component="span" fw={600}>regions.yml</Text> under overrides. Output
+              gets the same generator header as other configs; prior PM header lines are stripped from the source.
+            </Text>
+            <TextInput
+              label="World folder name under WorldGuard/worlds/"
+              description={
+                propagateToPluginFolders
+                  ? 'regions.yml is written to this folder under the output directory.'
+                  : 'Used only when “Propagate to plugin folders” is on (flat mode uses a single prefixed file).'
+              }
+              value={worldGuardWorldFolder}
+              onChange={(e) => setWorldGuardWorldFolder(e.currentTarget.value)}
+            />
+          </Stack>
+        )}
       </Stack>
 
       {BUILD_PLUGINS.some((p) => pluginOptions[p.id].generate) && (
@@ -477,7 +532,13 @@ export function BuildScreen({ server, onServerUpdate }: BuildScreenProps) {
                     </Button>
                   </Group>
                   <Text size="xs" c="dimmed">
-                    {pluginOptions[p.id].path ? 'Using custom file' : 'Will use bundled default template'}
+                    {p.id === 'worldguardregions'
+                      ? pluginOptions[p.id].path
+                        ? 'Using selected regions.yml'
+                        : 'Browse to your Region Forge export (required)'
+                      : pluginOptions[p.id].path
+                        ? 'Using custom file'
+                        : 'Will use bundled default template'}
                   </Text>
                 </Stack>
               ))}

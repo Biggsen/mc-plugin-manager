@@ -7,6 +7,7 @@ const { readdirSync } = require('fs')
 import type { PluginType } from '../types'
 import { PLUGIN_TYPES } from '../types'
 import { PLUGIN_OUTPUT_RELATIVE, getCEEventFragmentPropagatedRelativePath } from './configPathResolver'
+import { getWorldGuardRegionsPropagatedRelativePath } from './worldGuardRegionsPaths'
 import { CE_EVENT_FRAGMENT_BASENAMES } from '../ceGenerator'
 import { getGuideBooksSourceDir } from './guideBooksDir'
 
@@ -64,6 +65,11 @@ export function getPmGeneratedEntries(): { entries: PmGeneratedEntry[]; bookGuiW
       id: 'griefprevention',
       label: 'GriefPreventionData (config.yml)',
       relativePath: 'GriefPreventionData/config.yml',
+    },
+    {
+      id: 'worldguardregions',
+      label: 'WorldGuard (worlds/world/regions.yml)',
+      relativePath: getWorldGuardRegionsPropagatedRelativePath('world'),
     }
   )
 

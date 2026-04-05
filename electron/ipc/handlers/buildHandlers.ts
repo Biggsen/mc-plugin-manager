@@ -17,7 +17,14 @@ const {
   generateDiscordSrvConfigContent,
   readDiscordSrvMessagesContent,
 } = require('../../discordSrvGenerator')
-const { prependGeneratorVersionHeader } = require('../../utils/generatorVersionHeader')
+const {
+  prependGeneratorVersionHeader,
+  stripGeneratorVersionCommentLines,
+} = require('../../utils/generatorVersionHeader')
+const {
+  sanitizeWorldGuardWorldFolder,
+  getWorldGuardRegionsPropagatedRelativePath,
+} = require('../../utils/worldGuardRegionsPaths')
 
 import type { BuildResult, BuildReport, DiscordSrvSettings, GeneratorVersionKey } from '../../types'
 import { resolveConfigServerName } from '../../shared/resolveConfigServerName'
@@ -40,6 +47,10 @@ export function registerBuildHandlers(): void {
         generateCW?: boolean
         generateDiscordSRV?: boolean
         generateGriefPrevention?: boolean
+        generateWorldGuardRegions?: boolean
+        worldGuardRegionsPath?: string
+        /** World folder under WorldGuard/worlds/ when propagating (default world). */
+        worldGuardRegionsWorldFolder?: string
         discordSrv?: DiscordSrvSettings
         aaPath?: string
         cePath?: string
@@ -67,12 +78,13 @@ export function registerBuildHandlers(): void {
           !inputs.generateMC &&
           !inputs.generateCW &&
           !inputs.generateDiscordSRV &&
-          !inputs.generateGriefPrevention
+          !inputs.generateGriefPrevention &&
+          !inputs.generateWorldGuardRegions
         ) {
           return {
             success: false,
             error:
-              'At least one plugin (AA, BookGUI, CE, TAB, LM, MC, CommandWhitelist, DiscordSRV, or GriefPreventionData) must be selected',
+              'At least one plugin (AA, BookGUI, CE, TAB, LM, MC, CommandWhitelist, DiscordSRV, GriefPreventionData, or WorldGuard regions.yml) must be selected',
           }
         }
         if (!inputs.outDir || inputs.outDir.trim().length === 0) {
@@ -115,6 +127,7 @@ export function registerBuildHandlers(): void {
         let cwGenerated = false
         let discordsrvGenerated = false
         let griefPreventionGenerated = false
+        let worldGuardRegionsGenerated = false
         const configSources: BuildResult['configSources'] = {}
 
         const regionCountsForTAB = computeRegionCounts(profile.regions)
@@ -356,6 +369,60 @@ export function registerBuildHandlers(): void {
           }
         }
 
+        if (inputs.generateWorldGuardRegions) {
+          const srcPath = (inputs.worldGuardRegionsPath ?? '').trim()
+          if (!srcPath) {
+            return {
+              success: false,
+              error: 'WorldGuard regions.yml requires a source file (browse to your Region Forge export)',
+              buildId,
+            }
+          }
+          if (!existsSync(srcPath)) {
+            return {
+              success: false,
+              error: `WorldGuard regions source not found: ${srcPath}`,
+              buildId,
+            }
+          }
+          try {
+            const nextGeneratorVersion = versionForEmit('worldguardregions')
+            const rawBody = fs.readFileSync(srcPath, 'utf-8')
+            const body = stripGeneratorVersionCommentLines(rawBody)
+            const content = prependGeneratorVersionHeader(body, {
+              plugin: 'worldguardregions',
+              profileId: serverId,
+              buildId,
+              nextVersion: nextGeneratorVersion,
+              generatedAt: timestamp,
+            })
+            const flatName = `${serverNameSanitized}-worldguard-regions.yml`
+            const buildDir = ensureBuildDirectory(serverId, buildId)
+            const worldFolder = sanitizeWorldGuardWorldFolder(inputs.worldGuardRegionsWorldFolder)
+            if (propagate) {
+              const rel = getWorldGuardRegionsPropagatedRelativePath(worldFolder)
+              const outPath = path.join(inputs.outDir, rel)
+              fs.mkdirSync(path.dirname(outPath), { recursive: true })
+              fs.writeFileSync(outPath, content, 'utf-8')
+            } else {
+              fs.writeFileSync(path.join(inputs.outDir, flatName), content, 'utf-8')
+            }
+            fs.writeFileSync(path.join(buildDir, flatName), content, 'utf-8')
+            persistGeneratorVersion('worldguardregions', nextGeneratorVersion)
+            worldGuardRegionsGenerated = true
+            configSources.worldguardregions = { path: srcPath, isDefault: false }
+            profile.build.worldGuardRegionsSourcePath = srcPath
+            profile.build.worldGuardRegionsWorldFolder = worldFolder
+          } catch (error: unknown) {
+            const err = error as Error
+            return {
+              success: false,
+              error: err.message || 'WorldGuard regions.yml copy failed',
+              buildId,
+            }
+          }
+        }
+
         const gvSnap = profile.generatorVersions
         const report: BuildReport = {
           buildId,
@@ -372,6 +439,7 @@ export function registerBuildHandlers(): void {
             cw: cwGenerated,
             discordsrv: discordsrvGenerated,
             griefprevention: griefPreventionGenerated,
+            worldguardregions: worldGuardRegionsGenerated,
           },
           configSources,
           warnings,
