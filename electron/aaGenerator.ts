@@ -49,35 +49,44 @@ const HEARTS_TEMPLATE: TierTemplate = {
 
 const STRUCTURE_DISCOVERY_XP: Record<string, number> = {
   pillager_outpost: 80,
+  shipwreck: 80,
   desert_pyramid: 100,
   desert_well: 110,
   buried_treasure: 130,
   jungle_temple: 150,
   igloo: 180,
   trail_ruins: 200,
+  swamp_hut: 130,
+  woodland_mansion: 350,
   ancient_city: 500,
 }
 
 /** Per-structure claimblocks (AdvancedAchievements Reward.Command); PLAYER is substituted by AA */
 const STRUCTURE_DISCOVERY_CLAIM_BLOCKS: Record<string, number> = {
   pillager_outpost: 10,
+  shipwreck: 10,
   desert_pyramid: 12,
   desert_well: 13,
   buried_treasure: 15,
   jungle_temple: 18,
   igloo: 22,
   trail_ruins: 25,
+  swamp_hut: 15,
+  woodland_mansion: 35,
   ancient_city: 50,
 }
 
 const STRUCTURE_SET_DIFFICULTY: Record<string, number> = {
   pillager_outpost: 1.0,
+  shipwreck: 1.0,
   desert_pyramid: 1.1,
   desert_well: 1.2,
   buried_treasure: 1.35,
   jungle_temple: 1.5,
   igloo: 1.8,
   trail_ruins: 2.0,
+  swamp_hut: 1.35,
+  woodland_mansion: 2.75,
   ancient_city: 3.5,
 }
 
