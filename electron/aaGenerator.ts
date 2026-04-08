@@ -590,13 +590,41 @@ function generateCustomCategory(
   return result
 }
 
-type StructuresFoundSource = 'ten' | 'quarter' | 'half' | 'all'
+type StructuresFoundSource = 'ten' | 'quarter' | 'half' | 'threeQuarter' | 'all'
 
 const STRUCTURES_FOUND_PRIORITY: Record<StructuresFoundSource, number> = {
   ten: 1,
   quarter: 2,
   half: 3,
-  all: 4,
+  threeQuarter: 4,
+  all: 5,
+}
+
+/** Rank names for every-10 `structures_found` tiers (Vanguard is reserved for the ¾ milestone). */
+const STRUCTURES_FOUND_TEN_RANKS = [
+  'Wanderer',
+  'Scout',
+  'Pathfinder',
+  'Pioneer',
+  'Wayfarer',
+  'Seeker',
+  'Outrider',
+  'Surveyor',
+  'Cartographer',
+  'Delver',
+  'Frontier',
+  'Chronicler',
+] as const
+
+const STRUCTURES_FOUND_TEN_ROMAN: readonly string[] = ['I', 'II', 'III']
+
+function structuresFoundTenDisplayName(tenTierIndex: number): string {
+  const group = Math.floor(tenTierIndex / 3)
+  const levelIdx = tenTierIndex % 3
+  const rank =
+    STRUCTURES_FOUND_TEN_RANKS[Math.min(group, STRUCTURES_FOUND_TEN_RANKS.length - 1)]
+  const roman = STRUCTURES_FOUND_TEN_ROMAN[levelIdx] ?? 'I'
+  return `Structure ${rank} ${roman}`
 }
 
 /** Tier values and template source for Custom.structures_found (named milestones beat every-10 on collision). */
@@ -618,6 +646,8 @@ export function structuresFoundTierSpecs(
   if (halfTh > 0 && halfTh < total) set(halfTh, 'half')
   const quarterTh = Math.max(1, Math.ceil(total * 0.25))
   if (quarterTh < total) set(quarterTh, 'quarter')
+  const threeQuarterTh = Math.max(1, Math.ceil(total * 0.75))
+  if (threeQuarterTh < total) set(threeQuarterTh, 'threeQuarter')
 
   for (let k = 10; k < total; k += 10) {
     set(k, 'ten')
@@ -635,6 +665,7 @@ function pickStructuresFoundTemplateEntry(
 ): any {
   if (source === 'quarter' && templateCategory._quarter) return templateCategory._quarter
   if (source === 'half' && templateCategory._half) return templateCategory._half
+  if (source === 'threeQuarter' && templateCategory._threeQuarter) return templateCategory._threeQuarter
   if (source === 'all' && templateCategory._all) return templateCategory._all
 
   const numericKeys = Object.keys(templateCategory)
@@ -642,7 +673,12 @@ function pickStructuresFoundTemplateEntry(
     .map(Number)
     .sort((a, b) => a - b)
   if (numericKeys.length === 0) {
-    return templateCategory._all ?? templateCategory._half ?? templateCategory._quarter
+    return (
+      templateCategory._all ??
+      templateCategory._threeQuarter ??
+      templateCategory._half ??
+      templateCategory._quarter
+    )
   }
   const key = numericKeys.includes(value)
     ? value
@@ -663,6 +699,7 @@ function generateStructuresFoundCustom(
 
   const result: { [tier: number]: any } = {}
   const categoryName = 'structures_found'
+  let tenTierIndex = 0
 
   for (const { value, source } of specs) {
     const templateEntry = pickStructuresFoundTemplateEntry(templateCategory, value, source)
@@ -672,7 +709,7 @@ function generateStructuresFoundCustom(
     entry.Name = `${categoryName}_${value}`
 
     const claim =
-      source === 'ten' ? 100 : source === 'quarter' || source === 'half' ? 200 : 500
+      source === 'ten' ? 100 : source === 'all' ? 500 : 200
     entry.Reward = {
       Command: {
         Execute: [`acb PLAYER +${claim}`],
@@ -680,11 +717,27 @@ function generateStructuresFoundCustom(
       },
     }
 
-    if (entry.Message && typeof entry.Message === 'string') {
-      entry.Message = entry.Message.replace(/\d+ structures\b/gi, `${value} structures`)
-    }
     if (source === 'ten') {
       entry.Message = `You found ${value} structures!`
+      entry.DisplayName = structuresFoundTenDisplayName(tenTierIndex)
+      entry.Type = tenTierIndex < 6 ? 'normal' : 'rare'
+      tenTierIndex += 1
+    } else if (source === 'quarter') {
+      entry.Message = 'You found a quarter of all structures!'
+      entry.DisplayName = 'Structure Meridian'
+      entry.Type = 'rare'
+    } else if (source === 'half') {
+      entry.Message = 'You found half of all structures!'
+      entry.DisplayName = 'Structure Trailblazer'
+      entry.Type = 'rare'
+    } else if (source === 'threeQuarter') {
+      entry.Message = 'You found three quarters of all structures!'
+      entry.DisplayName = 'Structure Vanguard'
+      entry.Type = 'rare'
+    } else {
+      entry.Message = 'You found every structure!'
+      entry.DisplayName = 'Structure Legend'
+      entry.Type = 'rare'
     }
 
     ensureRewardCommandDisplayFromCeCalls(entry)

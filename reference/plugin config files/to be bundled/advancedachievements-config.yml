@@ -2134,7 +2134,7 @@ Custom:
     70:
       Message: You found 70 structures!
       Name: structures_found_70
-      DisplayName: Structure Vanguard
+      DisplayName: Structure Outrider
       Type: rare
     80:
       Message: You found 80 structures!
@@ -2175,6 +2175,11 @@ Custom:
       Message: You found half of all structures!
       Name: structures_found_half
       DisplayName: Structure Trailblazer
+      Type: rare
+    _threeQuarter:
+      Message: You found three quarters of all structures!
+      Name: structures_found_three_quarter
+      DisplayName: Structure Vanguard
       Type: rare
     _all:
       Message: You found every structure!
