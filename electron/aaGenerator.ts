@@ -2,6 +2,7 @@ const yaml = require('yaml')
 
 import type { RegionRecord } from './types'
 import { snakeToTitleCase } from './shared/stringFormatters'
+import { computeRegionCounts } from './utils/regionStats'
 
 interface AACommand {
   Goal: string
@@ -169,7 +170,7 @@ function appendLegendAlertExecute(entry: any): void {
 function appendLegendAlertsInCustom(customSection: any): void {
   if (!customSection || typeof customSection !== 'object') return
   for (const category of Object.keys(customSection)) {
-    if (category === 'blacksmiths_discovered') continue
+    if (category === 'blacksmiths_discovered' || category === 'total_discovered') continue
     const categoryEntries = customSection[category]
     if (!categoryEntries || typeof categoryEntries !== 'object') continue
     for (const tierKey of Object.keys(categoryEntries)) {
@@ -693,6 +694,65 @@ export function structuresFoundTenDisplayNames(total: number): Record<number, st
   return Object.fromEntries(buildStructuresFoundTenDisplayNames(total))
 }
 
+const TOTAL_DISCOVERED_PERCENTS = [10, 20, 25, 30, 40, 50, 60, 70, 75, 80, 90, 100] as const
+
+const TOTAL_DISCOVERED_TITLES = [
+  'Wanderer',
+  'Scout',
+  'Seeker',
+  'Pathfinder',
+  'Wayfarer',
+  'Trailblazer',
+  'Pioneer',
+  'Outrider',
+  'Vanguard',
+  'Chronicler',
+  'Cartographer',
+  'Legend',
+] as const
+
+/** Custom.total_discovered tiers: percent milestones vs exploration total (TAB / CE denominator). */
+export function generateTotalDiscoveredCustom(
+  explorationTotal: number,
+  serverName: string
+): Record<number, any> | null {
+  if (explorationTotal <= 0) return null
+  if (TOTAL_DISCOVERED_TITLES.length !== TOTAL_DISCOVERED_PERCENTS.length) {
+    throw new Error('TOTAL_DISCOVERED_TITLES and TOTAL_DISCOVERED_PERCENTS must match in length')
+  }
+
+  const categoryName = 'total_discovered'
+  let lastGoal = 0
+  const result: Record<number, any> = {}
+
+  for (let i = 0; i < TOTAL_DISCOVERED_PERCENTS.length; i++) {
+    const p = TOTAL_DISCOVERED_PERCENTS[i]
+    const title = TOTAL_DISCOVERED_TITLES[i]
+    let goal = Math.max(1, Math.ceil((explorationTotal * p) / 100))
+    if (goal <= lastGoal) goal = lastGoal + 1
+    if (goal > explorationTotal) break
+
+    const article = indefiniteArticleFor(title)
+    result[goal] = {
+      Message: `${p}% of ${serverName} explored!`,
+      Name: `${categoryName}_${p}`,
+      DisplayName: title,
+      Type: p < 50 ? 'normal' : 'rare',
+      Reward: {
+        Command: {
+          Execute: [
+            `lp user PLAYER parent set explorer_${p}`,
+            `say §7ALERT: §4PLAYER§7 has become ${article} §4${title.toUpperCase()}§7!`,
+          ],
+        },
+      },
+    }
+    lastGoal = goal
+  }
+
+  return Object.keys(result).length > 0 ? result : null
+}
+
 function pickStructuresFoundTemplateEntry(
   templateCategory: Record<string, any>,
   value: number,
@@ -822,15 +882,18 @@ function warnStructureFamiliesMismatch(regions: RegionRecord[], structureFamilie
 
 /**
  * Generate the owned Custom section categories based on region counts
+ * @param serverName Resolved world/server label for messages (default placeholder for tests)
  */
 export function generateAACustom(
   regions: RegionRecord[],
   templateConfig: any,
-  structureFamilies?: StructureFamiliesMap
+  structureFamilies?: StructureFamiliesMap,
+  serverName: string = '{SERVER_NAME}'
 ): { [category: string]: { [tier: number]: any } } {
   warnStructureFamiliesMismatch(regions, structureFamilies)
 
   const counts = countRegionsByKind(regions)
+  const explorationTotal = computeRegionCounts(regions).total
   const result: { [category: string]: { [tier: number]: any } } = {}
   
   const templateCustom = templateConfig.Custom || {}
@@ -874,6 +937,13 @@ export function generateAACustom(
         counts.hearts,
         'hearts_discovered'
       )
+    }
+  }
+
+  if (explorationTotal > 0 && templateCustom.total_discovered != null) {
+    const td = generateTotalDiscoveredCustom(explorationTotal, serverName)
+    if (td) {
+      result.total_discovered = td
     }
   }
 
@@ -961,6 +1031,7 @@ export {
 module.exports = {
   generateAACommands,
   generateAACustom,
+  generateTotalDiscoveredCustom,
   mergeAAConfig,
   generateCommandId,
   generateDisplayName,
