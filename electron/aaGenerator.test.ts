@@ -143,7 +143,7 @@ describe('generateAACustom CE Display', () => {
     const custom = generateAACustom(regions, template)
     const tier = custom.regions_discovered?.[20]
     expect(tier?.Reward?.Command?.Execute).toContain(
-      'say §7ALERT: §4PLAYER§7 has become a §4REGION LEGEND§7!'
+      'say §6PLAYER§7 has become a §6REGION LEGEND§7!'
     )
   })
 })
@@ -235,7 +235,7 @@ describe('structure AA generation', () => {
           Command: {
             Execute: [
               'acb PLAYER +99',
-              'say §7ALERT: §4PLAYER§7 has become an §4ANCIENT CITY LEGEND§7!',
+              'say §6PLAYER§7 has become an §6ANCIENT CITY LEGEND§7!',
             ],
             Display: '99 claimblocks',
           },
@@ -267,7 +267,7 @@ describe('structure AA generation', () => {
           Command: {
             Execute: [
               'acb PLAYER +120',
-              'say §7ALERT: §4PLAYER§7 has become a §4TRAIL RUIN LEGEND§7!',
+              'say §6PLAYER§7 has become a §6TRAIL RUIN LEGEND§7!',
             ],
             Display: '120 claimblocks',
           },
@@ -309,15 +309,15 @@ describe('generateTotalDiscoveredCustom', () => {
     expect(d?.[13]?.Name).toBe('total_discovered_10')
     expect(d?.[13]?.Reward.Command.Execute[0]).toBe('lp user PLAYER parent set explorer_10')
     expect(d?.[13]?.Reward.Command.Execute[1]).toBe(
-      'say §7ALERT: §4PLAYER§7 has become a §4WANDERER§7!'
+      'say §6PLAYER§7 has become a §6WANDERER§7!'
     )
     expect(d?.[26]?.DisplayName).toBe('Scout')
     expect(d?.[26]?.Reward.Command.Execute[1]).toBe(
-      'say §7ALERT: §4PLAYER§7 has become a §4SCOUT§7!'
+      'say §6PLAYER§7 has become a §6SCOUT§7!'
     )
     expect(d?.[91]?.DisplayName).toBe('Outrider')
     expect(d?.[91]?.Reward.Command.Execute[1]).toBe(
-      'say §7ALERT: §4PLAYER§7 has become an §4OUTRIDER§7!'
+      'say §6PLAYER§7 has become an §6OUTRIDER§7!'
     )
     expect(d?.[130]?.Message).toBe('100% of Charidh explored!')
     expect(d?.[130]?.DisplayName).toBe('Legend')

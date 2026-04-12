@@ -139,7 +139,7 @@ function normalizeExecuteToLines(execute: unknown): string[] {
 }
 
 const LEGEND_ALERT_TEMPLATE =
-  'say §7ALERT: §4PLAYER§7 has become [ARTICLE] §4[DISPLAYNAME]§7!'
+  'say §6PLAYER§7 has become [ARTICLE] §6[DISPLAYNAME]§7!'
 
 function indefiniteArticleFor(displayName: string): 'a' | 'an' {
   const firstWord = displayName.trim().split(/\s+/u)[0]?.toLowerCase() ?? ''
@@ -742,7 +742,7 @@ export function generateTotalDiscoveredCustom(
         Command: {
           Execute: [
             `lp user PLAYER parent set explorer_${p}`,
-            `say §7ALERT: §4PLAYER§7 has become ${article} §4${title.toUpperCase()}§7!`,
+            `say §6PLAYER§7 has become ${article} §6${title.toUpperCase()}§7!`,
           ],
         },
       },
