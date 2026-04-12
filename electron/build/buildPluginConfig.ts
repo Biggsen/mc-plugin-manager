@@ -112,7 +112,8 @@ export function buildPluginContent(
       const newCustom = generateAACustom(
         profile.regions,
         templateConfig,
-        profile.regionsMeta?.structureFamilies
+        profile.regionsMeta?.structureFamilies,
+        configServerName
       )
       const content = mergeAAConfig(configPath, newCommands, newCustom)
       return { content, configPath, isDefault }

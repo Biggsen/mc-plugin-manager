@@ -2094,12 +2094,7 @@ Custom:
         Command:
           Execute:
             - ce call get_book_mending player:PLAYER
-  total_discovered:
-    1:
-      Message: ''
-      Name: total_discovered_1
-      DisplayName: ''
-      Type: normal
+  total_discovered: {}
   structures_found:
     10:
       Message: You found 10 structures!

@@ -14,6 +14,7 @@ const { readFileSync } = require('fs')
  * - Custom.nether_regions_discovered
  * - Custom.nether_hearts_discovered
  * - Custom.structures_found (rollup; also matched by *_found strip below)
+ * - Custom.total_discovered (percent tiers from exploration total)
  * - Custom.<counter> for structure families (keys ending in _found, e.g. ancient_cities_found)
  */
 function removeOwnedAASections(config: Record<string, unknown>): Record<string, unknown> {
@@ -29,6 +30,7 @@ function removeOwnedAASections(config: Record<string, unknown>): Record<string, 
     delete custom.hearts_discovered
     delete custom.nether_regions_discovered
     delete custom.nether_hearts_discovered
+    delete custom.total_discovered
     for (const k of Object.keys(custom)) {
       if (/_found$/.test(k)) {
         delete custom[k]

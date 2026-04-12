@@ -7,6 +7,7 @@ import {
   structureTypeToSingularTitle,
   generateAACommands,
   generateAACustom,
+  generateTotalDiscoveredCustom,
   rewardDisplayFromCeExecuteLine,
   structuresFoundTierSpecs,
   structuresFoundTenDisplayNames,
@@ -297,6 +298,45 @@ describe('structuresFoundTierSpecs', () => {
       [15, 'threeQuarter'],
       [20, 'all'],
     ])
+  })
+})
+
+describe('generateTotalDiscoveredCustom', () => {
+  it('maps percent tiers to ceil goals and LuckPerms explorer ranks', () => {
+    const d = generateTotalDiscoveredCustom(130, 'Charidh')
+    expect(d?.[13]?.Message).toBe('10% of Charidh explored!')
+    expect(d?.[13]?.DisplayName).toBe('Wanderer')
+    expect(d?.[13]?.Name).toBe('total_discovered_10')
+    expect(d?.[13]?.Reward.Command.Execute[0]).toBe('lp user PLAYER parent set explorer_10')
+    expect(d?.[13]?.Reward.Command.Execute[1]).toBe(
+      'say §7ALERT: §4PLAYER§7 has become a §4WANDERER§7!'
+    )
+    expect(d?.[26]?.DisplayName).toBe('Scout')
+    expect(d?.[26]?.Reward.Command.Execute[1]).toBe(
+      'say §7ALERT: §4PLAYER§7 has become a §4SCOUT§7!'
+    )
+    expect(d?.[91]?.DisplayName).toBe('Outrider')
+    expect(d?.[91]?.Reward.Command.Execute[1]).toBe(
+      'say §7ALERT: §4PLAYER§7 has become an §4OUTRIDER§7!'
+    )
+    expect(d?.[130]?.Message).toBe('100% of Charidh explored!')
+    expect(d?.[130]?.DisplayName).toBe('Legend')
+  })
+
+  it('is emitted from generateAACustom when exploration total > 0', () => {
+    const regions: RegionRecord[] = Array.from({ length: 130 }, (_, i) => ({
+      world: 'overworld' as const,
+      id: `r_${i}`,
+      kind: 'region' as const,
+      discover: { method: 'on_enter' as const, recipeId: 'none' as const },
+    }))
+    const custom = generateAACustom(
+      regions,
+      { Custom: { total_discovered: {} } },
+      undefined,
+      'TestWorld'
+    )
+    expect(custom.total_discovered?.[13]?.Message).toBe('10% of TestWorld explored!')
   })
 })
 
