@@ -2169,7 +2169,7 @@ Custom:
     _quarter:
       Message: You found a quarter of all structures!
       Name: structures_found_quarter
-      DisplayName: Structure Meridian
+      DisplayName: Structure Seeker
       Type: rare
     _half:
       Message: You found half of all structures!

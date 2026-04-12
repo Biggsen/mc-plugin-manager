@@ -600,31 +600,30 @@ const STRUCTURES_FOUND_PRIORITY: Record<StructuresFoundSource, number> = {
   all: 5,
 }
 
-/** Rank names for every-10 `structures_found` tiers (Vanguard is reserved for the ¾ milestone). */
-const STRUCTURES_FOUND_TEN_RANKS = [
-  'Wanderer',
-  'Scout',
-  'Pathfinder',
-  'Pioneer',
-  'Wayfarer',
-  'Seeker',
-  'Outrider',
-  'Surveyor',
-  'Cartographer',
-  'Delver',
-  'Frontier',
-  'Chronicler',
-] as const
+/** Two base titles per inter-milestone segment (25% / 50% / 75% / 100% bounds). */
+const STRUCTURES_FOUND_SEGMENT_PAIRS: ReadonlyArray<readonly [string, string]> = [
+  ['Wanderer', 'Scout'],
+  ['Pathfinder', 'Wayfarer'],
+  ['Pioneer', 'Outrider'],
+  ['Chronicler', 'Cartographer'],
+]
 
-const STRUCTURES_FOUND_TEN_ROMAN: readonly string[] = ['I', 'II', 'III']
+function structuresFoundMilestoneBounds(total: number): { quarter: number; half: number; threeQuarter: number } {
+  return {
+    quarter: Math.max(1, Math.ceil(total * 0.25)),
+    half: Math.floor(total / 2),
+    threeQuarter: Math.max(1, Math.ceil(total * 0.75)),
+  }
+}
 
-function structuresFoundTenDisplayName(tenTierIndex: number): string {
-  const group = Math.floor(tenTierIndex / 3)
-  const levelIdx = tenTierIndex % 3
-  const rank =
-    STRUCTURES_FOUND_TEN_RANKS[Math.min(group, STRUCTURES_FOUND_TEN_RANKS.length - 1)]
-  const roman = STRUCTURES_FOUND_TEN_ROMAN[levelIdx] ?? 'I'
-  return `Structure ${rank} ${roman}`
+function structuresFoundTenSegmentIndex(
+  value: number,
+  bounds: { quarter: number; half: number; threeQuarter: number; all: number }
+): number {
+  if (value < bounds.quarter) return 0
+  if (value < bounds.half) return 1
+  if (value < bounds.threeQuarter) return 2
+  return 3
 }
 
 /** Tier values and template source for Custom.structures_found (named milestones beat every-10 on collision). */
@@ -656,6 +655,42 @@ export function structuresFoundTierSpecs(
   return [...best.entries()]
     .sort((a, b) => a[0] - b[0])
     .map(([value, source]) => ({ value, source }))
+}
+
+/** Map each `ten` tier value -> DisplayName; empty if no structure sites. */
+function buildStructuresFoundTenDisplayNames(total: number): Map<number, string> {
+  const result = new Map<number, string>()
+  if (total <= 0) return result
+
+  const bounds = { ...structuresFoundMilestoneBounds(total), all: total }
+  const tenValues = structuresFoundTierSpecs(total)
+    .filter((s) => s.source === 'ten')
+    .map((s) => s.value)
+
+  const bySeg: number[][] = [[], [], [], []]
+  for (const v of tenValues) {
+    bySeg[structuresFoundTenSegmentIndex(v, bounds)].push(v)
+  }
+
+  for (let seg = 0; seg < 4; seg++) {
+    const sorted = bySeg[seg].sort((a, b) => a - b)
+    const m = sorted.length
+    if (m === 0) continue
+    const pair = STRUCTURES_FOUND_SEGMENT_PAIRS[Math.min(seg, STRUCTURES_FOUND_SEGMENT_PAIRS.length - 1)]
+    const nFirst = Math.ceil(m / 2)
+    for (let idx = 0; idx < m; idx++) {
+      const rank = idx < nFirst ? pair[0] : pair[1]
+      const level = idx < nFirst ? idx + 1 : idx - nFirst + 1
+      result.set(sorted[idx], `Structure ${rank} ${toRomanLevel(level)}`)
+    }
+  }
+
+  return result
+}
+
+/** Exported for tests. */
+export function structuresFoundTenDisplayNames(total: number): Record<number, string> {
+  return Object.fromEntries(buildStructuresFoundTenDisplayNames(total))
 }
 
 function pickStructuresFoundTemplateEntry(
@@ -699,7 +734,8 @@ function generateStructuresFoundCustom(
 
   const result: { [tier: number]: any } = {}
   const categoryName = 'structures_found'
-  let tenTierIndex = 0
+  const tenDisplayNames = buildStructuresFoundTenDisplayNames(total)
+  const milestoneBounds = { ...structuresFoundMilestoneBounds(total), all: total }
 
   for (const { value, source } of specs) {
     const templateEntry = pickStructuresFoundTemplateEntry(templateCategory, value, source)
@@ -719,12 +755,12 @@ function generateStructuresFoundCustom(
 
     if (source === 'ten') {
       entry.Message = `You found ${value} structures!`
-      entry.DisplayName = structuresFoundTenDisplayName(tenTierIndex)
-      entry.Type = tenTierIndex < 6 ? 'normal' : 'rare'
-      tenTierIndex += 1
+      entry.DisplayName = tenDisplayNames.get(value) ?? `Structure Wanderer ${toRomanLevel(1)}`
+      entry.Type =
+        structuresFoundTenSegmentIndex(value, milestoneBounds) === 0 ? 'normal' : 'rare'
     } else if (source === 'quarter') {
       entry.Message = 'You found a quarter of all structures!'
-      entry.DisplayName = 'Structure Meridian'
+      entry.DisplayName = 'Structure Seeker'
       entry.Type = 'rare'
     } else if (source === 'half') {
       entry.Message = 'You found half of all structures!'

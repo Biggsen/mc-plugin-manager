@@ -9,6 +9,7 @@ import {
   generateAACustom,
   rewardDisplayFromCeExecuteLine,
   structuresFoundTierSpecs,
+  structuresFoundTenDisplayNames,
 } from './aaGenerator'
 
 import type { RegionRecord } from './types'
@@ -299,6 +300,22 @@ describe('structuresFoundTierSpecs', () => {
   })
 })
 
+describe('structuresFoundTenDisplayNames', () => {
+  it('total 400: first segment uses Wanderer V then Scout IV; second starts Pathfinder I', () => {
+    const d = structuresFoundTenDisplayNames(400)
+    expect(d[10]).toBe('Structure Wanderer I')
+    expect(d[50]).toBe('Structure Wanderer V')
+    expect(d[60]).toBe('Structure Scout I')
+    expect(d[90]).toBe('Structure Scout IV')
+    expect(d[110]).toBe('Structure Pathfinder I')
+    expect(d[190]).toBe('Structure Wayfarer IV')
+    expect(d[210]).toBe('Structure Pioneer I')
+    expect(d[290]).toBe('Structure Outrider IV')
+    expect(d[310]).toBe('Structure Chronicler I')
+    expect(d[390]).toBe('Structure Cartographer IV')
+  })
+})
+
 describe('generateAACustom structures_found', () => {
   const sfTemplate = {
     10: {
@@ -306,7 +323,7 @@ describe('generateAACustom structures_found', () => {
       DisplayName: 'Structure Wanderer',
       Type: 'normal',
     },
-    _quarter: { Message: 'Quarter', DisplayName: 'Structure Meridian', Type: 'rare' },
+    _quarter: { Message: 'Quarter', DisplayName: 'Structure Seeker', Type: 'rare' },
     _half: { Message: 'Half', DisplayName: 'Structure Trailblazer', Type: 'rare' },
     _threeQuarter: { Message: 'Three quarters', DisplayName: 'Structure Vanguard', Type: 'rare' },
     _all: { Message: 'All', DisplayName: 'Structure Legend', Type: 'rare' },
