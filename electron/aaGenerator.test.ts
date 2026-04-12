@@ -9,6 +9,7 @@ import {
   generateAACustom,
   rewardDisplayFromCeExecuteLine,
   structuresFoundTierSpecs,
+  structuresFoundTenDisplayNames,
 } from './aaGenerator'
 
 import type { RegionRecord } from './types'
@@ -276,24 +277,42 @@ describe('structure AA generation', () => {
 })
 
 describe('structuresFoundTierSpecs', () => {
-  it('total 140: half at 70 beats every-10; quarter at 35', () => {
+  it('total 140: half at 70 beats every-10; quarter at 35; three quarters at 105 beats ten', () => {
     const specs = structuresFoundTierSpecs(140)
     const byVal = Object.fromEntries(specs.map((s) => [s.value, s.source]))
     expect(byVal[35]).toBe('quarter')
     expect(byVal[70]).toBe('half')
+    expect(byVal[105]).toBe('threeQuarter')
     expect(byVal[140]).toBe('all')
     expect(byVal[10]).toBe('ten')
     expect(byVal[130]).toBe('ten')
-    expect(specs.length).toBe(15)
+    expect(specs.length).toBe(16)
   })
 
-  it('total 20: half at 10 replaces every-10 at 10', () => {
+  it('total 20: half at 10 replaces every-10 at 10; three quarters at 15', () => {
     const specs = structuresFoundTierSpecs(20)
     expect(specs.map((s) => [s.value, s.source])).toEqual([
       [5, 'quarter'],
       [10, 'half'],
+      [15, 'threeQuarter'],
       [20, 'all'],
     ])
+  })
+})
+
+describe('structuresFoundTenDisplayNames', () => {
+  it('total 400: first segment uses Wanderer V then Scout IV; second starts Pathfinder I', () => {
+    const d = structuresFoundTenDisplayNames(400)
+    expect(d[10]).toBe('Structure Wanderer I')
+    expect(d[50]).toBe('Structure Wanderer V')
+    expect(d[60]).toBe('Structure Scout I')
+    expect(d[90]).toBe('Structure Scout IV')
+    expect(d[110]).toBe('Structure Pathfinder I')
+    expect(d[190]).toBe('Structure Wayfarer IV')
+    expect(d[210]).toBe('Structure Pioneer I')
+    expect(d[290]).toBe('Structure Outrider IV')
+    expect(d[310]).toBe('Structure Chronicler I')
+    expect(d[390]).toBe('Structure Cartographer IV')
   })
 })
 
@@ -304,8 +323,9 @@ describe('generateAACustom structures_found', () => {
       DisplayName: 'Structure Wanderer',
       Type: 'normal',
     },
-    _quarter: { Message: 'Quarter', DisplayName: 'Structure Meridian', Type: 'rare' },
+    _quarter: { Message: 'Quarter', DisplayName: 'Structure Seeker', Type: 'rare' },
     _half: { Message: 'Half', DisplayName: 'Structure Trailblazer', Type: 'rare' },
+    _threeQuarter: { Message: 'Three quarters', DisplayName: 'Structure Vanguard', Type: 'rare' },
     _all: { Message: 'All', DisplayName: 'Structure Legend', Type: 'rare' },
   }
 
@@ -324,6 +344,8 @@ describe('generateAACustom structures_found', () => {
     )
     expect(custom.structures_found?.[1].Reward.Command.Execute[0]).toBe('acb PLAYER +200')
     expect(custom.structures_found?.[2].Reward.Command.Execute[0]).toBe('acb PLAYER +200')
+    expect(custom.structures_found?.[3].DisplayName).toBe('Structure Vanguard')
+    expect(custom.structures_found?.[3].Reward.Command.Execute[0]).toBe('acb PLAYER +200')
     expect(custom.structures_found?.[4].Reward.Command.Execute[0]).toBe('acb PLAYER +500')
     const allExecute = custom.structures_found?.[4].Reward.Command.Execute as string[]
     expect(allExecute.some((l) => l.includes('LEGEND'))).toBe(true)
