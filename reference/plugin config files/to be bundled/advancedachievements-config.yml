@@ -455,7 +455,7 @@ Places:
       Type: normal
       Reward:
         Command:
-          Execute: "say §7ALERT: §4PLAYER§7 has become the §4STONE GOD§7!"
+          Execute: "say §6PLAYER§7 has become the §6STONE GOD§7!"
           Display: Become the Stone God!
   # Item custom display name, for example Mario's head from the Custom Heads plugin.
   §eMario:
@@ -556,7 +556,7 @@ Crafts:
       Type: rare
       Reward:
         Experience: 500
-        Execute: "say §7ALERT: §4PLAYER§7 has become a §4BLACKSMITH LEGEND§7!"
+        Execute: "say §6PLAYER§7 has become a §6BLACKSMITH LEGEND§7!"
 
 # Count specific commands used. Specify command prefixes in lower case without initial slash. For example, command
 # '/petm setcolor red' from the PetMaster plugin matches with subcategory 'petm setcolor'. Aliases of a given command
