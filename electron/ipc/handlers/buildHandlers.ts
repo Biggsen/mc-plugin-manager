@@ -25,6 +25,7 @@ const {
   sanitizeWorldGuardWorldFolder,
   getWorldGuardRegionsPropagatedRelativePath,
 } = require('../../utils/worldGuardRegionsPaths')
+const { validateBuildNoteInput } = require('../../utils/buildNotes')
 
 import type { BuildResult, BuildReport, DiscordSrvSettings, GeneratorVersionKey } from '../../types'
 import { resolveConfigServerName } from '../../shared/resolveConfigServerName'
@@ -99,12 +100,9 @@ export function registerBuildHandlers(): void {
 
         const testBuild = Boolean(inputs.testBuild)
         const buildNoteTrimmed = String(inputs.buildNote ?? '').trim()
-        if (!testBuild && !buildNoteTrimmed) {
-          return {
-            success: false,
-            error:
-              'Build note is required. Enable “Test build” for iterative emits without bumping generator versions.',
-          }
+        const buildNoteValidationError = validateBuildNoteInput(testBuild, inputs.buildNote)
+        if (buildNoteValidationError) {
+          return { success: false, error: buildNoteValidationError }
         }
 
         const fs = require('fs')
