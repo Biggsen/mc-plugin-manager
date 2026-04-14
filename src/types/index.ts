@@ -240,6 +240,17 @@ export interface BuildReport {
   errors: string[]
   /** Counter values persisted on the profile after this build (plugins that were emitted). */
   generatorVersionsSnapshot?: Partial<Record<GeneratorVersionKey, number>>
+  /** Short note; required for normal builds, optional for test builds. */
+  buildNote?: string
+  /** When true, generator versions were not bumped (test / iterative emit). */
+  testBuild?: boolean
+}
+
+/** Row for build history list (from saved report.json). */
+export interface BuildListItem {
+  buildId: string
+  testBuild?: boolean
+  buildNote?: string
 }
 
 /** Single PM-generated path when comparing two plugin folder trees. */

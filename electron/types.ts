@@ -16,6 +16,7 @@ export type {
   ImportResult,
   BuildResult,
   BuildReport,
+  BuildListItem,
   PluginFolderCompareStatus,
   PluginFolderCompareFileResult,
   PluginFolderCompareResult,

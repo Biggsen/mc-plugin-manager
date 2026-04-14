@@ -62,6 +62,10 @@ export interface BuildPluginContext {
   generatedAt?: string
   /** Defaults to `1` if omitted — run `npm run build:electron` so buildHandlers passes the real serial. */
   nextGeneratorVersion?: number
+  /** Passed through to generator header `build-note=` when non-empty after sanitize. */
+  buildNote?: string
+  /** When true, header includes `emit=test`. */
+  testEmit?: boolean
 }
 
 function isDefaultPath(userPath: string | undefined): boolean {
@@ -223,6 +227,8 @@ export function runPluginBuild(
       buildId: context.buildId,
       nextVersion,
       generatedAt: context.generatedAt ?? new Date().toISOString(),
+      buildNote: context.buildNote,
+      testEmit: context.testEmit,
     }
     const contentToWrite = prependGeneratorVersionHeader(content, headerArgs)
     const buildDir = ensureBuildDirectory(context.serverId, context.buildId)

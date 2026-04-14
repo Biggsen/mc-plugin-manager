@@ -7,7 +7,7 @@ const {
   ensureBuildDirectory,
   saveBuildReport,
   loadBuildReport,
-  listBuildIds,
+  listBuildSummaries,
 } = require('../../storage')
 const { computeRegionCounts, computeRegionStats } = require('../../utils/regionStats')
 const { sanitizeServerName } = require('../../shared/stringFormatters')
@@ -63,8 +63,10 @@ export function registerBuildHandlers(): void {
         cwPath?: string
         outDir: string
         propagateToPluginFolders?: boolean
-        /** When true, emit configs with the current stored version (min 1) and do not bump profile.generatorVersions. */
-        bypassVersioning?: boolean
+        /** When true, emit as test: current generator version, no bump, optional note, `emit=test` in header. */
+        testBuild?: boolean
+        /** Required when testBuild is false; optional short note for test builds. */
+        buildNote?: string
       }
     ): Promise<BuildResult> => {
       try {
@@ -95,24 +97,35 @@ export function registerBuildHandlers(): void {
           return { success: false, error: 'Output directory must be set' }
         }
 
+        const testBuild = Boolean(inputs.testBuild)
+        const buildNoteTrimmed = String(inputs.buildNote ?? '').trim()
+        if (!testBuild && !buildNoteTrimmed) {
+          return {
+            success: false,
+            error:
+              'Build note is required. Enable “Test build” for iterative emits without bumping generator versions.',
+          }
+        }
+
         const fs = require('fs')
         if (!existsSync(inputs.outDir)) {
           fs.mkdirSync(inputs.outDir, { recursive: true })
         }
 
         const propagate = Boolean(inputs.propagateToPluginFolders)
-        const bypassVersioning = Boolean(inputs.bypassVersioning)
 
         function versionForEmit(key: GeneratorVersionKey): number {
           const cur = profile.generatorVersions?.[key] ?? 0
-          if (bypassVersioning) return Math.max(1, cur)
+          if (testBuild) return Math.max(1, cur)
           return cur + 1
         }
 
         function persistGeneratorVersion(key: GeneratorVersionKey, emittedVersion: number): void {
-          if (bypassVersioning) return
+          if (testBuild) return
           profile.generatorVersions = { ...(profile.generatorVersions ?? {}), [key]: emittedVersion }
         }
+
+        const headerStampNote = testBuild ? (buildNoteTrimmed || undefined) : buildNoteTrimmed
 
         const configServerName = resolveConfigServerName(profile)
         const serverNameSanitized = sanitizeServerName(configServerName)
@@ -143,6 +156,8 @@ export function registerBuildHandlers(): void {
           propagate,
           profileId: serverId,
           generatedAt: timestamp,
+          buildNote: headerStampNote,
+          testEmit: testBuild,
         }
 
         if (inputs.generateAA) {
@@ -210,6 +225,8 @@ export function registerBuildHandlers(): void {
               buildId: headerCtx.buildId,
               nextVersion: headerCtx.nextGeneratorVersion,
               generatedAt: headerCtx.generatedAt ?? timestamp,
+              buildNote: headerStampNote,
+              testEmit: testBuild,
             })
             const messagesBody = readDiscordSrvMessagesContent(srvMessagesTpl)
             const messagesContent = prependGeneratorVersionHeader(messagesBody, {
@@ -218,6 +235,8 @@ export function registerBuildHandlers(): void {
               buildId: headerCtx.buildId,
               nextVersion: headerCtx.nextGeneratorVersion,
               generatedAt: headerCtx.generatedAt ?? timestamp,
+              buildNote: headerStampNote,
+              testEmit: testBuild,
             })
             const configFlat = `${serverNameSanitized}-discordsrv-config.yml`
             const messagesFlat = `${serverNameSanitized}-discordsrv-messages.yml`
@@ -304,6 +323,8 @@ export function registerBuildHandlers(): void {
               buildId,
               nextVersion: nextGeneratorVersion,
               generatedAt: timestamp,
+              buildNote: headerStampNote,
+              testEmit: testBuild,
             }
             const hasLore = (profile.regions || []).some(
               (r: { loreBookDescription?: string; description?: string }) =>
@@ -347,6 +368,8 @@ export function registerBuildHandlers(): void {
               buildId,
               nextVersion: nextGeneratorVersion,
               generatedAt: timestamp,
+              buildNote: headerStampNote,
+              testEmit: testBuild,
             })
             const flatName = `${serverNameSanitized}-griefpreventiondata-config.yml`
             const buildDir = ensureBuildDirectory(serverId, buildId)
@@ -401,6 +424,8 @@ export function registerBuildHandlers(): void {
               buildId,
               nextVersion: nextGeneratorVersion,
               generatedAt: timestamp,
+              buildNote: headerStampNote,
+              testEmit: testBuild,
             })
             const flatName = `${serverNameSanitized}-worldguard-regions.yml`
             const buildDir = ensureBuildDirectory(serverId, buildId)
@@ -456,6 +481,8 @@ export function registerBuildHandlers(): void {
               buildId,
               nextVersion: nextGeneratorVersion,
               generatedAt: timestamp,
+              buildNote: headerStampNote,
+              testEmit: testBuild,
             })
             const flatName = `${serverNameSanitized}-worldguard-regions-nether.yml`
             const buildDir = ensureBuildDirectory(serverId, buildId)
@@ -488,6 +515,8 @@ export function registerBuildHandlers(): void {
         const report: BuildReport = {
           buildId,
           timestamp,
+          testBuild,
+          ...(buildNoteTrimmed.length > 0 ? { buildNote: buildNoteTrimmed } : {}),
           regionCounts,
           computedCounts: regionCountsForTAB,
           generated: {
@@ -542,8 +571,8 @@ export function registerBuildHandlers(): void {
 
   ipcMain.handle(
     'list-builds',
-    async (_event: unknown, serverId: string): Promise<string[]> => {
-      return listBuildIds(serverId)
+    async (_event: unknown, serverId: string) => {
+      return listBuildSummaries(serverId)
     }
   )
 }

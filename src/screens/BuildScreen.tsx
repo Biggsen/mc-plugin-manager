@@ -14,12 +14,14 @@ import {
   Collapse,
   UnstyledButton,
   List,
+  Badge,
 } from '@mantine/core'
 import { IconFolderOpen } from '@tabler/icons-react'
 import type {
   ServerProfile,
   BuildResult,
   BuildReport,
+  BuildListItem,
   DiscordSrvSettings,
   GeneratorVersionKey,
 } from '../types'
@@ -122,7 +124,8 @@ export function BuildScreen({ server, onServerUpdate }: BuildScreenProps) {
   const [propagateToPluginFolders, setPropagateToPluginFolders] = useState(
     Boolean(server.build?.propagateToPluginFolders)
   )
-  const [bypassVersioning, setBypassVersioning] = useState(false)
+  const [buildNote, setBuildNote] = useState('')
+  const [testBuild, setTestBuild] = useState(false)
   const [savedOutputPaths, setSavedOutputPaths] = useState<OutputPathPreset[]>([])
   const [discordSrv, setDiscordSrv] = useState<DiscordSrvSettings>(() => ({
     botToken: server.discordSrv?.botToken ?? '',
@@ -134,7 +137,7 @@ export function BuildScreen({ server, onServerUpdate }: BuildScreenProps) {
   const [isBuilding, setIsBuilding] = useState(false)
   const [buildResult, setBuildResult] = useState<BuildResult | null>(null)
   const [buildReport, setBuildReport] = useState<BuildReport | null>(null)
-  const [pastBuilds, setPastBuilds] = useState<string[]>([])
+  const [pastBuilds, setPastBuilds] = useState<BuildListItem[]>([])
   const [validationError, setValidationError] = useState<string | null>(null)
   const [showOverrides, setShowOverrides] = useState(false)
   const [showDiscordSrvSettings, setShowDiscordSrvSettings] = useState(false)
@@ -221,6 +224,11 @@ export function BuildScreen({ server, onServerUpdate }: BuildScreenProps) {
       return
     }
 
+    if (!testBuild && !buildNote.trim()) {
+      setValidationError('Enter a build note (or enable Test build for optional note and no version bump).')
+      return
+    }
+
     setIsBuilding(true)
     setBuildResult(null)
 
@@ -229,7 +237,8 @@ export function BuildScreen({ server, onServerUpdate }: BuildScreenProps) {
       const payload = {
         outDir,
         propagateToPluginFolders,
-        bypassVersioning,
+        testBuild,
+        buildNote: buildNote.trim(),
       } as Record<string, unknown>
       for (const p of BUILD_PLUGINS) {
         payload[p.generateKey] = pluginOptions[p.id].generate
@@ -273,6 +282,7 @@ export function BuildScreen({ server, onServerUpdate }: BuildScreenProps) {
       // Load build report if successful
       if (result.success && result.buildId) {
         await loadBuildReport(result.buildId)
+        void loadPastBuilds()
       } else {
         setBuildReport(null)
       }
@@ -681,14 +691,32 @@ export function BuildScreen({ server, onServerUpdate }: BuildScreenProps) {
             ? 'Files will be written to plugin subfolders under the output directory (e.g. output/AdvancedAchievements/config.yml).'
             : 'Generated files will be written to this directory with server-prefixed names.'}
         </Text>
+      </Stack>
+
+      <Stack gap="xs">
+        <TextInput
+          label="Build note"
+          description={
+            testBuild
+              ? 'Optional for test builds. Shown in build history and in generated config headers when set.'
+              : 'Required. One line; shown in history and added as build-note= in generated configs.'
+          }
+          placeholder="e.g. Fix TAB footer for nether hub"
+          value={buildNote}
+          onChange={(e) => setBuildNote(e.currentTarget.value)}
+        />
         <Checkbox
-          label="Bypass versioning"
-          checked={bypassVersioning}
-          onChange={(e) => setBypassVersioning(e.currentTarget.checked)}
+          label="Test build (no version bump)"
+          checked={testBuild}
+          onChange={(e) => {
+            const next = e.currentTarget.checked
+            setTestBuild(next)
+            if (next) setValidationError(null)
+          }}
         />
         <Text size="xs" c="dimmed">
-          Reuse the current generator version in config headers and do not bump stored versions—useful for
-          iterative testing without advancing serials.
+          Test builds reuse the current generator version, add emit=test to headers, and do not bump stored
+          serials—useful for iterating before a real release.
         </Text>
       </Stack>
 
@@ -698,7 +726,11 @@ export function BuildScreen({ server, onServerUpdate }: BuildScreenProps) {
         </Alert>
       )}
 
-      <Button onClick={handleBuild} loading={isBuilding}>
+      <Button
+        onClick={handleBuild}
+        loading={isBuilding}
+        disabled={!testBuild && !buildNote.trim()}
+      >
         Build Configs
       </Button>
 
@@ -743,6 +775,17 @@ export function BuildScreen({ server, onServerUpdate }: BuildScreenProps) {
             <Text size="sm" c="dimmed">
               Timestamp: {new Date(buildReport.timestamp).toLocaleString()}
             </Text>
+            {buildReport.testBuild && (
+              <Badge color="orange" variant="light" size="sm" w="fit-content">
+                Test build
+              </Badge>
+            )}
+            {buildReport.buildNote && (
+              <Text size="sm">
+                <Text component="span" fw={600}>Note: </Text>
+                {buildReport.buildNote}
+              </Text>
+            )}
           </Stack>
 
           <Stack gap="md" mb="md">
@@ -847,15 +890,31 @@ export function BuildScreen({ server, onServerUpdate }: BuildScreenProps) {
         <Paper p="md" withBorder>
           <Title order={3} mb="md">Past Builds</Title>
           <Stack gap="xs">
-            {pastBuilds.map((buildId) => (
+            {pastBuilds.map((item) => (
               <Button
-                key={buildId}
-                variant={buildReport?.buildId === buildId ? 'light' : 'default'}
-                onClick={() => loadBuildReport(buildId)}
+                key={item.buildId}
+                variant={buildReport?.buildId === item.buildId ? 'light' : 'default'}
+                onClick={() => loadBuildReport(item.buildId)}
                 fullWidth
                 justify="flex-start"
               >
-                {buildId}
+                <Stack gap={4} align="flex-start" w="100%">
+                  <Group gap="xs" wrap="nowrap">
+                    <Text size="sm" fw={600} style={{ wordBreak: 'break-all' }}>
+                      {item.buildId}
+                    </Text>
+                    {item.testBuild && (
+                      <Badge color="orange" variant="light" size="xs">
+                        Test
+                      </Badge>
+                    )}
+                  </Group>
+                  {item.buildNote && (
+                    <Text size="xs" c="dimmed" lineClamp={2}>
+                      {item.buildNote}
+                    </Text>
+                  )}
+                </Stack>
               </Button>
             ))}
           </Stack>
