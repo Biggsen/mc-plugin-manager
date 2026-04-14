@@ -813,7 +813,13 @@ export function BuildScreen({ server, onServerUpdate }: BuildScreenProps) {
             <Text size="sm" fw={600}>Generated:</Text>
             <Text size="sm">
               {(() => {
-                const generated = BUILD_PLUGINS.filter((p) => buildReport.generated?.[p.id]).map((p) => '✓ ' + p.label)
+                const generated = BUILD_PLUGINS.filter((p) => buildReport.generated?.[p.id]).map((p) => {
+                  const versionKey = PLUGIN_VERSION_KEY_BY_ID[p.id]
+                  const version =
+                    buildReport.generatorVersionsSnapshot?.[versionKey] ?? server.generatorVersions?.[versionKey]
+                  const versionLabel = Number.isFinite(version) ? ` (v${version})` : ''
+                  return `✓ ${p.label}${versionLabel}`
+                })
                 return generated.length > 0 ? generated.join(' • ') : 'None'
               })()}
             </Text>
@@ -898,23 +904,21 @@ export function BuildScreen({ server, onServerUpdate }: BuildScreenProps) {
                 fullWidth
                 justify="flex-start"
               >
-                <Stack gap={4} align="flex-start" w="100%">
-                  <Group gap="xs" wrap="nowrap">
-                    <Text size="sm" fw={600} style={{ wordBreak: 'break-all' }}>
-                      {item.buildId}
-                    </Text>
-                    {item.testBuild && (
-                      <Badge color="orange" variant="light" size="xs">
-                        Test
-                      </Badge>
-                    )}
-                  </Group>
+                <Group gap="xs" wrap="nowrap" w="100%">
+                  <Text size="sm" fw={600} style={{ wordBreak: 'break-all' }}>
+                    {item.buildId}
+                  </Text>
+                  {item.testBuild && (
+                    <Badge color="orange" variant="light" size="xs">
+                      Test
+                    </Badge>
+                  )}
                   {item.buildNote && (
-                    <Text size="xs" c="dimmed" lineClamp={2}>
+                    <Text size="xs" c="dimmed" style={{ minWidth: 0 }} lineClamp={1}>
                       {item.buildNote}
                     </Text>
                   )}
-                </Stack>
+                </Group>
               </Button>
             ))}
           </Stack>
