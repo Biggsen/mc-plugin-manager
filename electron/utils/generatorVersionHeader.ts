@@ -9,6 +9,21 @@ export interface GeneratorVersionHeaderOptions {
   buildId: string
   nextVersion: number
   generatedAt: string
+  /** Raw or trimmed note; sanitized for `build-note=`; omitted when empty after sanitize. */
+  buildNote?: string
+  /** Adds `emit=test` (test build / no version bump). */
+  testEmit?: boolean
+}
+
+/** Collapse whitespace, strip segment separators, cap length for a single header line. */
+export function sanitizeBuildNoteForHeader(raw: string): string {
+  if (!raw || typeof raw !== 'string') return ''
+  let s = raw.replace(/\r\n|\n|\r/g, ' ').replace(/;/g, ',').trim()
+  s = s.replace(/\s+/g, ' ')
+  if (s.length > 200) {
+    s = s.slice(0, 200).trim()
+  }
+  return s
 }
 
 /** Zero-pad to at least 3 digits through 999; wider unpadded beyond that. */
@@ -31,6 +46,15 @@ export function prependGeneratorVersionHeader(
     `plugin=${opts.plugin}`,
     `build-id=${opts.buildId}`,
   ]
+  if (opts.testEmit) {
+    segments.push('emit=test')
+  }
+  const noteForLine = opts.buildNote !== undefined && opts.buildNote !== ''
+    ? sanitizeBuildNoteForHeader(opts.buildNote)
+    : ''
+  if (noteForLine.length > 0) {
+    segments.push(`build-note=${noteForLine}`)
+  }
   const line = `${GENERATOR_VERSION_HEADER_PREFIX} ${segments.join('; ')}`
   if (content.length === 0) {
     return `${line}\n`

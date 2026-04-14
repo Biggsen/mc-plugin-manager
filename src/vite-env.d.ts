@@ -58,7 +58,8 @@ interface ElectronAPI {
       cwPath?: string
       outDir: string
       propagateToPluginFolders?: boolean
-      bypassVersioning?: boolean
+      testBuild?: boolean
+      buildNote?: string
     }
   ) => Promise<BuildResult>
   showConfigFileDialog: (title: string, defaultPath?: string) => Promise<string | null>
@@ -87,7 +88,7 @@ interface ElectronAPI {
     inputs: { outDir: string; author?: string }
   ) => Promise<{ success: boolean; count?: number; error?: string }>
   readBuildReport: (serverId: string, buildId: string) => Promise<BuildReport | null>
-  listBuilds: (serverId: string) => Promise<string[]>
+  listBuilds: (serverId: string) => Promise<import('./types').BuildListItem[]>
 }
 
 declare global {

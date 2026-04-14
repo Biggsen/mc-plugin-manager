@@ -5,6 +5,7 @@ import type {
   ImportResult,
   BuildResult,
   BuildReport,
+  BuildListItem,
   OnboardingConfig,
   RegionRecord,
   DiscordSrvSettings,
@@ -79,7 +80,8 @@ export interface ElectronAPI {
       cwPath?: string
       outDir: string
       propagateToPluginFolders?: boolean
-      bypassVersioning?: boolean
+      testBuild?: boolean
+      buildNote?: string
     }
   ) => Promise<BuildResult>
   showConfigFileDialog: (title: string, defaultPath?: string) => Promise<string | null>
@@ -107,7 +109,7 @@ export interface ElectronAPI {
   
   // Build reports
   readBuildReport: (serverId: string, buildId: string) => Promise<BuildReport | null>
-  listBuilds: (serverId: string) => Promise<string[]>
+  listBuilds: (serverId: string) => Promise<BuildListItem[]>
 }
 
 // Expose API to renderer
@@ -157,7 +159,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
       cwPath?: string
       outDir: string
       propagateToPluginFolders?: boolean
-      bypassVersioning?: boolean
+      testBuild?: boolean
+      buildNote?: string
     }
   ) => ipcRenderer.invoke('build-configs', serverId, inputs),
   showConfigFileDialog: (title: string, defaultPath?: string) =>

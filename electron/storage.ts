@@ -2,7 +2,8 @@ const { app } = require('electron')
 const { join } = require('path')
 const { existsSync, mkdirSync, readFileSync, writeFileSync, readdirSync, rmSync } = require('fs')
 
-import type { ServerProfile, BuildReport, ComparePreset } from './types'
+import type { ServerProfile, BuildReport, BuildListItem, ComparePreset } from './types'
+import { toBuildListItem } from './utils/buildSummary'
 
 const DATA_DIR_NAME = 'mc-plugin-manager-data'
 
@@ -181,6 +182,11 @@ export function listBuildIds(serverId: string): string[] {
     .reverse() // Most recent first
 }
 
+/** Build history rows for UI (reads each report.json). */
+export function listBuildSummaries(serverId: string): BuildListItem[] {
+  return listBuildIds(serverId).map((buildId) => toBuildListItem(buildId, loadBuildReport(serverId, buildId)))
+}
+
 module.exports = {
   getDataDirectory,
   getServersDirectory,
@@ -198,6 +204,7 @@ module.exports = {
   saveBuildReport,
   loadBuildReport,
   listBuildIds,
+  listBuildSummaries,
   getComparePresetsPath,
   loadComparePresets,
   saveComparePresets,

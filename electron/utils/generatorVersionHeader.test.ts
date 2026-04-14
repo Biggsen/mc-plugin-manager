@@ -3,6 +3,7 @@ import {
   prependGeneratorVersionHeader,
   stripGeneratorVersionCommentLines,
   formatGeneratorVersionDisplay,
+  sanitizeBuildNoteForHeader,
   GENERATOR_VERSION_HEADER_PREFIX,
 } from './generatorVersionHeader'
 
@@ -45,6 +46,29 @@ describe('prependGeneratorVersionHeader', () => {
     expect(out).toMatch(new RegExp(`^${GENERATOR_VERSION_HEADER_PREFIX.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')} `))
     expect(out.endsWith('\n')).toBe(true)
     expect(out.split('\n').length).toBe(2)
+  })
+
+  it('adds emit=test and build-note when provided', () => {
+    const out = prependGeneratorVersionHeader('x: 1\n', {
+      ...baseOpts,
+      testEmit: true,
+      buildNote: 'TAB spacing',
+    })
+    const line = out.split('\n')[0]
+    expect(line).toContain('emit=test')
+    expect(line).toContain('build-note=TAB spacing')
+  })
+
+  it('omits build-note when empty on test emit', () => {
+    const out = prependGeneratorVersionHeader('x: 1\n', { ...baseOpts, testEmit: true })
+    expect(out.split('\n')[0]).toContain('emit=test')
+    expect(out.split('\n')[0]).not.toContain('build-note=')
+  })
+})
+
+describe('sanitizeBuildNoteForHeader', () => {
+  it('replaces semicolons and newlines', () => {
+    expect(sanitizeBuildNoteForHeader('a;b\nc')).toBe('a,b c')
   })
 })
 
