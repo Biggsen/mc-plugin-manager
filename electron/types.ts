@@ -2,6 +2,7 @@
 export type {
   ServerId,
   PluginType,
+  BuildTarget,
   GeneratorVersionKey,
   RegionKind,
   DiscoverMethod,

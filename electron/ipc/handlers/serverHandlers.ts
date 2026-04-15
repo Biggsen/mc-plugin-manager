@@ -8,7 +8,7 @@ const {
 } = require('../../storage')
 const { sanitizeServerName } = require('../../shared/stringFormatters')
 
-import type { ServerProfile, OnboardingConfig, DiscordSrvSettings } from '../../types'
+import type { ServerProfile, OnboardingConfig, DiscordSrvSettings, BuildTarget } from '../../types'
 
 export function registerServerHandlers(): void {
   ipcMain.handle('list-servers', async (_event: unknown) => {
@@ -134,10 +134,22 @@ export function registerServerHandlers(): void {
 
   ipcMain.handle(
     'set-discordsrv-settings',
-    async (_event: unknown, serverId: string, partial: DiscordSrvSettings): Promise<void> => {
+    async (
+      _event: unknown,
+      serverId: string,
+      target: BuildTarget,
+      partial: DiscordSrvSettings
+    ): Promise<void> => {
       const profile = loadServerProfile(serverId)
       if (!profile) return
-      profile.discordSrv = { ...(profile.discordSrv ?? {}), ...partial }
+      const normalizedTarget: BuildTarget = target === 'live' ? 'live' : 'next'
+      profile.discordSrvByTarget = {
+        ...(profile.discordSrvByTarget ?? {}),
+        [normalizedTarget]: {
+          ...(profile.discordSrvByTarget?.[normalizedTarget] ?? {}),
+          ...partial,
+        },
+      }
       saveServerProfile(profile)
     }
   )

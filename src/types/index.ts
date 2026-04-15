@@ -29,6 +29,8 @@ export type GeneratorVersionKey =
   | 'worldguardregions'
   | 'worldguardregionsnether'
 
+export type BuildTarget = 'next' | 'live'
+
 export interface ServerProfile {
   id: ServerId
   /** Display name in this app (e.g. live vs next). */
@@ -62,6 +64,7 @@ export interface ServerProfile {
   }
   build: {
     lastBuildId?: string
+    buildTarget?: BuildTarget
     outputDirectory?: string
     loreBooksOutputDirectory?: string
     propagateToPluginFolders?: boolean
@@ -79,8 +82,10 @@ export interface ServerProfile {
   }
   /** Per-plugin successful emit serial (1-based), keyed by plugin id. */
   generatorVersions?: Partial<Record<GeneratorVersionKey, number>>
-  /** DiscordSRV build inputs (bot token, channel IDs, invite URL). */
+  /** DiscordSRV build inputs (legacy single-target shape). */
   discordSrv?: DiscordSrvSettings
+  /** DiscordSRV build inputs keyed by build target. */
+  discordSrvByTarget?: Partial<Record<BuildTarget, DiscordSrvSettings>>
 }
 
 export interface DiscordSrvSettings {
@@ -189,6 +194,7 @@ export interface BuildResult {
 export interface BuildReport {
   buildId: string
   timestamp: string
+  buildTarget?: BuildTarget
   regionCounts: {
     overworld: number
     nether: number

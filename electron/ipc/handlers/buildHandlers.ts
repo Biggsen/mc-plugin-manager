@@ -27,7 +27,13 @@ const {
 } = require('../../utils/worldGuardRegionsPaths')
 const { validateBuildNoteInput } = require('../../utils/buildNotes')
 
-import type { BuildResult, BuildReport, DiscordSrvSettings, GeneratorVersionKey } from '../../types'
+import type {
+  BuildResult,
+  BuildReport,
+  DiscordSrvSettings,
+  GeneratorVersionKey,
+  BuildTarget,
+} from '../../types'
 import { resolveConfigServerName } from '../../shared/resolveConfigServerName'
 import { getGuideBooksSourceDir } from '../../utils/guideBooksDir'
 import { getGriefPreventionBundledConfigPath } from '../../utils/griefPreventionBundledConfig'
@@ -55,6 +61,7 @@ export function registerBuildHandlers(): void {
         generateWorldGuardRegionsNether?: boolean
         worldGuardRegionsNetherPath?: string
         worldGuardRegionsNetherWorldFolder?: string
+        buildTarget?: BuildTarget
         discordSrv?: DiscordSrvSettings
         aaPath?: string
         cePath?: string
@@ -99,6 +106,7 @@ export function registerBuildHandlers(): void {
         }
 
         const testBuild = Boolean(inputs.testBuild)
+        const buildTarget: BuildTarget = inputs.buildTarget === 'live' ? 'live' : 'next'
         const buildNoteTrimmed = String(inputs.buildNote ?? '').trim()
         const buildNoteValidationError = validateBuildNoteInput(testBuild, inputs.buildNote)
         if (buildNoteValidationError) {
@@ -111,6 +119,7 @@ export function registerBuildHandlers(): void {
         }
 
         const propagate = Boolean(inputs.propagateToPluginFolders)
+        profile.build.buildTarget = buildTarget
 
         function versionForEmit(key: GeneratorVersionKey): number {
           const cur = profile.generatorVersions?.[key] ?? 0
@@ -181,19 +190,37 @@ export function registerBuildHandlers(): void {
           configSources.ce = result.configSource
         }
         if (inputs.generateDiscordSRV) {
+          const targetDiscordSrv = profile.discordSrvByTarget?.[buildTarget]
           const merged: Required<DiscordSrvSettings> = {
-            botToken: (inputs.discordSrv?.botToken ?? profile.discordSrv?.botToken ?? '').trim(),
+            botToken: (
+              inputs.discordSrv?.botToken ??
+              targetDiscordSrv?.botToken ??
+              profile.discordSrv?.botToken ??
+              ''
+            ).trim(),
             globalChannelId: (
-              inputs.discordSrv?.globalChannelId ?? profile.discordSrv?.globalChannelId ?? ''
+              inputs.discordSrv?.globalChannelId ??
+              targetDiscordSrv?.globalChannelId ??
+              profile.discordSrv?.globalChannelId ??
+              ''
             ).trim(),
             statusChannelId: (
-              inputs.discordSrv?.statusChannelId ?? profile.discordSrv?.statusChannelId ?? ''
+              inputs.discordSrv?.statusChannelId ??
+              targetDiscordSrv?.statusChannelId ??
+              profile.discordSrv?.statusChannelId ??
+              ''
             ).trim(),
             consoleChannelId: (
-              inputs.discordSrv?.consoleChannelId ?? profile.discordSrv?.consoleChannelId ?? ''
+              inputs.discordSrv?.consoleChannelId ??
+              targetDiscordSrv?.consoleChannelId ??
+              profile.discordSrv?.consoleChannelId ??
+              ''
             ).trim(),
             discordInviteUrl: (
-              inputs.discordSrv?.discordInviteUrl ?? profile.discordSrv?.discordInviteUrl ?? ''
+              inputs.discordSrv?.discordInviteUrl ??
+              targetDiscordSrv?.discordInviteUrl ??
+              profile.discordSrv?.discordInviteUrl ??
+              ''
             ).trim(),
           }
           const missing: string[] = []
@@ -251,7 +278,10 @@ export function registerBuildHandlers(): void {
             fs.writeFileSync(path.join(buildDir, configFlat), configContent, 'utf-8')
             fs.writeFileSync(path.join(buildDir, messagesFlat), messagesContent, 'utf-8')
             persistGeneratorVersion('discordsrv', nextGeneratorVersion)
-            profile.discordSrv = { ...merged }
+            profile.discordSrvByTarget = {
+              ...(profile.discordSrvByTarget ?? {}),
+              [buildTarget]: { ...merged },
+            }
             discordsrvGenerated = true
             configSources.discordsrv = {
               path: 'Bundled DiscordSRV templates',
@@ -513,6 +543,7 @@ export function registerBuildHandlers(): void {
         const report: BuildReport = {
           buildId,
           timestamp,
+          buildTarget,
           testBuild,
           ...(buildNoteTrimmed.length > 0 ? { buildNote: buildNoteTrimmed } : {}),
           regionCounts,
@@ -540,12 +571,19 @@ export function registerBuildHandlers(): void {
         saveBuildReport(serverId, buildId, report)
 
         profile.build.lastBuildId = buildId
+        profile.build.buildTarget = buildTarget
         profile.build.outputDirectory = inputs.outDir
         if (typeof inputs.propagateToPluginFolders === 'boolean') {
           profile.build.propagateToPluginFolders = inputs.propagateToPluginFolders
         }
         if (inputs.discordSrv !== undefined) {
-          profile.discordSrv = { ...(profile.discordSrv ?? {}), ...inputs.discordSrv }
+          profile.discordSrvByTarget = {
+            ...(profile.discordSrvByTarget ?? {}),
+            [buildTarget]: {
+              ...(profile.discordSrvByTarget?.[buildTarget] ?? {}),
+              ...inputs.discordSrv,
+            },
+          }
         }
         saveServerProfile(profile)
 

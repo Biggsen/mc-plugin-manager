@@ -26,7 +26,7 @@ const { generateCWConfig } = require('../cwGenerator')
 const { validateAADiff, validateCEDiff, validateTABDiff, validateLMDiff } = require('../diffValidator')
 const { prependGeneratorVersionHeader } = require('../utils/generatorVersionHeader')
 
-import type { PluginType, ServerProfile } from '../types'
+import type { PluginType, ServerProfile, BuildTarget } from '../types'
 import { resolveConfigServerName } from '../shared/resolveConfigServerName'
 
 export interface BuildInputs {
@@ -42,6 +42,7 @@ export interface BuildInputs {
   lmPath?: string
   mcPath?: string
   cwPath?: string
+  buildTarget?: BuildTarget
   outDir: string
   propagateToPluginFolders?: boolean
 }
@@ -73,7 +74,12 @@ function isDefaultPath(userPath: string | undefined): boolean {
 }
 
 function resolveDiscordInviteUrl(profile: ServerProfile): string {
-  return String(profile.discordSrv?.discordInviteUrl ?? '').trim()
+  const target: BuildTarget = profile.build?.buildTarget === 'live' ? 'live' : 'next'
+  return String(
+    profile.discordSrvByTarget?.[target]?.discordInviteUrl ??
+      profile.discordSrv?.discordInviteUrl ??
+      ''
+  ).trim()
 }
 
 /** Region has lore book or description text. */
