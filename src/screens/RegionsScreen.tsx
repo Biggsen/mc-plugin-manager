@@ -111,7 +111,13 @@ function kindColor(kind: RegionRecord['kind']): string {
   }
 }
 
-function RegionPanel({ region }: { region: RegionRecord }) {
+function RegionPanel({
+  region,
+  levelledMobsDifficulty,
+}: {
+  region: RegionRecord
+  levelledMobsDifficulty?: string
+}) {
   return (
     <Stack gap="md">
       <div>
@@ -153,6 +159,15 @@ function RegionPanel({ region }: { region: RegionRecord }) {
             Category
           </Text>
           <Text size="sm">{region.category}</Text>
+        </div>
+      )}
+
+      {levelledMobsDifficulty && (
+        <div>
+          <Text size="xs" tt="uppercase" fw={600} c="dimmed" mb={4}>
+            LevelledMobs Difficulty
+          </Text>
+          <Text size="sm">{levelledMobsDifficulty}</Text>
         </div>
       )}
 
@@ -216,6 +231,7 @@ interface RegionsScreenProps {
 
 export function RegionsScreen({ server }: RegionsScreenProps) {
   const regions = server.regions
+  const regionBands = server.regionsMeta?.levelledMobs?.regionBands
 
   if (regions.length === 0) {
     return (
@@ -271,7 +287,10 @@ export function RegionsScreen({ server }: RegionsScreenProps) {
                 </Group>
               </Accordion.Control>
               <Accordion.Panel>
-                <RegionPanel region={region} />
+                <RegionPanel
+                  region={region}
+                  levelledMobsDifficulty={regionBands?.[region.id]}
+                />
               </Accordion.Panel>
             </Accordion.Item>
           )
