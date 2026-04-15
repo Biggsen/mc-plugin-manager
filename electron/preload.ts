@@ -9,6 +9,7 @@ import type {
   OnboardingConfig,
   RegionRecord,
   DiscordSrvSettings,
+  BuildTarget,
   PluginFolderCompareResponse,
   ComparePreset,
   ComparePresetMutationResult,
@@ -26,7 +27,11 @@ export interface ElectronAPI {
   ) => Promise<ServerProfile | null>
   getServer: (serverId: string) => Promise<ServerProfile>
   deleteServer: (serverId: string) => Promise<{ success: boolean; error?: string }>
-  setDiscordSrvSettings: (serverId: string, partial: DiscordSrvSettings) => Promise<void>
+  setDiscordSrvSettings: (
+    serverId: string,
+    target: BuildTarget,
+    partial: DiscordSrvSettings
+  ) => Promise<void>
   
   // Region import
   importRegions: (
@@ -71,6 +76,7 @@ export interface ElectronAPI {
       generateWorldGuardRegionsNether?: boolean
       worldGuardRegionsNetherPath?: string
       worldGuardRegionsNetherWorldFolder?: string
+      buildTarget?: BuildTarget
       discordSrv?: DiscordSrvSettings
       aaPath?: string
       cePath?: string
@@ -121,8 +127,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.invoke('update-server-identity', serverId, partial),
   getServer: (serverId: string) => ipcRenderer.invoke('get-server', serverId),
   deleteServer: (serverId: string) => ipcRenderer.invoke('delete-server', serverId),
-  setDiscordSrvSettings: (serverId: string, partial: DiscordSrvSettings) =>
-    ipcRenderer.invoke('set-discordsrv-settings', serverId, partial),
+  setDiscordSrvSettings: (serverId: string, target: BuildTarget, partial: DiscordSrvSettings) =>
+    ipcRenderer.invoke('set-discordsrv-settings', serverId, target, partial),
   importRegions: (serverId: string, world: 'overworld' | 'nether', filePath: string) =>
     ipcRenderer.invoke('import-regions', serverId, world, filePath),
   importRegionsMeta: (serverId: string, world: 'overworld' | 'nether' | 'end', filePath: string) =>
@@ -150,6 +156,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
       generateWorldGuardRegionsNether?: boolean
       worldGuardRegionsNetherPath?: string
       worldGuardRegionsNetherWorldFolder?: string
+      buildTarget?: BuildTarget
       discordSrv?: DiscordSrvSettings
       aaPath?: string
       cePath?: string

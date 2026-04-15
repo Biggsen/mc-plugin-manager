@@ -10,7 +10,11 @@ interface ElectronAPI {
   ) => Promise<ServerProfile | null>
   getServer: (serverId: string) => Promise<ServerProfile | null>
   deleteServer: (serverId: string) => Promise<{ success: boolean; error?: string }>
-  setDiscordSrvSettings: (serverId: string, partial: import('./types').DiscordSrvSettings) => Promise<void>
+  setDiscordSrvSettings: (
+    serverId: string,
+    target: import('./types').BuildTarget,
+    partial: import('./types').DiscordSrvSettings
+  ) => Promise<void>
   importRegions: (
     serverId: string,
     world: 'overworld' | 'nether',
@@ -49,6 +53,7 @@ interface ElectronAPI {
       generateWorldGuardRegionsNether?: boolean
       worldGuardRegionsNetherPath?: string
       worldGuardRegionsNetherWorldFolder?: string
+      buildTarget?: import('./types').BuildTarget
       discordSrv?: import('./types').DiscordSrvSettings
       aaPath?: string
       cePath?: string

@@ -24,6 +24,7 @@ import type {
   BuildListItem,
   DiscordSrvSettings,
   GeneratorVersionKey,
+  BuildTarget,
 } from '../types'
 
 const OUTPUT_PATH_PRESETS_KEY = 'mcpm.outputPathPresets.v1'
@@ -119,6 +120,9 @@ interface BuildScreenProps {
 }
 
 export function BuildScreen({ server, onServerUpdate }: BuildScreenProps) {
+  const [buildTarget, setBuildTarget] = useState<BuildTarget>(
+    () => (server.build?.buildTarget === 'live' ? 'live' : 'next')
+  )
   const [pluginOptions, setPluginOptions] = useState(getInitialPluginOptions)
   const [outDir, setOutDir] = useState(server.build.outputDirectory || '')
   const [propagateToPluginFolders, setPropagateToPluginFolders] = useState(
@@ -127,13 +131,16 @@ export function BuildScreen({ server, onServerUpdate }: BuildScreenProps) {
   const [buildNote, setBuildNote] = useState('')
   const [testBuild, setTestBuild] = useState(false)
   const [savedOutputPaths, setSavedOutputPaths] = useState<OutputPathPreset[]>([])
-  const [discordSrv, setDiscordSrv] = useState<DiscordSrvSettings>(() => ({
-    botToken: server.discordSrv?.botToken ?? '',
-    globalChannelId: server.discordSrv?.globalChannelId ?? '',
-    statusChannelId: server.discordSrv?.statusChannelId ?? '',
-    consoleChannelId: server.discordSrv?.consoleChannelId ?? '',
-    discordInviteUrl: server.discordSrv?.discordInviteUrl ?? '',
-  }))
+  const [discordSrv, setDiscordSrv] = useState<DiscordSrvSettings>(() => {
+    const fromTarget = server.discordSrvByTarget?.[buildTarget]
+    return {
+      botToken: fromTarget?.botToken ?? server.discordSrv?.botToken ?? '',
+      globalChannelId: fromTarget?.globalChannelId ?? server.discordSrv?.globalChannelId ?? '',
+      statusChannelId: fromTarget?.statusChannelId ?? server.discordSrv?.statusChannelId ?? '',
+      consoleChannelId: fromTarget?.consoleChannelId ?? server.discordSrv?.consoleChannelId ?? '',
+      discordInviteUrl: fromTarget?.discordInviteUrl ?? server.discordSrv?.discordInviteUrl ?? '',
+    }
+  })
   const [isBuilding, setIsBuilding] = useState(false)
   const [buildResult, setBuildResult] = useState<BuildResult | null>(null)
   const [buildReport, setBuildReport] = useState<BuildReport | null>(null)
@@ -239,6 +246,7 @@ export function BuildScreen({ server, onServerUpdate }: BuildScreenProps) {
         propagateToPluginFolders,
         testBuild,
         buildNote: buildNote.trim(),
+        buildTarget,
       } as Record<string, unknown>
       for (const p of BUILD_PLUGINS) {
         payload[p.generateKey] = pluginOptions[p.id].generate
@@ -299,23 +307,19 @@ export function BuildScreen({ server, onServerUpdate }: BuildScreenProps) {
   useEffect(() => {
     setOutDir(server.build?.outputDirectory || '')
     setPropagateToPluginFolders(Boolean(server.build?.propagateToPluginFolders))
+    setBuildTarget(server.build?.buildTarget === 'live' ? 'live' : 'next')
+  }, [server.id, server.build?.outputDirectory, server.build?.propagateToPluginFolders, server.build?.buildTarget])
+
+  useEffect(() => {
+    const fromTarget = server.discordSrvByTarget?.[buildTarget]
     setDiscordSrv({
-      botToken: server.discordSrv?.botToken ?? '',
-      globalChannelId: server.discordSrv?.globalChannelId ?? '',
-      statusChannelId: server.discordSrv?.statusChannelId ?? '',
-      consoleChannelId: server.discordSrv?.consoleChannelId ?? '',
-      discordInviteUrl: server.discordSrv?.discordInviteUrl ?? '',
+      botToken: fromTarget?.botToken ?? server.discordSrv?.botToken ?? '',
+      globalChannelId: fromTarget?.globalChannelId ?? server.discordSrv?.globalChannelId ?? '',
+      statusChannelId: fromTarget?.statusChannelId ?? server.discordSrv?.statusChannelId ?? '',
+      consoleChannelId: fromTarget?.consoleChannelId ?? server.discordSrv?.consoleChannelId ?? '',
+      discordInviteUrl: fromTarget?.discordInviteUrl ?? server.discordSrv?.discordInviteUrl ?? '',
     })
-  }, [
-    server.id,
-    server.build?.outputDirectory,
-    server.build?.propagateToPluginFolders,
-    server.discordSrv?.botToken,
-    server.discordSrv?.globalChannelId,
-    server.discordSrv?.statusChannelId,
-    server.discordSrv?.consoleChannelId,
-    server.discordSrv?.discordInviteUrl,
-  ])
+  }, [server.id, server.discordSrvByTarget, server.discordSrv, buildTarget])
 
   useEffect(() => {
     setWorldGuardWorldFolder(server.build?.worldGuardRegionsWorldFolder?.trim() || 'world')
@@ -375,8 +379,8 @@ export function BuildScreen({ server, onServerUpdate }: BuildScreenProps) {
     }
   }
 
-  async function persistDiscordSrv(next: DiscordSrvSettings) {
-    await window.electronAPI.setDiscordSrvSettings(server.id, next)
+  async function persistDiscordSrv(target: BuildTarget, next: DiscordSrvSettings) {
+    await window.electronAPI.setDiscordSrvSettings(server.id, target, next)
     if (onServerUpdate) {
       const updated = await window.electronAPI.getServer(server.id)
       if (updated) onServerUpdate(updated)
@@ -413,6 +417,17 @@ export function BuildScreen({ server, onServerUpdate }: BuildScreenProps) {
       </Text>
 
       <Stack gap="xs">
+        <Text size="sm" fw={600}>
+          Build target
+        </Text>
+        <Checkbox
+          label="Live build target (unchecked = next)"
+          checked={buildTarget === 'live'}
+          onChange={(e) => setBuildTarget(e.currentTarget.checked ? 'live' : 'next')}
+        />
+        <Text size="xs" c="dimmed">
+          Select which environment receives DiscordSRV values for this build.
+        </Text>
         <Text size="sm" fw={600}>
           Select Plugins to Generate:
         </Text>
@@ -468,6 +483,9 @@ export function BuildScreen({ server, onServerUpdate }: BuildScreenProps) {
                   Values are written into generated config.yml. Console channel ID may be left empty to
                   disable the console channel.
                 </Text>
+                <Text size="xs" fw={600}>
+                  Editing target: {buildTarget.toUpperCase()}
+                </Text>
                 <TextInput
                   label="Bot token"
                   type="password"
@@ -480,7 +498,7 @@ export function BuildScreen({ server, onServerUpdate }: BuildScreenProps) {
                     })
                   }}
                   onBlur={(e) =>
-                    void persistDiscordSrv({ ...discordSrv, botToken: e.currentTarget.value })
+                    void persistDiscordSrv(buildTarget, { ...discordSrv, botToken: e.currentTarget.value })
                   }
                 />
                 <TextInput
@@ -491,7 +509,7 @@ export function BuildScreen({ server, onServerUpdate }: BuildScreenProps) {
                     setDiscordSrv((prev) => ({ ...prev, globalChannelId }))
                   }}
                   onBlur={(e) =>
-                    void persistDiscordSrv({ ...discordSrv, globalChannelId: e.currentTarget.value })
+                    void persistDiscordSrv(buildTarget, { ...discordSrv, globalChannelId: e.currentTarget.value })
                   }
                 />
                 <TextInput
@@ -502,7 +520,7 @@ export function BuildScreen({ server, onServerUpdate }: BuildScreenProps) {
                     setDiscordSrv((prev) => ({ ...prev, statusChannelId }))
                   }}
                   onBlur={(e) =>
-                    void persistDiscordSrv({ ...discordSrv, statusChannelId: e.currentTarget.value })
+                    void persistDiscordSrv(buildTarget, { ...discordSrv, statusChannelId: e.currentTarget.value })
                   }
                 />
                 <TextInput
@@ -513,7 +531,7 @@ export function BuildScreen({ server, onServerUpdate }: BuildScreenProps) {
                     setDiscordSrv((prev) => ({ ...prev, consoleChannelId }))
                   }}
                   onBlur={(e) =>
-                    void persistDiscordSrv({ ...discordSrv, consoleChannelId: e.currentTarget.value })
+                    void persistDiscordSrv(buildTarget, { ...discordSrv, consoleChannelId: e.currentTarget.value })
                   }
                 />
                 <TextInput
@@ -524,7 +542,10 @@ export function BuildScreen({ server, onServerUpdate }: BuildScreenProps) {
                     setDiscordSrv((prev) => ({ ...prev, discordInviteUrl }))
                   }}
                   onBlur={(e) =>
-                    void persistDiscordSrv({ ...discordSrv, discordInviteUrl: e.currentTarget.value })
+                    void persistDiscordSrv(buildTarget, {
+                      ...discordSrv,
+                      discordInviteUrl: e.currentTarget.value,
+                    })
                   }
                 />
               </Stack>
@@ -772,6 +793,11 @@ export function BuildScreen({ server, onServerUpdate }: BuildScreenProps) {
             <Text size="sm" c="dimmed">
               Build ID: <Text component="span" fw={600} c="dark">{buildReport.buildId}</Text>
             </Text>
+            {buildReport.buildTarget && (
+              <Text size="sm" c="dimmed">
+                Target: <Text component="span" fw={600} c="dark">{buildReport.buildTarget}</Text>
+              </Text>
+            )}
             <Text size="sm" c="dimmed">
               Timestamp: {new Date(buildReport.timestamp).toLocaleString()}
             </Text>
