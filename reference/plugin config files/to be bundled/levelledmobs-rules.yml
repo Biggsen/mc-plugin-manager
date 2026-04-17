@@ -129,11 +129,11 @@ presets:
 
         # r = level/maxLevel ; r2 = r*r
         max-health: '((%level-ratio% * %level-ratio%) * %max-health% * 14)'
-        attack-damage: '((%level-ratio% * %level-ratio%) * %attack-damage% * 6)'
-        ranged-attack-damage: '((%level-ratio% * %level-ratio%) * %ranged-attack-damage% * 4)'
+        attack-damage: '((%level-ratio% * %level-ratio%) * %attack-damage% * 8.5)'
+        ranged-attack-damage: '((%level-ratio% * %level-ratio%) * %ranged-attack-damage% * 5)'
 
         # Keep speed conservative
-        movement-speed: '((%level-ratio% * %level-ratio%) * %movement-speed% * 0.35)'
+        movement-speed: '((%level-ratio% * %level-ratio%) * %movement-speed% * 0.45)'
 
         creeper-blast-damage: '((%level-ratio% * %level-ratio%) * %creeper-blast-damage% * 2.0)'
         follow-range: '((%level-ratio% * %level-ratio%) * %follow-range% * 0.35)'
