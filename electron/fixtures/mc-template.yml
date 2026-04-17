@@ -1,4 +1,5 @@
 name: {SERVER_NAME}
+store_url: https://{TEBEX_SUBDOMAIN}.tebex.io
 server_guides:
   text:
     - "&e> Lore; &d/guidelore;/guidelore"
