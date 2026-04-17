@@ -31,11 +31,6 @@ interface TierTemplate {
   category: string // e.g., 'villages_discovered'
 }
 
-interface TierCalculationOptions {
-  halfRounding?: 'floor' | 'ceil'
-  preserveFixedTiers?: number[]
-}
-
 // Tier templates for each category
 // Villages: even increments of 10, plus special half and all milestones
 const VILLAGES_TEMPLATE: TierTemplate = {
@@ -51,16 +46,6 @@ const REGIONS_TEMPLATE: TierTemplate = {
 const HEARTS_TEMPLATE: TierTemplate = {
   tiers: [1, 'half', 'all'],
   category: 'hearts_discovered',
-}
-
-const NETHER_REGIONS_TEMPLATE: TierTemplate = {
-  tiers: [1, 'half', 'all'],
-  category: 'nether_regions_discovered',
-}
-
-const NETHER_HEARTS_TEMPLATE: TierTemplate = {
-  tiers: [1, 'half', 'all'],
-  category: 'nether_hearts_discovered',
 }
 
 const STRUCTURE_DISCOVERY_XP: Record<string, number> = {
@@ -264,16 +249,10 @@ function ensureRewardCommandDisplayFromCeCalls(entry: any): void {
  * 3. Drop highest remaining fixed tier if within ALL_COLLISION_THRESHOLD of total
  * 4. Calculate 'half' = floor(total/2) and 'all' = total
  */
-function calculateTiers(
-  template: TierTemplate,
-  total: number,
-  options: TierCalculationOptions = {}
-): number[] {
+function calculateTiers(template: TierTemplate, total: number): number[] {
   if (total <= 0) return []
 
-  const half = (options.halfRounding ?? 'floor') === 'ceil'
-    ? Math.ceil(total / 2)
-    : Math.floor(total / 2)
+  const half = Math.floor(total / 2)
 
   const resolvedTiers: { value: number; isFixed: boolean }[] = []
 
@@ -291,7 +270,6 @@ function calculateTiers(
 
   filtered = filtered.filter(t => {
     if (!t.isFixed) return true
-    if (options.preserveFixedTiers?.includes(t.value)) return true
     if (Math.abs(t.value - half) <= HALF_COLLISION_THRESHOLD) return false
     return true
   })
@@ -508,23 +486,14 @@ export function generateAACommands(regions: RegionRecord[]): AACommandsSection {
 /**
  * Count regions by kind from profile.regions
  */
-function countRegionsByKind(regions: RegionRecord[]): {
-  villages: number
-  regions: number
-  hearts: number
-  netherRegions: number
-  netherHearts: number
-} {
-  // Overworld categories are generated separately from nether categories.
+function countRegionsByKind(regions: RegionRecord[]): { villages: number; regions: number; hearts: number } {
+  // Only count overworld regions (nether has separate categories)
   const overworldRegions = regions.filter(r => r.world === 'overworld')
-  const netherRegions = regions.filter(r => r.world === 'nether')
   
   return {
     villages: overworldRegions.filter(r => r.kind === 'village').length,
     regions: overworldRegions.filter(r => r.kind === 'region').length,
     hearts: overworldRegions.filter(r => r.kind === 'heart').length,
-    netherRegions: netherRegions.filter(r => r.kind === 'region').length,
-    netherHearts: netherRegions.filter(r => r.kind === 'heart').length,
   }
 }
 
@@ -536,14 +505,10 @@ function generateCustomCategory(
   calculatedTiers: number[],
   template: TierTemplate,
   total: number,
-  categoryName: string,
-  options: TierCalculationOptions = {}
+  categoryName: string
 ): { [tier: number]: any } {
   const result: { [tier: number]: any } = {}
-  const half = (options.halfRounding ?? 'floor') === 'ceil'
-    ? Math.ceil(total / 2)
-    : Math.floor(total / 2)
-  const oddCeilHalf = (options.halfRounding ?? 'floor') === 'ceil' && total % 2 !== 0
+  const half = Math.floor(total / 2)
 
   const hasHalfTemplate = '_half' in templateCategory
   const hasAllTemplate = '_all' in templateCategory
@@ -613,14 +578,6 @@ function generateCustomCategory(
           entry.Message = 'You discovered half of all the regions!'
         } else if (categoryName === 'hearts_discovered') {
           entry.Message = 'You discovered half of all the Hearts of regions!'
-        } else if (categoryName === 'nether_regions_discovered') {
-          entry.Message = oddCeilHalf
-            ? 'You discovered more than half of all Nether regions!'
-            : 'You discovered half of all Nether regions!'
-        } else if (categoryName === 'nether_hearts_discovered') {
-          entry.Message = oddCeilHalf
-            ? 'You discovered more than half of all Nether Hearts!'
-            : 'You discovered half of all Nether Hearts!'
         }
       }
     }
@@ -983,42 +940,6 @@ export function generateAACustom(
     }
   }
 
-  // Generate nether_regions_discovered if nether regions exist
-  if (counts.netherRegions > 0 && templateCustom.nether_regions_discovered) {
-    const tiers = calculateTiers(NETHER_REGIONS_TEMPLATE, counts.netherRegions, {
-      halfRounding: 'ceil',
-      preserveFixedTiers: [1],
-    })
-    if (tiers.length > 0) {
-      result.nether_regions_discovered = generateCustomCategory(
-        templateCustom.nether_regions_discovered,
-        tiers,
-        NETHER_REGIONS_TEMPLATE,
-        counts.netherRegions,
-        'nether_regions_discovered',
-        { halfRounding: 'ceil' }
-      )
-    }
-  }
-
-  // Generate nether_hearts_discovered if nether hearts exist
-  if (counts.netherHearts > 0 && templateCustom.nether_hearts_discovered) {
-    const tiers = calculateTiers(NETHER_HEARTS_TEMPLATE, counts.netherHearts, {
-      halfRounding: 'ceil',
-      preserveFixedTiers: [1],
-    })
-    if (tiers.length > 0) {
-      result.nether_hearts_discovered = generateCustomCategory(
-        templateCustom.nether_hearts_discovered,
-        tiers,
-        NETHER_HEARTS_TEMPLATE,
-        counts.netherHearts,
-        'nether_hearts_discovered',
-        { halfRounding: 'ceil' }
-      )
-    }
-  }
-
   if (explorationTotal > 0 && templateCustom.total_discovered != null) {
     const td = generateTotalDiscoveredCustom(explorationTotal, serverName)
     if (td) {
@@ -1104,8 +1025,6 @@ export {
   VILLAGES_TEMPLATE,
   REGIONS_TEMPLATE,
   HEARTS_TEMPLATE,
-  NETHER_REGIONS_TEMPLATE,
-  NETHER_HEARTS_TEMPLATE,
   generateCommandId,
 }
 
@@ -1120,8 +1039,6 @@ module.exports = {
   VILLAGES_TEMPLATE,
   REGIONS_TEMPLATE,
   HEARTS_TEMPLATE,
-  NETHER_REGIONS_TEMPLATE,
-  NETHER_HEARTS_TEMPLATE,
   structureTypeToSingularTitle,
   rewardDisplayFromCeExecuteLine,
 }

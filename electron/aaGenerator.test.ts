@@ -4,7 +4,6 @@ import {
   VILLAGES_TEMPLATE,
   REGIONS_TEMPLATE,
   HEARTS_TEMPLATE,
-  NETHER_REGIONS_TEMPLATE,
   structureTypeToSingularTitle,
   generateAACommands,
   generateAACustom,
@@ -47,13 +46,6 @@ describe('calculateTiers', () => {
 
   it('half equals all (total 2)', () => {
     expect(calculateTiers(HEARTS_TEMPLATE, 2)).toEqual([1, 2])
-  })
-
-  it('nether half can round up', () => {
-    expect(calculateTiers(NETHER_REGIONS_TEMPLATE, 9, {
-      halfRounding: 'ceil',
-      preserveFixedTiers: [1],
-    })).toEqual([1, 5, 9])
   })
 })
 
@@ -153,52 +145,6 @@ describe('generateAACustom CE Display', () => {
     expect(tier?.Reward?.Command?.Execute).toContain(
       'say §6PLAYER§7 has become a §6REGION LEGEND§7!'
     )
-  })
-})
-
-describe('generateAACustom nether dynamic tiers', () => {
-  it('generates nether region and heart tiers from nether totals', () => {
-    const regions: RegionRecord[] = [
-      ...Array.from({ length: 9 }, (_, i) => ({
-        world: 'nether' as const,
-        id: `nr_${i}`,
-        kind: 'region' as const,
-        discover: { method: 'on_enter' as const, recipeId: 'none' as const },
-      })),
-      ...Array.from({ length: 7 }, (_, i) => ({
-        world: 'nether' as const,
-        id: `nh_${i}`,
-        kind: 'heart' as const,
-        discover: { method: 'on_enter' as const, recipeId: 'none' as const },
-      })),
-    ]
-    const template = {
-      Custom: {
-        nether_regions_discovered: {
-          1: { Message: 'One', Name: 'nether_regions_discovered_1', DisplayName: 'A', Type: 'normal' },
-          4: { Message: 'Half', Name: 'nether_regions_discovered_4', DisplayName: 'B', Type: 'normal' },
-          8: { Message: 'All', Name: 'nether_regions_discovered_8', DisplayName: 'C', Type: 'rare' },
-        },
-        nether_hearts_discovered: {
-          1: { Message: 'One', Name: 'nether_hearts_discovered_1', DisplayName: 'A', Type: 'normal' },
-          4: { Message: 'Half', Name: 'nether_hearts_discovered_4', DisplayName: 'B', Type: 'normal' },
-          8: { Message: 'All', Name: 'nether_hearts_discovered_8', DisplayName: 'C', Type: 'rare' },
-        },
-      },
-    }
-    const custom = generateAACustom(regions, template)
-
-    expect(Object.keys(custom.nether_regions_discovered ?? {}).map(Number).sort((a, b) => a - b)).toEqual([1, 5, 9])
-    expect(custom.nether_regions_discovered?.[5]?.Message).toBe(
-      'You discovered more than half of all Nether regions!'
-    )
-    expect(custom.nether_regions_discovered?.[9]?.Name).toBe('nether_regions_discovered_9')
-
-    expect(Object.keys(custom.nether_hearts_discovered ?? {}).map(Number).sort((a, b) => a - b)).toEqual([1, 4, 7])
-    expect(custom.nether_hearts_discovered?.[4]?.Message).toBe(
-      'You discovered more than half of all Nether Hearts!'
-    )
-    expect(custom.nether_hearts_discovered?.[7]?.Name).toBe('nether_hearts_discovered_7')
   })
 })
 
