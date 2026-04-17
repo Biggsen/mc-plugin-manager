@@ -11,6 +11,7 @@ import {
   Modal,
   ActionIcon,
   Center,
+  Select,
 } from '@mantine/core'
 import {
   IconPlus,
@@ -28,6 +29,119 @@ import {
 import type { ServerProfile, ServerSummaryWithStats } from '../types'
 import classes from './ServerProfilesScreen.module.css'
 
+const SERVER_SORT_STORAGE_KEY = 'mcpm.serverListSort.v1'
+
+const SERVER_SORT_OPTIONS = [
+  { value: 'name-asc', label: 'Name (A–Z)' },
+  { value: 'name-desc', label: 'Name (Z–A)' },
+  { value: 'lastUpdated-desc', label: 'Last updated (newest first)' },
+  { value: 'lastUpdated-asc', label: 'Last updated (oldest first)' },
+  { value: 'regions-desc', label: 'Regions (most)' },
+  { value: 'regions-asc', label: 'Regions (fewest)' },
+  { value: 'villages-desc', label: 'Villages (most)' },
+  { value: 'villages-asc', label: 'Villages (fewest)' },
+  { value: 'hearts-desc', label: 'Hearts (most)' },
+  { value: 'hearts-asc', label: 'Hearts (fewest)' },
+  { value: 'netherRegions-desc', label: 'Nether regions (most)' },
+  { value: 'netherRegions-asc', label: 'Nether regions (fewest)' },
+  { value: 'netherHearts-desc', label: 'Nether hearts (most)' },
+  { value: 'netherHearts-asc', label: 'Nether hearts (fewest)' },
+  { value: 'structures-desc', label: 'Structures (most)' },
+  { value: 'structures-asc', label: 'Structures (fewest)' },
+  { value: 'totalRegions-desc', label: 'Total regions (most)' },
+  { value: 'totalRegions-asc', label: 'Total regions (fewest)' },
+] as const
+
+type ServerSortValue = (typeof SERVER_SORT_OPTIONS)[number]['value']
+
+function isServerSortValue(s: string): s is ServerSortValue {
+  return SERVER_SORT_OPTIONS.some((o) => o.value === s)
+}
+
+function readStoredServerSort(): ServerSortValue {
+  try {
+    const raw = window.localStorage.getItem(SERVER_SORT_STORAGE_KEY)
+    if (raw && isServerSortValue(raw)) return raw
+  } catch {
+    /* ignore */
+  }
+  return 'name-asc'
+}
+
+function totalRegionsStat(s: ServerSummaryWithStats): number {
+  const r = s.regionCount ?? 0
+  const v = s.villageCount ?? 0
+  const h = s.heartCount ?? 0
+  const nr = s.netherRegionCount ?? 0
+  const nh = s.netherHeartCount ?? 0
+  return r + v + h + nr + nh
+}
+
+function lastImportMs(s: ServerSummaryWithStats): number | null {
+  if (!s.lastImportIso) return null
+  const t = new Date(s.lastImportIso).getTime()
+  return Number.isFinite(t) ? t : null
+}
+
+function compareServersForSort(
+  a: ServerSummaryWithStats,
+  b: ServerSummaryWithStats,
+  sort: ServerSortValue
+): number {
+  switch (sort) {
+    case 'name-asc':
+      return a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
+    case 'name-desc':
+      return b.name.localeCompare(a.name, undefined, { sensitivity: 'base' })
+    case 'lastUpdated-desc': {
+      const ta = lastImportMs(a)
+      const tb = lastImportMs(b)
+      if (ta === null && tb === null) return 0
+      if (ta === null) return 1
+      if (tb === null) return -1
+      return tb - ta
+    }
+    case 'lastUpdated-asc': {
+      const ta = lastImportMs(a)
+      const tb = lastImportMs(b)
+      if (ta === null && tb === null) return 0
+      if (ta === null) return -1
+      if (tb === null) return 1
+      return ta - tb
+    }
+    case 'regions-desc':
+      return (b.regionCount ?? 0) - (a.regionCount ?? 0)
+    case 'regions-asc':
+      return (a.regionCount ?? 0) - (b.regionCount ?? 0)
+    case 'villages-desc':
+      return (b.villageCount ?? 0) - (a.villageCount ?? 0)
+    case 'villages-asc':
+      return (a.villageCount ?? 0) - (b.villageCount ?? 0)
+    case 'hearts-desc':
+      return (b.heartCount ?? 0) - (a.heartCount ?? 0)
+    case 'hearts-asc':
+      return (a.heartCount ?? 0) - (b.heartCount ?? 0)
+    case 'netherRegions-desc':
+      return (b.netherRegionCount ?? 0) - (a.netherRegionCount ?? 0)
+    case 'netherRegions-asc':
+      return (a.netherRegionCount ?? 0) - (b.netherRegionCount ?? 0)
+    case 'netherHearts-desc':
+      return (b.netherHeartCount ?? 0) - (a.netherHeartCount ?? 0)
+    case 'netherHearts-asc':
+      return (a.netherHeartCount ?? 0) - (b.netherHeartCount ?? 0)
+    case 'structures-desc':
+      return (b.structureCount ?? 0) - (a.structureCount ?? 0)
+    case 'structures-asc':
+      return (a.structureCount ?? 0) - (b.structureCount ?? 0)
+    case 'totalRegions-desc':
+      return totalRegionsStat(b) - totalRegionsStat(a)
+    case 'totalRegions-asc':
+      return totalRegionsStat(a) - totalRegionsStat(b)
+    default:
+      return 0
+  }
+}
+
 interface ServerProfilesScreenProps {
   onSelectServer: (server: ServerProfile) => void
 }
@@ -39,6 +153,7 @@ export function ServerProfilesScreen({
   const [newServerName, setNewServerName] = useState('')
   const [newConfigName, setNewConfigName] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
+  const [sortBy, setSortBy] = useState<ServerSortValue>(readStoredServerSort)
   const [isCreating, setIsCreating] = useState(false)
   const [addServerModalOpen, setAddServerModalOpen] = useState(false)
   const [serverToDelete, setServerToDelete] = useState<ServerSummaryWithStats | null>(null)
@@ -48,11 +163,25 @@ export function ServerProfilesScreen({
     loadServers()
   }, [])
 
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(SERVER_SORT_STORAGE_KEY, sortBy)
+    } catch {
+      /* ignore */
+    }
+  }, [sortBy])
+
   const filteredServers = useMemo(() => {
     if (!searchQuery.trim()) return servers
     const q = searchQuery.trim().toLowerCase()
     return servers.filter((s) => s.name.toLowerCase().includes(q))
   }, [servers, searchQuery])
+
+  const sortedFilteredServers = useMemo(() => {
+    const list = [...filteredServers]
+    list.sort((a, b) => compareServersForSort(a, b, sortBy))
+    return list
+  }, [filteredServers, sortBy])
 
   const summary = useMemo(() => {
     const n = filteredServers.length
@@ -240,13 +369,27 @@ export function ServerProfilesScreen({
         )}
       </Modal>
 
-      <TextInput
-        placeholder="Search servers..."
-        value={searchQuery}
-        onChange={(e) => setSearchQuery(e.currentTarget.value)}
-        leftSection={<IconSearch size={16} />}
-        style={{ maxWidth: 400 }}
-      />
+      <Group align="flex-end" gap="md" wrap="wrap">
+        <TextInput
+          placeholder="Search servers..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.currentTarget.value)}
+          leftSection={<IconSearch size={16} />}
+          style={{ flex: 1, minWidth: 200, maxWidth: 400 }}
+          aria-label="Search servers"
+        />
+        <Select
+          label="Sort by"
+          data={[...SERVER_SORT_OPTIONS]}
+          value={sortBy}
+          onChange={(v) => {
+            if (v) setSortBy(v as ServerSortValue)
+          }}
+          w={280}
+          searchable
+          nothingFoundMessage="No matching sort"
+        />
+      </Group>
 
       {filteredServers.length > 0 && (
         <Text size="sm" c="dimmed">
@@ -266,7 +409,7 @@ export function ServerProfilesScreen({
         </Paper>
       ) : (
         <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="md">
-          {filteredServers.map((server) => (
+          {sortedFilteredServers.map((server) => (
             <ServerCard
               key={server.id}
               server={server}
