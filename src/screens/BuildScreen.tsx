@@ -155,6 +155,9 @@ export function BuildScreen({ server, onServerUpdate }: BuildScreenProps) {
   const [worldGuardNetherWorldFolder, setWorldGuardNetherWorldFolder] = useState(
     () => server.build?.worldGuardRegionsNetherWorldFolder?.trim() || 'world_nether'
   )
+  const [mcTebexSubdomain, setMcTebexSubdomain] = useState(
+    () => server.build?.mcTebexSubdomain?.trim() || ''
+  )
 
   async function handleSelectPluginFile(id: BuildPluginId) {
     const plugin = BUILD_PLUGINS.find((p) => p.id === id)
@@ -217,6 +220,12 @@ export function BuildScreen({ server, onServerUpdate }: BuildScreenProps) {
         return
       }
     }
+    if (pluginOptions.mc.generate) {
+      if (!mcTebexSubdomain.trim()) {
+        setValidationError('MyCommand requires a Tebex subdomain (for https://[subdomain].tebex.io)')
+        return
+      }
+    }
 
     if (pluginOptions.worldguardregions.generate && !pluginOptions.worldguardregions.path?.trim()) {
       setValidationError('Overworld WorldGuard regions.yml requires a source file — use Browse under overrides')
@@ -265,6 +274,9 @@ export function BuildScreen({ server, onServerUpdate }: BuildScreenProps) {
           consoleChannelId: discordSrv.consoleChannelId ?? '',
           discordInviteUrl: discordSrv.discordInviteUrl ?? '',
         }
+      }
+      if (pluginOptions.mc.generate) {
+        payload.mcTebexSubdomain = mcTebexSubdomain.trim()
       }
       if (pluginOptions.worldguardregions.generate) {
         payload.worldGuardRegionsWorldFolder = worldGuardWorldFolder.trim() || 'world'
@@ -330,6 +342,10 @@ export function BuildScreen({ server, onServerUpdate }: BuildScreenProps) {
       server.build?.worldGuardRegionsNetherWorldFolder?.trim() || 'world_nether'
     )
   }, [server.id, server.build?.worldGuardRegionsNetherWorldFolder])
+
+  useEffect(() => {
+    setMcTebexSubdomain(server.build?.mcTebexSubdomain?.trim() || '')
+  }, [server.id, server.build?.mcTebexSubdomain])
 
   useEffect(() => {
     const saved = server.build?.worldGuardRegionsSourcePath?.trim()
@@ -567,6 +583,17 @@ export function BuildScreen({ server, onServerUpdate }: BuildScreenProps) {
               }
               value={worldGuardWorldFolder}
               onChange={(e) => setWorldGuardWorldFolder(e.currentTarget.value)}
+            />
+          </Stack>
+        )}
+        {pluginOptions.mc.generate && (
+          <Stack gap="xs" mt="sm">
+            <TextInput
+              label="MyCommand Tebex subdomain"
+              description="Used for /store URL as https://[subdomain].tebex.io"
+              placeholder="e.g. charidh"
+              value={mcTebexSubdomain}
+              onChange={(e) => setMcTebexSubdomain(e.currentTarget.value)}
             />
           </Stack>
         )}

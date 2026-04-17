@@ -6,7 +6,7 @@ store:
   register: true
   text:
   - '&7Support the server and receive claimblocks to help protect your builds:'
-  - '$OPEN_URL$&fcharidh.tebex.io; &eClick to open;https://charidh.tebex.io'
+  - '$OPEN_URL$&f{TEBEX_SUBDOMAIN}.tebex.io; &eClick to open;https://{TEBEX_SUBDOMAIN}.tebex.io'
   
 structures:
   command: /structures

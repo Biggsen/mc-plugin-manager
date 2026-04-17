@@ -11,6 +11,7 @@ const LORE_GUIDES_LINE = '&e> Lore; &d/guidelore;/guidelore'
  *
  * Placeholders:
  * - {SERVER_NAME} -> resolved config server name (see resolveConfigServerName)
+ * - {TEBEX_SUBDOMAIN} -> custom Tebex subdomain (left side of `.tebex.io`)
  *
  * Any `discord` command block is removed (DiscordSRV owns /discord).
  *
@@ -21,11 +22,13 @@ const LORE_GUIDES_LINE = '&e> Lore; &d/guidelore;/guidelore'
 export function generateMCConfig(
   templatePath: string,
   serverName: string,
+  tebexSubdomain: string,
   regions: RegionRecord[] = [],
   hasLore: boolean = false
 ): string {
   let content = readFileSync(templatePath, 'utf-8')
   content = content.replace(/\{SERVER_NAME\}/g, serverName)
+  content = content.replace(/\{TEBEX_SUBDOMAIN\}/g, tebexSubdomain.trim())
 
   const config = yaml.parse(content)
   if (config?.discord) {

@@ -41,6 +41,7 @@ export interface BuildInputs {
   tabPath?: string
   lmPath?: string
   mcPath?: string
+  mcTebexSubdomain?: string
   cwPath?: string
   buildTarget?: BuildTarget
   outDir: string
@@ -168,7 +169,13 @@ export function buildPluginContent(
     }
     case 'mc': {
       const hasLore = serverProfileHasLore(profile)
-      const content = generateMCConfig(configPath, configServerName, profile.regions || [], hasLore)
+      const content = generateMCConfig(
+        configPath,
+        configServerName,
+        String(inputs.mcTebexSubdomain ?? profile.build?.mcTebexSubdomain ?? ''),
+        profile.regions || [],
+        hasLore
+      )
       return { content, configPath, isDefault }
     }
     case 'cw': {

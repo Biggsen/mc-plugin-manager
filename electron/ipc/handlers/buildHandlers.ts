@@ -68,6 +68,7 @@ export function registerBuildHandlers(): void {
         tabPath?: string
         lmPath?: string
         mcPath?: string
+        mcTebexSubdomain?: string
         cwPath?: string
         outDir: string
         propagateToPluginFolders?: boolean
@@ -320,6 +321,15 @@ export function registerBuildHandlers(): void {
           configSources.lm = result.configSource
         }
         if (inputs.generateMC) {
+          const subdomain = String(inputs.mcTebexSubdomain ?? '').trim()
+          if (!subdomain) {
+            return {
+              success: false,
+              error: 'MyCommand requires a Tebex subdomain (for https://[subdomain].tebex.io)',
+              buildId,
+            }
+          }
+          profile.build.mcTebexSubdomain = subdomain
           const nextGeneratorVersion = versionForEmit('mc')
           const result = runPluginBuild('mc', profile, inputs, {
             ...buildContextBase,

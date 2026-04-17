@@ -83,6 +83,7 @@ export interface ElectronAPI {
       tabPath?: string
       lmPath?: string
       mcPath?: string
+      mcTebexSubdomain?: string
       cwPath?: string
       outDir: string
       propagateToPluginFolders?: boolean
@@ -163,6 +164,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
       tabPath?: string
       lmPath?: string
       mcPath?: string
+      mcTebexSubdomain?: string
       cwPath?: string
       outDir: string
       propagateToPluginFolders?: boolean

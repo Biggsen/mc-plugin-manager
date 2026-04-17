@@ -79,6 +79,8 @@ export interface ServerProfile {
     worldGuardRegionsNetherSourcePath?: string
     /** Nether world folder under WorldGuard/worlds/ (e.g. `world_nether`). */
     worldGuardRegionsNetherWorldFolder?: string
+    /** MyCommand Tebex store subdomain (left side of `.tebex.io`). */
+    mcTebexSubdomain?: string
   }
   /** Per-plugin successful emit serial (1-based), keyed by plugin id. */
   generatorVersions?: Partial<Record<GeneratorVersionKey, number>>
