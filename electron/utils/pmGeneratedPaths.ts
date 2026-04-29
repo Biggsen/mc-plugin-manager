@@ -67,6 +67,16 @@ export function getPmGeneratedEntries(): { entries: PmGeneratedEntry[]; bookGuiW
       relativePath: 'GriefPreventionData/config.yml',
     },
     {
+      id: 'essentials-config',
+      label: 'EssentialsX (config.yml)',
+      relativePath: path.join('essentials', 'config.yml'),
+    },
+    {
+      id: 'essentials-rules',
+      label: 'EssentialsX (rules.txt)',
+      relativePath: path.join('essentials', 'rules.txt'),
+    },
+    {
       id: 'worldguardregions',
       label: 'WorldGuard (worlds/world/regions.yml)',
       relativePath: getWorldGuardRegionsPropagatedRelativePath('world'),
