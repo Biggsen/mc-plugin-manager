@@ -1,0 +1,13 @@
+[General]
+[1] Be respectful to others
+[2] Use common sense
+
+[Gameplay]
+[3] No AFK farming (auto-jump, macros, etc.)
+[4] No exploiting unintended mechanics
+[5] Accessing or using the Nether roof is not allowed
+
+[Claims & Exploration]
+[6] Claims must not block or restrict access to discoverable regions, villages, hearts, or structures
+[7] Hearts must remain accessible and usable (lodestones). Blocking or enclosing them is not allowed
+[8] Staff may resize or remove claims that violate this

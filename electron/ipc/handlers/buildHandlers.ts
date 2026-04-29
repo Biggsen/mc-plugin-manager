@@ -1,4 +1,4 @@
-const { ipcMain } = require('electron')
+const { ipcMain, app } = require('electron')
 const path = require('path')
 const { existsSync, writeFileSync } = require('fs')
 const {
@@ -52,6 +52,7 @@ export function registerBuildHandlers(): void {
         generateLM?: boolean
         generateMC?: boolean
         generateCW?: boolean
+        generateEssentials?: boolean
         generateDiscordSRV?: boolean
         generateGriefPrevention?: boolean
         generateWorldGuardRegions?: boolean
@@ -91,6 +92,7 @@ export function registerBuildHandlers(): void {
           !inputs.generateLM &&
           !inputs.generateMC &&
           !inputs.generateCW &&
+          !inputs.generateEssentials &&
           !inputs.generateDiscordSRV &&
           !inputs.generateGriefPrevention &&
           !inputs.generateWorldGuardRegions &&
@@ -99,7 +101,7 @@ export function registerBuildHandlers(): void {
           return {
             success: false,
             error:
-              'At least one plugin (AA, BookGUI, CE, TAB, LM, MC, CommandWhitelist, DiscordSRV, GriefPreventionData, WorldGuard overworld regions.yml, or WorldGuard nether regions.yml) must be selected',
+              'At least one plugin (AA, BookGUI, CE, TAB, LM, MC, CommandWhitelist, EssentialsX, DiscordSRV, GriefPreventionData, WorldGuard overworld regions.yml, or WorldGuard nether regions.yml) must be selected',
           }
         }
         if (!inputs.outDir || inputs.outDir.trim().length === 0) {
@@ -150,6 +152,7 @@ export function registerBuildHandlers(): void {
         let lmGenerated = false
         let mcGenerated = false
         let cwGenerated = false
+        let essentialsGenerated = false
         let discordsrvGenerated = false
         let griefPreventionGenerated = false
         let worldGuardRegionsGenerated = false
@@ -350,6 +353,72 @@ export function registerBuildHandlers(): void {
           persistGeneratorVersion('cw', nextGeneratorVersion)
           cwGenerated = true
           configSources.cw = result.configSource
+        }
+
+        if (inputs.generateEssentials) {
+          try {
+            const templatesBase = app.isPackaged
+              ? path.join(app.getAppPath(), 'dist-electron', 'assets', 'templates')
+              : path.join(__dirname, '..', '..', 'assets', 'templates')
+            const essentialsConfigTemplate = path.join(templatesBase, 'essentials-config.yml')
+            const essentialsRulesTemplate = path.join(templatesBase, 'essentials-rules.txt')
+            if (!existsSync(essentialsConfigTemplate) || !existsSync(essentialsRulesTemplate)) {
+              return {
+                success: false,
+                error: `Bundled EssentialsX templates not found in: ${templatesBase}`,
+                buildId,
+              }
+            }
+
+            const nextGeneratorVersion = versionForEmit('essentials')
+            const headerArgs = {
+              profileId: serverId,
+              buildId,
+              nextVersion: nextGeneratorVersion,
+              generatedAt: timestamp,
+              buildNote: headerStampNote,
+              testEmit: testBuild,
+            }
+            const configBody = fs.readFileSync(essentialsConfigTemplate, 'utf-8')
+            const rulesBody = fs.readFileSync(essentialsRulesTemplate, 'utf-8')
+            const configContent = prependGeneratorVersionHeader(configBody, {
+              plugin: 'essentials',
+              ...headerArgs,
+            })
+            const rulesContent = prependGeneratorVersionHeader(rulesBody, {
+              plugin: 'essentials',
+              ...headerArgs,
+            })
+            const buildDir = ensureBuildDirectory(serverId, buildId)
+            const configFlatName = `${serverNameSanitized}-essentials-config.yml`
+            const rulesFlatName = `${serverNameSanitized}-essentials-rules.txt`
+
+            if (propagate) {
+              const essentialsDir = path.join(inputs.outDir, 'essentials')
+              fs.mkdirSync(essentialsDir, { recursive: true })
+              fs.writeFileSync(path.join(essentialsDir, 'config.yml'), configContent, 'utf-8')
+              fs.writeFileSync(path.join(essentialsDir, 'rules.txt'), rulesContent, 'utf-8')
+            } else {
+              fs.writeFileSync(path.join(inputs.outDir, configFlatName), configContent, 'utf-8')
+              fs.writeFileSync(path.join(inputs.outDir, rulesFlatName), rulesContent, 'utf-8')
+            }
+
+            fs.writeFileSync(path.join(buildDir, configFlatName), configContent, 'utf-8')
+            fs.writeFileSync(path.join(buildDir, rulesFlatName), rulesContent, 'utf-8')
+            persistGeneratorVersion('essentials', nextGeneratorVersion)
+            essentialsGenerated = true
+            configSources.essentials = {
+              path: 'Bundled EssentialsX templates',
+              isDefault: true,
+            }
+          } catch (error: unknown) {
+            const err = error as Error
+            return {
+              success: false,
+              error: err.message || 'EssentialsX file generation failed',
+              buildId,
+            }
+          }
         }
 
         if (inputs.generateBookGUI) {
@@ -566,6 +635,7 @@ export function registerBuildHandlers(): void {
             lm: lmGenerated,
             mc: mcGenerated,
             cw: cwGenerated,
+            essentials: essentialsGenerated,
             discordsrv: discordsrvGenerated,
             griefprevention: griefPreventionGenerated,
             worldguardregions: worldGuardRegionsGenerated,

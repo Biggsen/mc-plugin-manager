@@ -23,6 +23,7 @@ export type RewardRecipeId =
 /** Keys stored in `generatorVersions` (plugin YAML emit serial). */
 export type GeneratorVersionKey =
   | PluginType
+  | 'essentials'
   | 'discordsrv'
   | 'bookgui'
   | 'griefprevention'
@@ -186,6 +187,7 @@ export interface BuildResult {
     lm?: { path: string; isDefault: boolean }
     mc?: { path: string; isDefault: boolean }
     cw?: { path: string; isDefault: boolean }
+    essentials?: { path: string; isDefault: boolean }
     discordsrv?: { path: string; isDefault: boolean }
     griefprevention?: { path: string; isDefault: boolean }
     worldguardregions?: { path: string; isDefault: boolean }
@@ -223,6 +225,7 @@ export interface BuildReport {
     lm: boolean
     mc: boolean
     cw: boolean
+    essentials?: boolean
     /** Present from builds that include DiscordSRV support; treat absent as false. */
     discordsrv?: boolean
     /** Bundled GriefPreventionData/config.yml copy; treat absent as false. */
@@ -239,6 +242,7 @@ export interface BuildReport {
     lm?: { path: string; isDefault: boolean }
     mc?: { path: string; isDefault: boolean }
     cw?: { path: string; isDefault: boolean }
+    essentials?: { path: string; isDefault: boolean }
     discordsrv?: { path: string; isDefault: boolean }
     griefprevention?: { path: string; isDefault: boolean }
     worldguardregions?: { path: string; isDefault: boolean }
