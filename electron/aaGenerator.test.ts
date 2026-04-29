@@ -361,7 +361,7 @@ describe('generateTotalDiscoveredCustom', () => {
     expect(d?.[13]?.Message).toBe('10% of Charidh explored!')
     expect(d?.[13]?.DisplayName).toBe('Wanderer')
     expect(d?.[13]?.Name).toBe('total_discovered_10')
-    expect(d?.[13]?.Reward.Command.Execute[0]).toBe('lp user PLAYER parent set explorer_10')
+    expect(d?.[13]?.Reward.Command.Execute[0]).toBe('lp user PLAYER promote explorer')
     expect(d?.[13]?.Reward.Command.Execute[1]).toBe(
       'say §6PLAYER§7 has become a §6WANDERER§7!'
     )

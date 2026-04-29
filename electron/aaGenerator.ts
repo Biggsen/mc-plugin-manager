@@ -784,7 +784,7 @@ export function generateTotalDiscoveredCustom(
       Reward: {
         Command: {
           Execute: [
-            `lp user PLAYER parent set explorer_${p}`,
+            `lp user PLAYER promote explorer`,
             `say §6PLAYER§7 has become ${article} §6${title.toUpperCase()}§7!`,
           ],
         },
