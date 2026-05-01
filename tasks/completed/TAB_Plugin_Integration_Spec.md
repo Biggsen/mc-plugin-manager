@@ -498,11 +498,8 @@ export function validateTABDiff(
 
 ## Reference Files
 
-### Base Template
-- `reference/plugin config files/defaults/tab-config.yml`
-
-### Server-Specific Example
-- `reference/plugin config files/charidh-server/charidh-tab-config.yml`
+### Bundled template (shipped defaults)
+- `reference/plugin config files/to be bundled/tab-config.yml`
 
 These files demonstrate:
 - Static conditions structure (region-name, village-name, heart-region)
