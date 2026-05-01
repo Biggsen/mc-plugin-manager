@@ -12,6 +12,15 @@ function isIgnoredCatalogKey(key: string): boolean {
   return key.startsWith('_')
 }
 
+function coerceNumeric(value: unknown): number | undefined {
+  if (typeof value === 'number' && Number.isFinite(value)) return value
+  if (typeof value === 'string' && value.trim().length > 0) {
+    const parsed = Number(value)
+    return Number.isFinite(parsed) ? parsed : undefined
+  }
+  return undefined
+}
+
 export function loadDropTableCatalogsFromDirectory(
   dirPath: string
 ): { catalogs: DropTableCatalogSummary[]; warnings: string[] } {
@@ -37,16 +46,30 @@ export function loadDropTableCatalogsFromDirectory(
         continue
       }
 
-      const itemIds = Object.keys(parsed)
+      const parsedObj = parsed as Record<string, unknown>
+
+      const itemIds = Object.keys(parsedObj)
         .filter((k) => !isIgnoredCatalogKey(k))
         .map(normalizeItemId)
         .filter((k) => k.length > 0)
         .sort((a, b) => a.localeCompare(b))
+      const itemValues: Record<string, number | undefined> = {}
+      for (const rawKey of Object.keys(parsedObj)) {
+        if (isIgnoredCatalogKey(rawKey)) continue
+        const normalized = normalizeItemId(rawKey)
+        const row = parsedObj[rawKey]
+        const unitBuy =
+          row && typeof row === 'object' && !Array.isArray(row)
+            ? coerceNumeric((row as Record<string, unknown>).unit_buy)
+            : undefined
+        itemValues[normalized] = unitBuy
+      }
 
       catalogs.push({
         tableName,
         sourcePath: filePath,
         itemIds,
+        itemValues,
         itemCount: itemIds.length,
       })
     } catch (error: unknown) {

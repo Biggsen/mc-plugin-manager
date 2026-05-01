@@ -8,6 +8,15 @@ interface GeneratedCustomDrops {
   warnings: string[]
 }
 
+function clamp(n: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, n))
+}
+
+function computeChanceFromUnitBuy(unitBuy: number): number {
+  const chance = 0.45 / Math.pow(unitBuy, 0.85)
+  return clamp(chance, 0.0005, 0.15)
+}
+
 function normalizeItemId(raw: string): string {
   return raw.trim().replace(/[^a-zA-Z0-9_]/g, '_').replace(/_+/g, '_').toUpperCase()
 }
@@ -23,15 +32,26 @@ function sortedObject<T>(obj: Record<string, T>): Record<string, T> {
 
 function toItemNode(
   itemId: string,
-  override?: { chance?: number; amount?: number | string }
+  override?: { chance?: number; amount?: number | string },
+  unitBuy?: number
 ): Record<string, Record<string, unknown>> {
   const normalized = normalizeItemId(itemId)
   const entry: Record<string, unknown> = {}
+  const isRare = typeof unitBuy === 'number' && Number.isFinite(unitBuy) && unitBuy >= 100
   if (typeof override?.chance === 'number') {
     entry.chance = override.chance
+  } else if (typeof unitBuy === 'number' && Number.isFinite(unitBuy) && unitBuy > 0) {
+    // Derived baseline chance from item economy value.
+    entry.chance = Number(computeChanceFromUnitBuy(unitBuy).toFixed(6))
   }
   if (override?.amount !== undefined && override?.amount !== 1 && override?.amount !== '1') {
     entry.amount = override.amount
+  }
+  if (isRare) {
+    entry.groupid = 'rare'
+    entry['group-limits'] = {
+      'cap-total': 1,
+    }
   }
   return { [normalized]: entry }
 }
@@ -43,9 +63,11 @@ export function generateOwnedLMCustomDropTables(
   const warnings: string[] = []
   const dropTables: Record<string, unknown[]> = {}
   const catalogItemsByTable = new Map<string, Set<string>>()
+  const catalogValuesByTable = new Map<string, Record<string, number | undefined>>()
 
   for (const catalog of catalogs) {
     catalogItemsByTable.set(catalog.tableName, new Set(catalog.itemIds))
+    catalogValuesByTable.set(catalog.tableName, catalog.itemValues ?? {})
   }
 
   const tables = config?.tables ?? {}
@@ -72,7 +94,8 @@ export function generateOwnedLMCustomDropTables(
       .sort((a: string, b: string) => a.localeCompare(b))
       .map((itemId: string) => {
         const rawOverride = table.itemOverrides?.[itemId] || table.itemOverrides?.[itemId.toLowerCase()]
-        return toItemNode(itemId, rawOverride)
+        const unitBuy = catalogValuesByTable.get(tableName)?.[itemId]
+        return toItemNode(itemId, rawOverride, unitBuy)
       })
 
     if (entries.length > 0) {
@@ -128,7 +151,7 @@ export function mergeLMCustomDropsConfig(
     lineWidth: 0,
     simpleKeys: false,
     doubleQuotedAsJSON: false,
-    defaultStringType: 'QUOTE_DOUBLE',
+    defaultStringType: 'PLAIN',
     defaultKeyType: 'PLAIN',
   })
 }

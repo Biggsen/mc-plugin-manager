@@ -283,6 +283,7 @@ export interface DropTableCatalogSummary {
   tableName: string
   sourcePath: string
   itemIds: string[]
+  itemValues: Record<string, number | undefined>
   itemCount: number
 }
 

@@ -11,6 +11,15 @@ function normalizeItemId(raw: string): string {
   return raw.trim().replace(/[^a-zA-Z0-9_]/g, '_').replace(/_+/g, '_').toUpperCase()
 }
 
+function clamp(n: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, n))
+}
+
+function computeChanceFromUnitBuy(unitBuy: number): number {
+  const chance = 0.45 / Math.pow(unitBuy, 0.85)
+  return clamp(chance, 0.0005, 0.15)
+}
+
 export function DropTablesScreen({ server, onServerUpdate }: DropTablesScreenProps) {
   const [catalogs, setCatalogs] = useState<DropTableCatalogSummary[]>([])
   const [warnings, setWarnings] = useState<string[]>([])
@@ -78,12 +87,16 @@ export function DropTablesScreen({ server, onServerUpdate }: DropTablesScreenPro
       const key = normalizeItemId(itemId)
       const existing = current.itemOverrides?.[key] ?? {}
       const nextChance = typeof chance === 'number' ? chance : Number(chance)
+      const nextEntry = {
+        ...existing,
+        ...(Number.isFinite(nextChance) ? { chance: nextChance } : {}),
+      }
+      if (!Number.isFinite(nextChance) && 'chance' in nextEntry) {
+        delete (nextEntry as Record<string, unknown>).chance
+      }
       const nextOverrides = {
         ...(current.itemOverrides ?? {}),
-        [key]: {
-          ...existing,
-          ...(Number.isFinite(nextChance) ? { chance: nextChance } : {}),
-        },
+        [key]: nextEntry,
       }
       return {
         ...prev,
@@ -197,7 +210,7 @@ export function DropTablesScreen({ server, onServerUpdate }: DropTablesScreenPro
                   <Group justify="space-between">
                     <Text fw={600}>{catalog.tableName}</Text>
                     <Group gap="xs">
-                      <Badge variant="outline">{selectedCount} selected</Badge>
+                      <Badge color="green">{selectedCount} selected</Badge>
                       <Badge variant="light">{catalog.itemCount} items</Badge>
                     </Group>
                   </Group>
@@ -205,6 +218,11 @@ export function DropTablesScreen({ server, onServerUpdate }: DropTablesScreenPro
                     {catalog.itemIds.map((itemId) => {
                       const isSelected = selectedSet.has(itemId)
                       const override = table.itemOverrides?.[itemId]
+                      const unitBuy = catalog.itemValues?.[itemId]
+                      const computedChance =
+                        typeof unitBuy === 'number' && unitBuy > 0
+                          ? Number(computeChanceFromUnitBuy(unitBuy).toFixed(6))
+                          : undefined
                       const overrideKey = getOverrideKey(catalog.tableName, itemId)
                       const isOverrideOpen = Boolean(openOverrides[overrideKey])
                       return (
@@ -213,7 +231,16 @@ export function DropTablesScreen({ server, onServerUpdate }: DropTablesScreenPro
                             <Group justify="space-between" align="center">
                               <Checkbox
                                 checked={isSelected}
-                                label={itemId}
+                                label={
+                                  <Group gap={8}>
+                                    <Text size="sm">{itemId}</Text>
+                                    {typeof catalog.itemValues?.[itemId] === 'number' && (
+                                      <Badge color="green" variant="light">
+                                        ${catalog.itemValues[itemId]}
+                                      </Badge>
+                                    )}
+                                  </Group>
+                                }
                                 onChange={(e) => {
                                   const checked = e.currentTarget.checked
                                   updateTableSelection(catalog.tableName, itemId, checked)
@@ -249,7 +276,11 @@ export function DropTablesScreen({ server, onServerUpdate }: DropTablesScreenPro
                                   max={1}
                                   value={override?.chance ?? ''}
                                   onChange={(value) => setItemChance(catalog.tableName, itemId, value)}
-                                  placeholder="Inherited default"
+                                  placeholder={
+                                    computedChance !== undefined
+                                      ? `Auto (${computedChance})`
+                                      : 'Inherited default'
+                                  }
                                 />
                                 <TextInput
                                   label="Amount override"
