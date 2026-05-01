@@ -1,9 +1,9 @@
 defaults:
   chance: 0.2
-  overall-chance: 1.0
+  overall-chance: 0.25
   amount: 1
-  equipped: 1.0
-  equip-offhand: true
+  equipped: 0.0
+  equip-offhand: false
   equip-on-helmet: false
   only-drop-if-equipped: false
   player-caused: true

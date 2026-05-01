@@ -181,7 +181,21 @@ export function buildPluginContent(
       return { content, configPath, isDefault }
     }
     case 'lm': {
-      const ownedLMRules = generateOwnedLMRules(profile.regions, profile.regionsMeta?.levelledMobs)
+      const { catalogs } = loadBundledDropTableCatalogs()
+      const catalogTableIds = new Set(catalogs.map((catalog: { tableName: string }) => catalog.tableName))
+      const configuredTables = profile.dropTables?.tables ?? {}
+      const availableDropTableIds = new Set(
+        Object.keys(configuredTables).filter((tableName) => {
+          if (!catalogTableIds.has(tableName)) return false
+          const selected = configuredTables[tableName]?.selectedItems
+          return Array.isArray(selected) && selected.length > 0
+        })
+      )
+      const ownedLMRules = generateOwnedLMRules(
+        profile.regions,
+        profile.regionsMeta?.levelledMobs,
+        availableDropTableIds
+      )
       const content = mergeLMConfig(configPath, ownedLMRules)
       return { content, configPath, isDefault }
     }
