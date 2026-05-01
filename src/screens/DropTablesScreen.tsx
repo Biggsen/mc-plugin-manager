@@ -77,6 +77,38 @@ export function DropTablesScreen({ server, onServerUpdate }: DropTablesScreenPro
     })
   }
 
+  function selectAllInTable(tableName: string, itemIds: string[]) {
+    setDraft((prev) => {
+      const current = prev.tables?.[tableName] ?? { selectedItems: [], itemOverrides: {} }
+      return {
+        ...prev,
+        tables: {
+          ...prev.tables,
+          [tableName]: {
+            ...current,
+            selectedItems: [...itemIds].sort((a, b) => a.localeCompare(b)),
+          },
+        },
+      }
+    })
+  }
+
+  function clearAllInTable(tableName: string) {
+    setDraft((prev) => {
+      const current = prev.tables?.[tableName] ?? { selectedItems: [], itemOverrides: {} }
+      return {
+        ...prev,
+        tables: {
+          ...prev.tables,
+          [tableName]: {
+            ...current,
+            selectedItems: [],
+          },
+        },
+      }
+    })
+  }
+
   function getOverrideKey(tableName: string, itemId: string): string {
     return `${tableName}::${normalizeItemId(itemId)}`
   }
@@ -212,6 +244,23 @@ export function DropTablesScreen({ server, onServerUpdate }: DropTablesScreenPro
                     <Group gap="xs">
                       <Badge color="green">{selectedCount} selected</Badge>
                       <Badge variant="light">{catalog.itemCount} items</Badge>
+                      <Button
+                        size="xs"
+                        variant="subtle"
+                        onClick={() => selectAllInTable(catalog.tableName, catalog.itemIds)}
+                        disabled={selectedCount === catalog.itemIds.length}
+                      >
+                        Select all
+                      </Button>
+                      <Button
+                        size="xs"
+                        variant="subtle"
+                        color="gray"
+                        onClick={() => clearAllInTable(catalog.tableName)}
+                        disabled={selectedCount === 0}
+                      >
+                        Clear
+                      </Button>
                     </Group>
                   </Group>
                   <Stack gap="xs" mah={320} style={{ overflowY: 'auto' }}>

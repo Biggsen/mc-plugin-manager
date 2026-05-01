@@ -1,0 +1,225 @@
+{
+  "candle": {
+    "name": "candle",
+    "category": "light",
+    "stack": 64,
+    "unit_buy": 4
+  },
+  "end_rod": {
+    "name": "end rod",
+    "category": "light",
+    "stack": 64,
+    "unit_buy": 9
+  },
+  "jack_o_lantern": {
+    "name": "jack o'lantern",
+    "category": "light",
+    "stack": 64,
+    "unit_buy": 8
+  },
+  "redstone_lamp": {
+    "name": "redstone lamp",
+    "category": "light",
+    "stack": 64,
+    "unit_buy": 20
+  },
+  "sea_lantern": {
+    "name": "sea lantern",
+    "category": "light",
+    "stack": 64,
+    "unit_buy": 320
+  },
+  "shroomlight": {
+    "name": "shroomlight",
+    "category": "light",
+    "stack": 64,
+    "unit_buy": 6
+  },
+  "copper_bulb": {
+    "name": "copper bulb",
+    "category": "light",
+    "stack": 64,
+    "unit_buy": 29
+  },
+  "exposed_copper_bulb": {
+    "name": "exposed copper bulb",
+    "category": "light",
+    "stack": 64,
+    "unit_buy": 30
+  },
+  "oxidized_copper_bulb": {
+    "name": "oxidized copper bulb",
+    "category": "light",
+    "stack": 64,
+    "unit_buy": 33
+  },
+  "waxed_copper_bulb": {
+    "name": "waxed copper bulb",
+    "category": "light",
+    "stack": 64,
+    "unit_buy": 30
+  },
+  "waxed_exposed_copper_bulb": {
+    "name": "waxed exposed copper bulb",
+    "category": "light",
+    "stack": 64,
+    "unit_buy": 32
+  },
+  "waxed_oxidized_copper_bulb": {
+    "name": "waxed oxidized copper bulb",
+    "category": "light",
+    "stack": 64,
+    "unit_buy": 34
+  },
+  "waxed_weathered_copper_bulb": {
+    "name": "waxed weathered copper bulb",
+    "category": "light",
+    "stack": 64,
+    "unit_buy": 33
+  },
+  "weathered_copper_bulb": {
+    "name": "weathered copper bulb",
+    "category": "light",
+    "stack": 64,
+    "unit_buy": 31
+  },
+  "campfire": {
+    "name": "campfire",
+    "category": "light",
+    "stack": 64,
+    "unit_buy": 32
+  },
+  "soul_campfire": {
+    "name": "soul campfire",
+    "category": "light",
+    "stack": 64,
+    "unit_buy": 28
+  },
+  "ochre_froglight": {
+    "name": "ochre froglight",
+    "category": "light",
+    "stack": 64,
+    "unit_buy": 20
+  },
+  "pearlescent_froglight": {
+    "name": "pearlescent froglight",
+    "category": "light",
+    "stack": 64,
+    "unit_buy": 20
+  },
+  "verdant_froglight": {
+    "name": "verdant froglight",
+    "category": "light",
+    "stack": 64,
+    "unit_buy": 20
+  },
+  "glowstone": {
+    "name": "glowstone",
+    "category": "light",
+    "stack": 64,
+    "unit_buy": 8
+  },
+  "glowstone_dust": {
+    "name": "glowstone dust",
+    "category": "light",
+    "stack": 64,
+    "unit_buy": 2
+  },
+  "lantern": {
+    "name": "lantern",
+    "category": "light",
+    "stack": "64",
+    "unit_buy": 15
+  },
+  "soul_lantern": {
+    "name": "soul lantern",
+    "category": "light",
+    "stack": "64",
+    "unit_buy": 16
+  },
+  "copper_lantern": {
+    "name": "copper lantern",
+    "category": "light",
+    "stack": 64,
+    "unit_buy": 6
+  },
+  "exposed_copper_lantern": {
+    "name": "exposed copper lantern",
+    "category": "light",
+    "stack": 64,
+    "unit_buy": 5
+  },
+  "oxidized_copper_lantern": {
+    "name": "oxidized copper lantern",
+    "category": "light",
+    "stack": 64,
+    "unit_buy": 7
+  },
+  "weathered_copper_lantern": {
+    "name": "weathered copper lantern",
+    "category": "light",
+    "stack": 64,
+    "unit_buy": 6
+  },
+  "waxed_copper_lantern": {
+    "name": "waxed copper lantern",
+    "category": "light",
+    "stack": 64,
+    "unit_buy": 8
+  },
+  "waxed_exposed_copper_lantern": {
+    "name": "waxed exposed copper lantern",
+    "category": "light",
+    "stack": 64,
+    "unit_buy": 7
+  },
+  "waxed_oxidized_copper_lantern": {
+    "name": "waxed oxidized copper lantern",
+    "category": "light",
+    "stack": 64,
+    "unit_buy": 9
+  },
+  "waxed_weathered_copper_lantern": {
+    "name": "waxed weathered copper lantern",
+    "category": "light",
+    "stack": 64,
+    "unit_buy": 8
+  },
+  "copper_torch": {
+    "name": "copper torch",
+    "category": "light",
+    "stack": 64,
+    "unit_buy": 1.7
+  },
+  "redstone_torch": {
+    "name": "redstone torch",
+    "category": "light",
+    "stack": 64,
+    "unit_buy": 4
+  },
+  "soul_torch": {
+    "name": "soul torch",
+    "category": "light",
+    "stack": "64",
+    "unit_buy": 1.8
+  },
+  "torch": {
+    "name": "torch",
+    "category": "light",
+    "stack": 64,
+    "unit_buy": 1.5
+  },
+  "_export_metadata": {
+    "source": "Verzion's Economy Price Guide",
+    "url": "https://minecraft-economy-price-guide.net",
+    "version": "1.21",
+    "export_date": "2026-05-01T15:20:26.173Z",
+    "item_count": 35,
+    "currency_type": "money",
+    "price_multiplier": 1,
+    "sell_margin": 0.3,
+    "round_to_whole": false,
+    "sort_field": "default",
+    "sort_direction": "curated"
+  }
+}

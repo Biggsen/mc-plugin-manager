@@ -1,6 +1,6 @@
 defaults:
   chance: 0.2
-  overall-chance: 0.25
+  overall-chance: 0.4
   amount: 1
   equipped: 0.0
   equip-offhand: false

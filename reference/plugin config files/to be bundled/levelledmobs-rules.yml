@@ -306,8 +306,8 @@ custom-rules:
   - custom-rule: 'Player Farm Item and XP Limiter'
     is-enabled: true
     settings:
-      maximum-death-in-chunk-threshold: 15
-      max-adjacent-chunks: 5
+      maximum-death-in-chunk-threshold: 40
+      max-adjacent-chunks: 3
       chunk-max-cooldown-seconds: 10m
       disable-vanilla-drops-on-chunk-max: false
       disable-item-boost-on-chunk-max: true

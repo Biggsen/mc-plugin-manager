@@ -33,7 +33,9 @@ function sortedObject<T>(obj: Record<string, T>): Record<string, T> {
 function toItemNode(
   itemId: string,
   override?: { chance?: number; amount?: number | string },
-  unitBuy?: number
+  unitBuy?: number,
+  includeRareGroupLimit?: boolean,
+  includeCommonGroupLimit?: boolean
 ): Record<string, Record<string, unknown>> {
   const normalized = normalizeItemId(itemId)
   const entry: Record<string, unknown> = {}
@@ -49,8 +51,17 @@ function toItemNode(
   }
   if (isRare) {
     entry.groupid = 'rare'
-    entry['group-limits'] = {
-      'cap-total': 1,
+    if (includeRareGroupLimit) {
+      entry['group-limits'] = {
+        'cap-total': 1,
+      }
+    }
+  } else {
+    entry.groupid = 'common'
+    if (includeCommonGroupLimit) {
+      entry['group-limits'] = {
+        'cap-total': 1,
+      }
     }
   }
   return { [normalized]: entry }
@@ -82,7 +93,7 @@ export function generateOwnedLMCustomDropTables(
       continue
     }
 
-    const entries = table.selectedItems
+    const normalizedItemIds = table.selectedItems
       .map((rawId: string) => normalizeItemId(rawId))
       .filter((itemId: string) => {
         if (!knownItems.has(itemId)) {
@@ -92,11 +103,25 @@ export function generateOwnedLMCustomDropTables(
         return true
       })
       .sort((a: string, b: string) => a.localeCompare(b))
-      .map((itemId: string) => {
+    const entries: unknown[] = []
+    let rareGroupLimitAssigned = false
+    let commonGroupLimitAssigned = false
+    for (const itemId of normalizedItemIds) {
         const rawOverride = table.itemOverrides?.[itemId] || table.itemOverrides?.[itemId.toLowerCase()]
         const unitBuy = catalogValuesByTable.get(tableName)?.[itemId]
-        return toItemNode(itemId, rawOverride, unitBuy)
-      })
+        const isRare = typeof unitBuy === 'number' && Number.isFinite(unitBuy) && unitBuy >= 100
+        const includeRareGroupLimit = isRare && !rareGroupLimitAssigned
+        const includeCommonGroupLimit = !isRare && !commonGroupLimitAssigned
+        if (includeRareGroupLimit) {
+          rareGroupLimitAssigned = true
+        }
+        if (includeCommonGroupLimit) {
+          commonGroupLimitAssigned = true
+        }
+        entries.push(
+          toItemNode(itemId, rawOverride, unitBuy, includeRareGroupLimit, includeCommonGroupLimit)
+        )
+      }
 
     if (entries.length > 0) {
       dropTables[tableName] = entries

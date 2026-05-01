@@ -1,0 +1,147 @@
+{
+  "music_disc_11": {
+    "name": "11 disc",
+    "category": "discs",
+    "stack": 1,
+    "unit_buy": 100
+  },
+  "music_disc_13": {
+    "name": "13 disc",
+    "category": "discs",
+    "stack": 1,
+    "unit_buy": 100
+  },
+  "music_disc_5": {
+    "name": "5 disc",
+    "category": "discs",
+    "stack": 1,
+    "unit_buy": 162
+  },
+  "disc_fragment_5": {
+    "name": "5 disc fragment",
+    "category": "discs",
+    "stack": 64,
+    "unit_buy": 18
+  },
+  "music_disc_blocks": {
+    "name": "blocks disc",
+    "category": "discs",
+    "stack": 1,
+    "unit_buy": 110
+  },
+  "music_disc_cat": {
+    "name": "cat disc",
+    "category": "discs",
+    "stack": 1,
+    "unit_buy": 100
+  },
+  "music_disc_chirp": {
+    "name": "chirp disc",
+    "category": "discs",
+    "stack": 1,
+    "unit_buy": 110
+  },
+  "music_disc_creator": {
+    "name": "creator disc",
+    "category": "discs",
+    "stack": 1,
+    "unit_buy": 130
+  },
+  "music_disc_far": {
+    "name": "far disc",
+    "category": "discs",
+    "stack": 1,
+    "unit_buy": 110
+  },
+  "music_disc_lava_chicken": {
+    "name": "lava chicken disc",
+    "category": "discs",
+    "stack": 1,
+    "unit_buy": 130
+  },
+  "music_disc_mall": {
+    "name": "mall disc",
+    "category": "discs",
+    "stack": 1,
+    "unit_buy": 110
+  },
+  "music_disc_mellohi": {
+    "name": "mellohi disc",
+    "category": "discs",
+    "stack": 1,
+    "unit_buy": 120
+  },
+  "music_disc_creator_music_box": {
+    "name": "music disc",
+    "category": "discs",
+    "stack": 1,
+    "unit_buy": 140
+  },
+  "music_disc_otherside": {
+    "name": "otherside disc",
+    "category": "discs",
+    "stack": 1,
+    "unit_buy": 140
+  },
+  "music_disc_pigstep": {
+    "name": "pigstep disc",
+    "category": "discs",
+    "stack": 1,
+    "unit_buy": 100
+  },
+  "music_disc_precipice": {
+    "name": "precipice disc",
+    "category": "discs",
+    "stack": 1,
+    "unit_buy": 130
+  },
+  "music_disc_relic": {
+    "name": "relic disc",
+    "category": "discs",
+    "stack": 1,
+    "unit_buy": 150
+  },
+  "music_disc_stal": {
+    "name": "stal disc",
+    "category": "discs",
+    "stack": 1,
+    "unit_buy": 110
+  },
+  "music_disc_strad": {
+    "name": "strad disc",
+    "category": "discs",
+    "stack": 1,
+    "unit_buy": 110
+  },
+  "music_disc_tears": {
+    "name": "tears disc",
+    "category": "discs",
+    "stack": 1,
+    "unit_buy": 150
+  },
+  "music_disc_wait": {
+    "name": "wait disc",
+    "category": "discs",
+    "stack": 1,
+    "unit_buy": 130
+  },
+  "music_disc_ward": {
+    "name": "ward disc",
+    "category": "discs",
+    "stack": 1,
+    "unit_buy": 110
+  },
+  "_export_metadata": {
+    "source": "Verzion's Economy Price Guide",
+    "url": "https://minecraft-economy-price-guide.net",
+    "version": "1.21",
+    "export_date": "2026-05-01T15:19:36.536Z",
+    "item_count": 22,
+    "currency_type": "money",
+    "price_multiplier": 1,
+    "sell_margin": 0.3,
+    "round_to_whole": false,
+    "sort_field": "default",
+    "sort_direction": "curated"
+  }
+}
