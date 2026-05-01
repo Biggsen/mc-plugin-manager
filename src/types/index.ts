@@ -2,9 +2,9 @@
 
 export type ServerId = string
 
-export type PluginType = 'aa' | 'ce' | 'tab' | 'lm' | 'mc' | 'cw'
+export type PluginType = 'aa' | 'ce' | 'tab' | 'lm' | 'lmcd' | 'mc' | 'cw'
 
-export const PLUGIN_TYPES: PluginType[] = ['aa', 'ce', 'tab', 'lm', 'mc', 'cw']
+export const PLUGIN_TYPES: PluginType[] = ['aa', 'ce', 'tab', 'lm', 'lmcd', 'mc', 'cw']
 
 export type RegionKind = 'system' | 'region' | 'village' | 'heart' | 'structure' | 'water'
 
@@ -82,7 +82,11 @@ export interface ServerProfile {
     worldGuardRegionsNetherWorldFolder?: string
     /** MyCommand Tebex store subdomain (left side of `.tebex.io`). */
     mcTebexSubdomain?: string
+    /** Folder containing item catalog JSON files (e.g. ores.json, drops.json). */
+    dropTablesCatalogDir?: string
   }
+  /** LevelledMobs CustomDrops table customization model. */
+  dropTables?: DropTablesConfig
   /** Per-plugin successful emit serial (1-based), keyed by plugin id. */
   generatorVersions?: Partial<Record<GeneratorVersionKey, number>>
   /** DiscordSRV build inputs (legacy single-target shape). */
@@ -185,6 +189,7 @@ export interface BuildResult {
     ce?: { path: string; isDefault: boolean }
     tab?: { path: string; isDefault: boolean }
     lm?: { path: string; isDefault: boolean }
+    lmcd?: { path: string; isDefault: boolean }
     mc?: { path: string; isDefault: boolean }
     cw?: { path: string; isDefault: boolean }
     essentials?: { path: string; isDefault: boolean }
@@ -223,6 +228,7 @@ export interface BuildReport {
     ce: boolean
     tab: boolean
     lm: boolean
+    lmcd?: boolean
     mc: boolean
     cw: boolean
     essentials?: boolean
@@ -240,6 +246,7 @@ export interface BuildReport {
     ce?: { path: string; isDefault: boolean }
     tab?: { path: string; isDefault: boolean }
     lm?: { path: string; isDefault: boolean }
+    lmcd?: { path: string; isDefault: boolean }
     mc?: { path: string; isDefault: boolean }
     cw?: { path: string; isDefault: boolean }
     essentials?: { path: string; isDefault: boolean }
@@ -256,6 +263,27 @@ export interface BuildReport {
   buildNote?: string
   /** When true, generator versions were not bumped (test / iterative emit). */
   testBuild?: boolean
+}
+
+export interface DropTableItemOverride {
+  chance?: number
+  amount?: number | string
+}
+
+export interface DropTableDefinition {
+  selectedItems: string[]
+  itemOverrides?: Record<string, DropTableItemOverride>
+}
+
+export interface DropTablesConfig {
+  tables: Record<string, DropTableDefinition>
+}
+
+export interface DropTableCatalogSummary {
+  tableName: string
+  sourcePath: string
+  itemIds: string[]
+  itemCount: number
 }
 
 /** Row for build history list (from saved report.json). */

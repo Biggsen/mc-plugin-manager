@@ -12,6 +12,7 @@ const CONFIG_FILENAMES: Record<PluginType, string> = {
   ce: 'conditionalevents-config.yml',
   tab: 'tab-config.yml',
   lm: 'levelledmobs-rules.yml',
+  lmcd: 'levelledmobs-customdrops.yml',
   mc: 'mycommand-commands.yml',
   cw: 'commandwhitelist-config.yml',
 }
@@ -22,6 +23,7 @@ export const PLUGIN_OUTPUT_RELATIVE: Record<PluginType, string> = {
   ce: 'ConditionalEvents/config.yml',
   tab: 'TAB/config.yml',
   lm: 'LevelledMobs/rules.yml',
+  lmcd: 'LevelledMobs/customdrops.yml',
   mc: 'MyCommand/commands/commands.yml',
   cw: 'CommandWhitelist/config.yml',
 }

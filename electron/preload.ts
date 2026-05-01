@@ -14,6 +14,8 @@ import type {
   ComparePreset,
   ComparePresetMutationResult,
   ComparePresetDeleteResult,
+  DropTablesConfig,
+  DropTableCatalogSummary,
 } from './types'
 
 // Define the IPC API interface
@@ -56,6 +58,15 @@ export interface ElectronAPI {
     regionId: string,
     updates: { anchors?: string[]; description?: string }
   ) => Promise<ServerProfile | null>
+  scanDropTableCatalogs: () => Promise<{
+    catalogs: DropTableCatalogSummary[]
+    warnings: string[]
+    sourceDir: string
+  }>
+  updateDropTablesConfig: (
+    serverId: string,
+    payload: { config: DropTablesConfig }
+  ) => Promise<ServerProfile | null>
   
   // Build
   buildConfigs: (
@@ -66,6 +77,7 @@ export interface ElectronAPI {
       generateCE?: boolean
       generateTAB?: boolean
       generateLM?: boolean
+      generateLMCustomDrops?: boolean
       generateMC?: boolean
       generateCW?: boolean
       generateDiscordSRV?: boolean
@@ -82,6 +94,7 @@ export interface ElectronAPI {
       cePath?: string
       tabPath?: string
       lmPath?: string
+      lmCustomDropsPath?: string
       mcPath?: string
       mcTebexSubdomain?: string
       cwPath?: string
@@ -139,6 +152,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.invoke('update-onboarding', serverId, onboarding),
   updateRegionLoreBook: (serverId: string, regionId: string, updates: { anchors?: string[]; description?: string }) =>
     ipcRenderer.invoke('update-region-lore-book', serverId, regionId, updates),
+  scanDropTableCatalogs: () => ipcRenderer.invoke('scan-drop-table-catalogs'),
+  updateDropTablesConfig: (
+    serverId: string,
+    payload: { config: DropTablesConfig }
+  ) => ipcRenderer.invoke('update-drop-tables-config', serverId, payload),
   buildConfigs: (
     serverId: string,
     inputs: {
@@ -147,6 +165,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
       generateCE?: boolean
       generateTAB?: boolean
       generateLM?: boolean
+      generateLMCustomDrops?: boolean
       generateMC?: boolean
       generateCW?: boolean
       generateDiscordSRV?: boolean
@@ -163,6 +182,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
       cePath?: string
       tabPath?: string
       lmPath?: string
+      lmCustomDropsPath?: string
       mcPath?: string
       mcTebexSubdomain?: string
       cwPath?: string

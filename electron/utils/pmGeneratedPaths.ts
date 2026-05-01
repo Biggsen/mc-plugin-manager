@@ -22,6 +22,7 @@ const PLUGIN_LABELS: Record<PluginType, string> = {
   ce: 'ConditionalEvents',
   tab: 'TAB',
   lm: 'LevelledMobs',
+  lmcd: 'LevelledMobs CustomDrops',
   mc: 'MyCommand',
   cw: 'CommandWhitelist',
 }

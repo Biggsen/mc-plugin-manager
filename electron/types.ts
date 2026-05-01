@@ -25,6 +25,10 @@ export type {
   ComparePreset,
   ComparePresetMutationResult,
   ComparePresetDeleteResult,
+  DropTableItemOverride,
+  DropTableDefinition,
+  DropTablesConfig,
+  DropTableCatalogSummary,
 } from '@shared/types'
 
-export const PLUGIN_TYPES: import('@shared/types').PluginType[] = ['aa', 'ce', 'tab', 'lm', 'mc', 'cw']
+export const PLUGIN_TYPES: import('@shared/types').PluginType[] = ['aa', 'ce', 'tab', 'lm', 'lmcd', 'mc', 'cw']

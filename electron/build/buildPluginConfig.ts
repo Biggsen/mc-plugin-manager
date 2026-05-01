@@ -21,9 +21,22 @@ const {
 } = require('../ceGenerator')
 const { generateOwnedTABSections, mergeTABConfig } = require('../tabGenerator')
 const { generateOwnedLMRules, mergeLMConfig } = require('../lmGenerator')
+const {
+  loadBundledDropTableCatalogs,
+} = require('../lmCustomDropsCatalog')
+const {
+  generateOwnedLMCustomDropTables,
+  mergeLMCustomDropsConfig,
+} = require('../lmCustomDropsGenerator')
 const { generateMCConfig } = require('../mcGenerator')
 const { generateCWConfig } = require('../cwGenerator')
-const { validateAADiff, validateCEDiff, validateTABDiff, validateLMDiff } = require('../diffValidator')
+const {
+  validateAADiff,
+  validateCEDiff,
+  validateTABDiff,
+  validateLMDiff,
+  validateLMCustomDropsDiff,
+} = require('../diffValidator')
 const { prependGeneratorVersionHeader } = require('../utils/generatorVersionHeader')
 
 import type { PluginType, ServerProfile, BuildTarget } from '../types'
@@ -34,12 +47,14 @@ export interface BuildInputs {
   generateCE?: boolean
   generateTAB?: boolean
   generateLM?: boolean
+  generateLMCustomDrops?: boolean
   generateMC?: boolean
   generateCW?: boolean
   aaPath?: string
   cePath?: string
   tabPath?: string
   lmPath?: string
+  lmCustomDropsPath?: string
   mcPath?: string
   mcTebexSubdomain?: string
   cwPath?: string
@@ -104,11 +119,14 @@ export function buildPluginContent(
   configPath: string
   isDefault: boolean
   ceEventFragments?: Record<string, string>
+  warnings?: string[]
+  ownedDropTables?: string[]
 } {
   const pathInput = type === 'aa' ? inputs.aaPath
     : type === 'ce' ? inputs.cePath
     : type === 'tab' ? inputs.tabPath
     : type === 'lm' ? inputs.lmPath
+    : type === 'lmcd' ? inputs.lmCustomDropsPath
     : type === 'mc' ? inputs.mcPath
     : inputs.cwPath
   const configPath = resolveConfigPath(type, pathInput)
@@ -178,6 +196,20 @@ export function buildPluginContent(
       )
       return { content, configPath, isDefault }
     }
+    case 'lmcd': {
+      const { catalogs, warnings } = loadBundledDropTableCatalogs()
+      const dropTablesConfig = profile.dropTables
+      const generated = generateOwnedLMCustomDropTables(dropTablesConfig, catalogs)
+      const ownedDropTables = Object.keys(dropTablesConfig?.tables ?? {})
+      const content = mergeLMCustomDropsConfig(configPath, generated, ownedDropTables)
+      return {
+        content,
+        configPath,
+        isDefault,
+        warnings: [...warnings, ...generated.warnings],
+        ownedDropTables,
+      }
+    }
     case 'cw': {
       const discordInvite = resolveDiscordInviteUrl(profile)
       const hasLore = serverProfileHasLore(profile)
@@ -194,7 +226,8 @@ export function buildPluginContent(
 function validatePluginDiff(
   type: PluginType,
   configPath: string,
-  content: string
+  content: string,
+  ownedDropTables?: string[]
 ): { valid: boolean; error?: string } {
   switch (type) {
     case 'aa':
@@ -205,6 +238,8 @@ function validatePluginDiff(
       return validateTABDiff(configPath, content)
     case 'lm':
       return validateLMDiff(configPath, content)
+    case 'lmcd':
+      return validateLMCustomDropsDiff(configPath, content, ownedDropTables ?? [])
     case 'mc':
     case 'cw':
       return { valid: true }
@@ -224,10 +259,14 @@ export function runPluginBuild(
   profile: ServerProfile,
   inputs: BuildInputs,
   context: BuildPluginContext
-): { success: true; configSource: ConfigSource } | { success: false; error: string } {
+): { success: true; configSource: ConfigSource; warnings: string[] } | { success: false; error: string } {
   try {
-    const { content, configPath, isDefault, ceEventFragments } = buildPluginContent(type, profile, inputs)
-    const validation = validatePluginDiff(type, configPath, content)
+    const { content, configPath, isDefault, ceEventFragments, warnings, ownedDropTables } = buildPluginContent(
+      type,
+      profile,
+      inputs
+    )
+    const validation = validatePluginDiff(type, configPath, content, ownedDropTables)
     if (!validation.valid) {
       return { success: false, error: validation.error || `${type.toUpperCase()} diff validation failed` }
     }
@@ -276,6 +315,7 @@ export function runPluginBuild(
     return {
       success: true,
       configSource: { path: configPath, isDefault },
+      warnings: warnings ?? [],
     }
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err)

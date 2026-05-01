@@ -7,8 +7,15 @@ const {
   listServerIds,
 } = require('../../storage')
 const { sanitizeServerName } = require('../../shared/stringFormatters')
+const { loadBundledDropTableCatalogs } = require('../../lmCustomDropsCatalog')
 
-import type { ServerProfile, OnboardingConfig, DiscordSrvSettings, BuildTarget } from '../../types'
+import type {
+  ServerProfile,
+  OnboardingConfig,
+  DiscordSrvSettings,
+  BuildTarget,
+  DropTablesConfig,
+} from '../../types'
 
 export function registerServerHandlers(): void {
   ipcMain.handle('list-servers', async (_event: unknown) => {
@@ -151,6 +158,28 @@ export function registerServerHandlers(): void {
         },
       }
       saveServerProfile(profile)
+    }
+  )
+
+  ipcMain.handle(
+    'scan-drop-table-catalogs',
+    async (_event: unknown) => {
+      return loadBundledDropTableCatalogs()
+    }
+  )
+
+  ipcMain.handle(
+    'update-drop-tables-config',
+    async (
+      _event: unknown,
+      serverId: string,
+      payload: { config: DropTablesConfig }
+    ): Promise<ServerProfile | null> => {
+      const profile = loadServerProfile(serverId)
+      if (!profile) return null
+      profile.dropTables = payload.config ?? { tables: {} }
+      saveServerProfile(profile)
+      return profile
     }
   )
 

@@ -50,6 +50,7 @@ export function registerBuildHandlers(): void {
         generateCE?: boolean
         generateTAB?: boolean
         generateLM?: boolean
+        generateLMCustomDrops?: boolean
         generateMC?: boolean
         generateCW?: boolean
         generateEssentials?: boolean
@@ -68,6 +69,7 @@ export function registerBuildHandlers(): void {
         cePath?: string
         tabPath?: string
         lmPath?: string
+        lmCustomDropsPath?: string
         mcPath?: string
         mcTebexSubdomain?: string
         cwPath?: string
@@ -90,6 +92,7 @@ export function registerBuildHandlers(): void {
           !inputs.generateCE &&
           !inputs.generateTAB &&
           !inputs.generateLM &&
+          !inputs.generateLMCustomDrops &&
           !inputs.generateMC &&
           !inputs.generateCW &&
           !inputs.generateEssentials &&
@@ -101,7 +104,7 @@ export function registerBuildHandlers(): void {
           return {
             success: false,
             error:
-              'At least one plugin (AA, BookGUI, CE, TAB, LM, MC, CommandWhitelist, EssentialsX, DiscordSRV, GriefPreventionData, WorldGuard overworld regions.yml, or WorldGuard nether regions.yml) must be selected',
+              'At least one plugin (AA, BookGUI, CE, TAB, LM, LM CustomDrops, MC, CommandWhitelist, EssentialsX, DiscordSRV, GriefPreventionData, WorldGuard overworld regions.yml, or WorldGuard nether regions.yml) must be selected',
           }
         }
         if (!inputs.outDir || inputs.outDir.trim().length === 0) {
@@ -150,6 +153,7 @@ export function registerBuildHandlers(): void {
         let ceGenerated = false
         let tabGenerated = false
         let lmGenerated = false
+        let lmCustomDropsGenerated = false
         let mcGenerated = false
         let cwGenerated = false
         let essentialsGenerated = false
@@ -322,6 +326,19 @@ export function registerBuildHandlers(): void {
           persistGeneratorVersion('lm', nextGeneratorVersion)
           lmGenerated = true
           configSources.lm = result.configSource
+          warnings.push(...result.warnings)
+        }
+        if (inputs.generateLMCustomDrops) {
+          const nextGeneratorVersion = versionForEmit('lmcd')
+          const result = runPluginBuild('lmcd', profile, inputs, {
+            ...buildContextBase,
+            nextGeneratorVersion,
+          })
+          if (!result.success) return { success: false, error: result.error, buildId }
+          persistGeneratorVersion('lmcd', nextGeneratorVersion)
+          lmCustomDropsGenerated = true
+          configSources.lmcd = result.configSource
+          warnings.push(...result.warnings)
         }
         if (inputs.generateMC) {
           const subdomain = String(inputs.mcTebexSubdomain ?? '').trim()
@@ -633,6 +650,7 @@ export function registerBuildHandlers(): void {
             ce: ceGenerated,
             tab: tabGenerated,
             lm: lmGenerated,
+            lmcd: lmCustomDropsGenerated,
             mc: mcGenerated,
             cw: cwGenerated,
             essentials: essentialsGenerated,
