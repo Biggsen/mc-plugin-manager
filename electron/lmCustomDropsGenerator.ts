@@ -30,6 +30,15 @@ function sortedObject<T>(obj: Record<string, T>): Record<string, T> {
     }, {} as Record<string, T>)
 }
 
+function parseEnchantedBookEntry(itemId: string): { enchantment: string; level: number } | null {
+  const match = /^ENCHANTED_BOOK_(.+)_(\d+)$/.exec(itemId)
+  if (!match) return null
+  const enchantment = match[1].toLowerCase()
+  const level = Number(match[2])
+  if (!Number.isFinite(level) || level < 1) return null
+  return { enchantment, level }
+}
+
 function toItemNode(
   itemId: string,
   override?: { chance?: number; amount?: number | string },
@@ -38,6 +47,8 @@ function toItemNode(
   includeCommonGroupLimit?: boolean
 ): Record<string, Record<string, unknown>> {
   const normalized = normalizeItemId(itemId)
+  const enchantedBook = parseEnchantedBookEntry(normalized)
+  const outputItemId = enchantedBook ? 'ENCHANTED_BOOK' : normalized
   const entry: Record<string, unknown> = {}
   const isRare = typeof unitBuy === 'number' && Number.isFinite(unitBuy) && unitBuy >= 100
   if (typeof override?.chance === 'number') {
@@ -64,7 +75,12 @@ function toItemNode(
       }
     }
   }
-  return { [normalized]: entry }
+  if (enchantedBook) {
+    entry.enchantments = {
+      [enchantedBook.enchantment]: enchantedBook.level,
+    }
+  }
+  return { [outputItemId]: entry }
 }
 
 export function generateOwnedLMCustomDropTables(

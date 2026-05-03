@@ -725,6 +725,60 @@
     "stack": 1,
     "unit_buy": 900
   },
+  "book": {
+    "name": "book",
+    "category": "utility",
+    "stack": 64,
+    "unit_buy": 11
+  },
+  "experience_bottle": {
+    "name": "bottle o' enchanting",
+    "category": "utility",
+    "stack": 64,
+    "unit_buy": 100
+  },
+  "leather": {
+    "name": "leather",
+    "category": "drops",
+    "stack": "64",
+    "unit_buy": 8
+  },
+  "lapis_lazuli": {
+    "name": "lapis lazuli",
+    "category": "ores",
+    "stack": 64,
+    "unit_buy": 5
+  },
+  "lapis_block": {
+    "name": "lapis lazuli block",
+    "category": "ores",
+    "stack": "64",
+    "unit_buy": 45
+  },
+  "amethyst_shard": {
+    "name": "amethyst shard",
+    "category": "ores",
+    "stack": 64,
+    "unit_buy": 10
+  },
+  "glow_ink_sac": {
+    "name": "glow ink sac",
+    "category": "drops",
+    "stack": 64,
+    "unit_buy": 10
+  },
+  "glowstone": {
+    "name": "glowstone",
+    "category": "light",
+    "stack": 64,
+    "unit_buy": 8
+  },
+  "glowstone_dust": {
+    "name": "glowstone dust",
+    "category": "light",
+    "stack": 64,
+    "unit_buy": 2
+  },
   "_export_metadata": {
     "source": "Verzion's Economy Price Guide",
     "url": "https://minecraft-economy-price-guide.net",
