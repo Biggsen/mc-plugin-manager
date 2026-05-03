@@ -1,0 +1,315 @@
+{
+  "conduit": {
+    "name": "conduit",
+    "category": "ocean",
+    "stack": 64,
+    "unit_buy": 1140
+  },
+  "heart_of_the_sea": {
+    "name": "heart of the sea",
+    "category": "ocean",
+    "stack": 64,
+    "unit_buy": 500
+  },
+  "kelp": {
+    "name": "kelp",
+    "category": "ocean",
+    "stack": 64,
+    "unit_buy": 1
+  },
+  "sea_pickle": {
+    "name": "sea pickle",
+    "category": "ocean",
+    "stack": 64,
+    "unit_buy": 5
+  },
+  "seagrass": {
+    "name": "seagrass",
+    "category": "ocean",
+    "stack": 64,
+    "unit_buy": 2
+  },
+  "sponge": {
+    "name": "sponge",
+    "category": "ocean",
+    "stack": 64,
+    "unit_buy": 300
+  },
+  "turtle_egg": {
+    "name": "turtle egg",
+    "category": "ocean",
+    "stack": 64,
+    "unit_buy": 60
+  },
+  "wet_sponge": {
+    "name": "wet sponge",
+    "category": "ocean",
+    "stack": 64,
+    "unit_buy": 300
+  },
+  "brain_coral": {
+    "name": "brain coral",
+    "category": "ocean",
+    "stack": 64,
+    "unit_buy": 20
+  },
+  "brain_coral_block": {
+    "name": "brain coral block",
+    "category": "ocean",
+    "stack": 64,
+    "unit_buy": 30
+  },
+  "brain_coral_fan": {
+    "name": "brain coral fan",
+    "category": "ocean",
+    "stack": 64,
+    "unit_buy": 25
+  },
+  "dead_brain_coral": {
+    "name": "dead brain coral",
+    "category": "ocean",
+    "stack": 64,
+    "unit_buy": 15
+  },
+  "dead_brain_coral_block": {
+    "name": "dead brain coral block",
+    "category": "ocean",
+    "stack": 64,
+    "unit_buy": 20
+  },
+  "dead_brain_coral_fan": {
+    "name": "dead brain coral fan",
+    "category": "ocean",
+    "stack": 64,
+    "unit_buy": 15
+  },
+  "bubble_coral": {
+    "name": "bubble coral",
+    "category": "ocean",
+    "stack": 64,
+    "unit_buy": 20
+  },
+  "bubble_coral_block": {
+    "name": "bubble coral block",
+    "category": "ocean",
+    "stack": 64,
+    "unit_buy": 30
+  },
+  "bubble_coral_fan": {
+    "name": "bubble coral fan",
+    "category": "ocean",
+    "stack": 64,
+    "unit_buy": 25
+  },
+  "dead_bubble_coral": {
+    "name": "dead bubble coral",
+    "category": "ocean",
+    "stack": 64,
+    "unit_buy": 15
+  },
+  "dead_bubble_coral_block": {
+    "name": "dead bubble coral block",
+    "category": "ocean",
+    "stack": 64,
+    "unit_buy": 20
+  },
+  "dead_bubble_coral_fan": {
+    "name": "dead bubble coral fan",
+    "category": "ocean",
+    "stack": 64,
+    "unit_buy": 15
+  },
+  "dead_fire_coral": {
+    "name": "dead fire coral",
+    "category": "ocean",
+    "stack": 64,
+    "unit_buy": 15
+  },
+  "dead_fire_coral_block": {
+    "name": "dead fire coral block",
+    "category": "ocean",
+    "stack": 64,
+    "unit_buy": 20
+  },
+  "dead_fire_coral_fan": {
+    "name": "dead fire coral fan",
+    "category": "ocean",
+    "stack": 64,
+    "unit_buy": 15
+  },
+  "fire_coral": {
+    "name": "fire coral",
+    "category": "ocean",
+    "stack": 64,
+    "unit_buy": 20
+  },
+  "fire_coral_block": {
+    "name": "fire coral block",
+    "category": "ocean",
+    "stack": 64,
+    "unit_buy": 30
+  },
+  "fire_coral_fan": {
+    "name": "fire coral fan",
+    "category": "ocean",
+    "stack": 64,
+    "unit_buy": 25
+  },
+  "dead_horn_coral": {
+    "name": "dead horn coral",
+    "category": "ocean",
+    "stack": 64,
+    "unit_buy": 15
+  },
+  "dead_horn_coral_block": {
+    "name": "dead horn coral block",
+    "category": "ocean",
+    "stack": 64,
+    "unit_buy": 20
+  },
+  "dead_horn_coral_fan": {
+    "name": "dead horn coral fan",
+    "category": "ocean",
+    "stack": 64,
+    "unit_buy": 15
+  },
+  "horn_coral": {
+    "name": "horn coral",
+    "category": "ocean",
+    "stack": 64,
+    "unit_buy": 20
+  },
+  "horn_coral_block": {
+    "name": "horn coral block",
+    "category": "ocean",
+    "stack": 64,
+    "unit_buy": 30
+  },
+  "horn_coral_fan": {
+    "name": "horn coral fan",
+    "category": "ocean",
+    "stack": 64,
+    "unit_buy": 25
+  },
+  "dead_tube_coral": {
+    "name": "dead tube coral",
+    "category": "ocean",
+    "stack": 64,
+    "unit_buy": 15
+  },
+  "dead_tube_coral_block": {
+    "name": "dead tube coral block",
+    "category": "ocean",
+    "stack": 64,
+    "unit_buy": 20
+  },
+  "dead_tube_coral_fan": {
+    "name": "dead tube coral fan",
+    "category": "ocean",
+    "stack": 64,
+    "unit_buy": 15
+  },
+  "tube_coral": {
+    "name": "tube coral",
+    "category": "ocean",
+    "stack": 64,
+    "unit_buy": 20
+  },
+  "tube_coral_block": {
+    "name": "tube coral block",
+    "category": "ocean",
+    "stack": 64,
+    "unit_buy": 30
+  },
+  "tube_coral_fan": {
+    "name": "tube coral fan",
+    "category": "ocean",
+    "stack": 64,
+    "unit_buy": 25
+  },
+  "prismarine_crystals": {
+    "name": "prismarine crystals",
+    "category": "ocean",
+    "stack": 64,
+    "unit_buy": 40
+  },
+  "prismarine_shard": {
+    "name": "prismarine shard",
+    "category": "ocean",
+    "stack": 64,
+    "unit_buy": 30
+  },
+  "prismarine_brick_slab": {
+    "name": "prismarine brick slab",
+    "category": "ocean",
+    "stack": 64,
+    "unit_buy": 135
+  },
+  "prismarine_brick_stairs": {
+    "name": "prismarine brick stairs",
+    "category": "ocean",
+    "stack": 64,
+    "unit_buy": 405
+  },
+  "prismarine_bricks": {
+    "name": "prismarine bricks",
+    "category": "ocean",
+    "stack": 64,
+    "unit_buy": 270
+  },
+  "dark_prismarine": {
+    "name": "dark prismarine",
+    "category": "ocean",
+    "stack": 64,
+    "unit_buy": 245
+  },
+  "dark_prismarine_slab": {
+    "name": "dark prismarine slab",
+    "category": "ocean",
+    "stack": 64,
+    "unit_buy": 123
+  },
+  "dark_prismarine_stairs": {
+    "name": "dark prismarine stairs",
+    "category": "ocean",
+    "stack": 64,
+    "unit_buy": 368
+  },
+  "prismarine": {
+    "name": "prismarine",
+    "category": "ocean",
+    "stack": 64,
+    "unit_buy": 120
+  },
+  "prismarine_slab": {
+    "name": "prismarine slab",
+    "category": "ocean",
+    "stack": 64,
+    "unit_buy": 60
+  },
+  "prismarine_stairs": {
+    "name": "prismarine stairs",
+    "category": "ocean",
+    "stack": 64,
+    "unit_buy": 180
+  },
+  "prismarine_wall": {
+    "name": "prismarine wall",
+    "category": "ocean",
+    "stack": 64,
+    "unit_buy": 120
+  },
+  "_export_metadata": {
+    "source": "Verzion's Economy Price Guide",
+    "url": "https://minecraft-economy-price-guide.net",
+    "version": "1.21",
+    "export_date": "2026-05-01T15:21:17.889Z",
+    "item_count": 50,
+    "currency_type": "money",
+    "price_multiplier": 1,
+    "sell_margin": 0.3,
+    "round_to_whole": false,
+    "sort_field": "default",
+    "sort_direction": "curated"
+  }
+}

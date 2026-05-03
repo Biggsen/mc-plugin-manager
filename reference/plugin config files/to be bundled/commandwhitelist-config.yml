@@ -33,6 +33,7 @@ groups:
     - lock
     - help
     - store
+    - rules
     - guides
     - guideintro
     - guidediscovery

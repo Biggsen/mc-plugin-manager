@@ -384,6 +384,22 @@ function removeOwnedLMSections(config: Record<string, unknown>): Record<string, 
   return cleaned
 }
 
+function removeOwnedLMCustomDropsSections(
+  config: Record<string, unknown>,
+  ownedTableNames: string[]
+): Record<string, unknown> {
+  const cleaned = { ...config } as Record<string, unknown>
+  if (!cleaned['drop-table'] || typeof cleaned['drop-table'] !== 'object' || Array.isArray(cleaned['drop-table'])) {
+    return cleaned
+  }
+  const dropTable = { ...(cleaned['drop-table'] as Record<string, unknown>) }
+  for (const tableName of ownedTableNames) {
+    delete dropTable[tableName]
+  }
+  cleaned['drop-table'] = dropTable
+  return cleaned
+}
+
 /**
  * Validate that only owned sections changed in LevelledMobs config
  */
@@ -416,6 +432,35 @@ export function validateLMDiff(
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : String(error)
     return { valid: false, error: `Failed to validate LM diff: ${msg}` }
+  }
+}
+
+export function validateLMCustomDropsDiff(
+  originalPath: string,
+  generatedContent: string,
+  ownedTableNames: string[]
+): { valid: boolean; error?: string; differences?: string[] } {
+  try {
+    const originalContent = stripGeneratorVersionCommentLines(readFileSync(originalPath, 'utf-8'))
+    const original = yaml.parse(originalContent)
+    const originalCleaned = removeOwnedLMCustomDropsSections(original, ownedTableNames)
+
+    const generated = yaml.parse(stripGeneratorVersionCommentLines(generatedContent))
+    const generatedCleaned = removeOwnedLMCustomDropsSections(generated, ownedTableNames)
+
+    const result = deepEqual(originalCleaned, generatedCleaned)
+    if (!result.equal) {
+      return {
+        valid: false,
+        error: 'Non-owned sections changed in LevelledMobs customdrops config',
+        differences: result.differences,
+      }
+    }
+
+    return { valid: true }
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : String(error)
+    return { valid: false, error: `Failed to validate LM customdrops diff: ${msg}` }
   }
 }
 

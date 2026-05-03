@@ -1,0 +1,58 @@
+defaults:
+  chance: 0.2
+  overall-chance: 0.4
+  amount: 1
+  equipped: 0.0
+  equip-offhand: false
+  equip-on-helmet: false
+  only-drop-if-equipped: false
+  player-caused: true
+  nomultiplier: true
+  nospawner: false
+  use-chunk-kill-max: true
+  overall-permission: ''
+  override: false
+  minLevel: -1
+  maxLevel: -1
+  item-flags: ''
+  groupid: ''
+  group-limits:
+    cap-select: 1
+    cap-per-item: -1
+    cap-total: -1
+    cap-equipped: -1
+    retries: 0
+  run-on-spawn: false
+  run-on-death: true
+  delay: 0
+
+all_mobs:
+  -
+
+all_levellable_mobs:
+  -
+
+all_hostile_mobs:
+  -
+
+all_passive_mobs:
+  -
+
+all_overworld_mobs:
+  -
+
+all_nether_mobs:
+  -
+
+all_flying_mobs:
+  -
+
+all_ground_mobs:
+  -
+
+all_aquatic_mobs:
+  -
+
+drop-table: {}
+
+file-version: 12

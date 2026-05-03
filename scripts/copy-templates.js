@@ -5,6 +5,8 @@ const path = require('path')
 const sourceDir = path.join(__dirname, '..', 'reference', 'plugin config files', 'to be bundled')
 // Target directory
 const targetDir = path.join(__dirname, '..', 'dist-electron', 'assets', 'templates')
+const dataSourceDir = path.join(__dirname, '..', 'reference', 'data')
+const dataTargetDir = path.join(__dirname, '..', 'dist-electron', 'assets', 'data')
 
 // Old monolithic ipc.js in dist-electron shadows ipc/index.js when main uses require('./ipc').
 const staleIpcJs = path.join(__dirname, '..', 'dist-electron', 'ipc.js')
@@ -23,6 +25,7 @@ const templates = [
   'essentials-config.yml',
   'essentials-rules.txt',
   'griefprevention-config.yml',
+  'levelledmobs-customdrops.yml',
   'levelledmobs-rules.yml',
   'mycommand-commands.yml',
   'tab-config.yml'
@@ -120,6 +123,20 @@ if (fs.existsSync(guideBooksSourceDir)) {
     const dest = path.join(guideBooksTargetDir, file)
     fs.copyFileSync(src, dest)
     console.log(`Copied guide book: ${file}`)
+  }
+}
+
+// Copy bundled drop table catalog JSON files to dist-electron/assets/data
+if (!fs.existsSync(dataTargetDir)) {
+  fs.mkdirSync(dataTargetDir, { recursive: true })
+}
+if (fs.existsSync(dataSourceDir)) {
+  const dataFiles = fs.readdirSync(dataSourceDir).filter((f) => f.endsWith('.json'))
+  for (const file of dataFiles) {
+    const src = path.join(dataSourceDir, file)
+    const dest = path.join(dataTargetDir, file)
+    fs.copyFileSync(src, dest)
+    console.log(`Copied data file: ${file}`)
   }
 }
 

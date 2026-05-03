@@ -258,8 +258,8 @@ inputs: {
 
 ## Reference Files
 
-- **Server example (owned rules)**: `reference/plugin config files/teledosi-server/teledosi-rules.yml`
-  - Shows: Villages - Easy Band (`worldguard-regions` list), region-band rules (`worldguard-regions` string, `use-preset: lvlstrategy-*`), and preserved rules (Minimized Nametag, Armor and Weapons, Player Farm).
+- **Bundled template (merge baseline)**: `reference/plugin config files/to be bundled/levelledmobs-rules.yml`
+  - Real-server snapshots that illustrated Villages bands, region-band presets, and preserved rules were removed from the repo; use the bundled file and live generator output as references.
 - **regions-meta schema**: `reference/regions-meta-schema.md` (§6 `levelledMobs`).
 
 ---

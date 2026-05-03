@@ -35,6 +35,15 @@ interface ElectronAPI {
     regionId: string,
     updates: { anchors?: string[]; description?: string }
   ) => Promise<ServerProfile | null>
+  scanDropTableCatalogs: () => Promise<{
+    catalogs: import('./types').DropTableCatalogSummary[]
+    warnings: string[]
+    sourceDir: string
+  }>
+  updateDropTablesConfig: (
+    serverId: string,
+    payload: { config: import('./types').DropTablesConfig }
+  ) => Promise<ServerProfile | null>
   buildConfigs: (
     serverId: string,
     inputs: {
@@ -43,6 +52,7 @@ interface ElectronAPI {
       generateCE?: boolean
       generateTAB?: boolean
       generateLM?: boolean
+      generateLMCustomDrops?: boolean
       generateMC?: boolean
       generateCW?: boolean
       generateDiscordSRV?: boolean
@@ -59,6 +69,7 @@ interface ElectronAPI {
       cePath?: string
       tabPath?: string
       lmPath?: string
+      lmCustomDropsPath?: string
       mcPath?: string
       mcTebexSubdomain?: string
       cwPath?: string

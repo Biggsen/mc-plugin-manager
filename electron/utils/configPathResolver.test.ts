@@ -12,6 +12,7 @@ describe('CONFIG_FILENAMES', () => {
     expect(CONFIG_FILENAMES.ce).toBe('conditionalevents-config.yml')
     expect(CONFIG_FILENAMES.tab).toBe('tab-config.yml')
     expect(CONFIG_FILENAMES.lm).toBe('levelledmobs-rules.yml')
+    expect(CONFIG_FILENAMES.lmcd).toBe('levelledmobs-customdrops.yml')
     expect(CONFIG_FILENAMES.mc).toBe('mycommand-commands.yml')
     expect(CONFIG_FILENAMES.cw).toBe('commandwhitelist-config.yml')
   })

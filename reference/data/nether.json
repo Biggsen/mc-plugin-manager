@@ -1,0 +1,303 @@
+{
+  "dried_ghast": {
+    "name": "dried ghast",
+    "category": "nether",
+    "stack": 64,
+    "unit_buy": 641
+  },
+  "magma_block": {
+    "name": "magma block",
+    "category": "nether",
+    "stack": 64,
+    "unit_buy": 100
+  },
+  "nether_sprouts": {
+    "name": "nether sprouts",
+    "category": "nether",
+    "stack": 64,
+    "unit_buy": 3
+  },
+  "netherite_upgrade_smithing_template": {
+    "name": "netherite upgrade smithing template",
+    "category": "nether",
+    "stack": 64,
+    "unit_buy": 1500
+  },
+  "respawn_anchor": {
+    "name": "respawn anchor",
+    "category": "nether",
+    "stack": 64,
+    "unit_buy": 204
+  },
+  "basalt": {
+    "name": "basalt",
+    "category": "nether",
+    "stack": 64,
+    "unit_buy": 1
+  },
+  "polished_basalt": {
+    "name": "polished basalt",
+    "category": "nether",
+    "stack": 64,
+    "unit_buy": 1
+  },
+  "smooth_basalt": {
+    "name": "smooth basalt",
+    "category": "nether",
+    "stack": 64,
+    "unit_buy": 3
+  },
+  "blackstone": {
+    "name": "blackstone",
+    "category": "nether",
+    "stack": 64,
+    "unit_buy": 2
+  },
+  "blackstone_slab": {
+    "name": "blackstone slab",
+    "category": "nether",
+    "stack": 64,
+    "unit_buy": 1
+  },
+  "blackstone_stairs": {
+    "name": "blackstone stairs",
+    "category": "nether",
+    "stack": 64,
+    "unit_buy": 3
+  },
+  "blackstone_wall": {
+    "name": "blackstone wall",
+    "category": "nether",
+    "stack": 64,
+    "unit_buy": 2
+  },
+  "chiseled_polished_blackstone": {
+    "name": "chiseled polished blackstone",
+    "category": "nether",
+    "stack": 64,
+    "unit_buy": 2
+  },
+  "gilded_blackstone": {
+    "name": "gilded blackstone",
+    "category": "nether",
+    "stack": 64,
+    "unit_buy": 1
+  },
+  "polished_blackstone": {
+    "name": "polished blackstone",
+    "category": "nether",
+    "stack": 64,
+    "unit_buy": 2
+  },
+  "polished_blackstone_slab": {
+    "name": "polished blackstone slab",
+    "category": "nether",
+    "stack": 64,
+    "unit_buy": 1
+  },
+  "polished_blackstone_stairs": {
+    "name": "polished blackstone stairs",
+    "category": "nether",
+    "stack": 64,
+    "unit_buy": 3
+  },
+  "polished_blackstone_wall": {
+    "name": "polished blackstone wall",
+    "category": "nether",
+    "stack": 64,
+    "unit_buy": 2
+  },
+  "cracked_polished_blackstone_bricks": {
+    "name": "cracked polished blackstone bricks",
+    "category": "nether",
+    "stack": 64,
+    "unit_buy": 3
+  },
+  "polished_blackstone_brick_slab": {
+    "name": "polished blackstone brick slab",
+    "category": "nether",
+    "stack": 64,
+    "unit_buy": 1
+  },
+  "polished_blackstone_brick_stairs": {
+    "name": "polished blackstone brick stairs",
+    "category": "nether",
+    "stack": 64,
+    "unit_buy": 3
+  },
+  "polished_blackstone_brick_wall": {
+    "name": "polished blackstone brick wall",
+    "category": "nether",
+    "stack": 64,
+    "unit_buy": 2
+  },
+  "polished_blackstone_bricks": {
+    "name": "polished blackstone bricks",
+    "category": "nether",
+    "stack": 64,
+    "unit_buy": 2
+  },
+  "crimson_fungus": {
+    "name": "crimson fungus",
+    "category": "nether",
+    "stack": 64,
+    "unit_buy": 4
+  },
+  "crimson_nylium": {
+    "name": "crimson nylium",
+    "category": "nether",
+    "stack": 64,
+    "unit_buy": 1
+  },
+  "crimson_roots": {
+    "name": "crimson roots",
+    "category": "nether",
+    "stack": 64,
+    "unit_buy": 2
+  },
+  "nether_wart": {
+    "name": "nether wart",
+    "category": "nether",
+    "stack": 64,
+    "unit_buy": 2
+  },
+  "nether_wart_block": {
+    "name": "nether wart block",
+    "category": "nether",
+    "stack": 64,
+    "unit_buy": 18
+  },
+  "warped_fungus": {
+    "name": "warped fungus",
+    "category": "nether",
+    "stack": 64,
+    "unit_buy": 4
+  },
+  "warped_nylium": {
+    "name": "warped nylium",
+    "category": "nether",
+    "stack": 64,
+    "unit_buy": 1
+  },
+  "warped_roots": {
+    "name": "warped roots",
+    "category": "nether",
+    "stack": 64,
+    "unit_buy": 2
+  },
+  "warped_wart_block": {
+    "name": "warped wart block",
+    "category": "nether",
+    "stack": 64,
+    "unit_buy": 2
+  },
+  "crying_obsidian": {
+    "name": "crying obsidian",
+    "category": "nether",
+    "stack": 64,
+    "unit_buy": 30
+  },
+  "obsidian": {
+    "name": "obsidian",
+    "category": "nether",
+    "stack": 64,
+    "unit_buy": 25
+  },
+  "quartz_block": {
+    "name": "block of quartz",
+    "category": "nether",
+    "stack": 64,
+    "unit_buy": 12
+  },
+  "chiseled_quartz_block": {
+    "name": "chiseled quartz block",
+    "category": "nether",
+    "stack": 64,
+    "unit_buy": 12
+  },
+  "quartz": {
+    "name": "nether quartz",
+    "category": "nether",
+    "stack": 64,
+    "unit_buy": 3
+  },
+  "nether_quartz_ore": {
+    "name": "nether quartz ore",
+    "category": "nether",
+    "stack": 64,
+    "unit_buy": 7
+  },
+  "quartz_bricks": {
+    "name": "quartz bricks",
+    "category": "nether",
+    "stack": 64,
+    "unit_buy": 12
+  },
+  "quartz_pillar": {
+    "name": "quartz pillar",
+    "category": "nether",
+    "stack": 64,
+    "unit_buy": 12
+  },
+  "quartz_slab": {
+    "name": "quartz slab",
+    "category": "nether",
+    "stack": 64,
+    "unit_buy": 6
+  },
+  "quartz_stairs": {
+    "name": "quartz stairs",
+    "category": "nether",
+    "stack": 64,
+    "unit_buy": 18
+  },
+  "smooth_quartz": {
+    "name": "smooth quartz block",
+    "category": "nether",
+    "stack": 64,
+    "unit_buy": 13
+  },
+  "smooth_quartz_slab": {
+    "name": "smooth quartz slab",
+    "category": "nether",
+    "stack": 64,
+    "unit_buy": 7
+  },
+  "smooth_quartz_stairs": {
+    "name": "smooth quartz stairs",
+    "category": "nether",
+    "stack": 64,
+    "unit_buy": 20
+  },
+  "netherrack": {
+    "name": "netherrack",
+    "category": "nether",
+    "stack": 64,
+    "unit_buy": 1
+  },
+  "soul_sand": {
+    "name": "soul sand",
+    "category": "nether",
+    "stack": 64,
+    "unit_buy": 1
+  },
+  "soul_soil": {
+    "name": "soul soil",
+    "category": "nether",
+    "stack": 64,
+    "unit_buy": 1
+  },
+  "_export_metadata": {
+    "source": "Verzion's Economy Price Guide",
+    "url": "https://minecraft-economy-price-guide.net",
+    "version": "1.21",
+    "export_date": "2026-05-01T15:17:25.086Z",
+    "item_count": 48,
+    "currency_type": "money",
+    "price_multiplier": 1,
+    "sell_margin": 0.3,
+    "round_to_whole": false,
+    "sort_field": "default",
+    "sort_direction": "curated"
+  }
+}
