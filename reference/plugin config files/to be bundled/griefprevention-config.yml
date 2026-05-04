@@ -8,7 +8,7 @@ GriefPrevention:
   Claims:
     Mode:
       world_the_end: Disabled
-      world_nether: Disabled
+      world_nether: Survival
       world: Survival
     PreventGlobalMonsterEggs: true
     PreventTheft: true
@@ -32,7 +32,7 @@ GriefPrevention:
     Accrued Idle Threshold: 0
     AccruedIdlePercent: 0
     AbandonReturnRatio: 1.0
-    AutomaticNewPlayerClaimsRadius: 4
+    AutomaticNewPlayerClaimsRadius: 0
     AutomaticNewPlayerClaimsRadiusMinimum: 0
     ExtendIntoGroundDistance: 5
     MinimumWidth: 5
@@ -101,14 +101,14 @@ GriefPrevention:
     PvPWorlds: false
     NonPvPWorlds: true
   BlockLandClaimExplosions: true
-  BlockSurfaceCreeperExplosions: true
-  BlockSurfaceOtherExplosions: true
+  BlockSurfaceCreeperExplosions: false
+  BlockSurfaceOtherExplosions: false
   LimitSkyTrees: true
   LimitTreeGrowth: false
   PistonMovement: CLAIMS_ONLY
   PistonExplosionSound: true
-  FireSpreads: false
-  FireDestroys: false
+  FireSpreads: true
+  FireDestroys: true
   AdminsGetWhispers: true
   AdminsGetSignNotifications: true
   VisualizationAntiCheatCompatMode: false
