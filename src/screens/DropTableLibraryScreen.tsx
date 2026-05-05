@@ -64,7 +64,9 @@ export function DropTableLibraryScreen({ onCreateTable, onEditTable }: DropTable
         <Paper withBorder w={280} p="xs">
           <ScrollArea h={420}>
             <Stack gap={4}>
-              {tables.map((t) => (
+              {tables.map((t) => {
+                const itemCount = t.selectedEntries?.length ?? t.selectedItems.length
+                return (
                 <Button
                   key={t.id}
                   variant={t.id === selectedId ? 'light' : 'subtle'}
@@ -77,11 +79,12 @@ export function DropTableLibraryScreen({ onCreateTable, onEditTable }: DropTable
                       {t.name}
                     </Text>
                     <Text size="xs" c="dimmed">
-                      {t.selectedItems.length} items
+                      {itemCount} items
                     </Text>
                   </Stack>
                 </Button>
-              ))}
+                )
+              })}
               {tables.length === 0 && (
                 <Text size="sm" c="dimmed" p="xs">
                   No drop tables in the library.
@@ -102,17 +105,17 @@ export function DropTableLibraryScreen({ onCreateTable, onEditTable }: DropTable
               <Text size="sm" c="dimmed">
                 {selected.description?.trim() || 'No description'}
               </Text>
-              <Text size="sm">Contains {selected.selectedItems.length} items</Text>
+              <Text size="sm">Contains {selected.selectedEntries?.length ?? selected.selectedItems.length} items</Text>
 
               <Paper withBorder p="xs">
                 <ScrollArea h={280}>
                   <Stack gap={2}>
-                    {selected.selectedItems.map((itemId) => (
-                      <Text key={itemId} size="sm">
-                        {itemId}
+                    {(selected.selectedEntries?.map((entry) => entry.itemId) ?? selected.selectedItems).map((itemId, idx) => (
+                      <Text key={`${itemId}_${idx}`} size="sm">
+                        {itemId} {(selected.selectedEntries?.length ?? 0) > 0 ? `#${idx + 1}` : ''}
                       </Text>
                     ))}
-                    {selected.selectedItems.length === 0 && (
+                    {(selected.selectedEntries?.length ?? selected.selectedItems.length) === 0 && (
                       <Text size="sm" c="dimmed">
                         No items in this table.
                       </Text>

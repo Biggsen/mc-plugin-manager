@@ -84,18 +84,25 @@ export function generateOwnedLMCustomDropTables(resolvedTables: ResolvedDropTabl
 
   for (const rt of resolvedTables) {
     const tableName = rt.tableName
-    if (!tableName || !Array.isArray(rt.selectedItems) || rt.selectedItems.length === 0) {
+    const entryRows =
+      Array.isArray(rt.selectedEntries) && rt.selectedEntries.length > 0
+        ? rt.selectedEntries
+        : (rt.selectedItems ?? []).map((itemId) => ({
+            entryId: itemId,
+            itemId,
+            override: rt.itemOverrides?.[itemId] ?? rt.itemOverrides?.[itemId.toLowerCase()],
+          }))
+
+    if (!tableName || entryRows.length === 0) {
       continue
     }
     const groupId = parseDifficultyGroupId(tableName)
-
-    const normalizedItemIds = [...new Set(rt.selectedItems.map((rawId: string) => normalizeItemId(rawId)))].sort(
-      (a: string, b: string) => a.localeCompare(b)
-    )
     const entries: unknown[] = []
     let groupLimitAssigned = false
-    for (const itemId of normalizedItemIds) {
-      const rawOverride = rt.itemOverrides?.[itemId] || rt.itemOverrides?.[itemId.toLowerCase()]
+    for (const row of entryRows) {
+      const itemId = normalizeItemId(String(row.itemId ?? ''))
+      if (!itemId) continue
+      const rawOverride = row.override ?? rt.itemOverrides?.[itemId] ?? rt.itemOverrides?.[itemId.toLowerCase()]
       const includeGroupLimit = Boolean(groupId) && !groupLimitAssigned
       if (includeGroupLimit) {
         groupLimitAssigned = true

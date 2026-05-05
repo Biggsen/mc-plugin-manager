@@ -18,6 +18,7 @@ import type {
   DropTableLibraryEntry,
   DropTableLibraryDeleteResult,
   DropTableItemOverride,
+  DropTableSelectedEntry,
 } from './types'
 
 // Define the IPC API interface
@@ -67,6 +68,7 @@ export interface ElectronAPI {
     id: string
     name?: string
     description?: string
+    selectedEntries?: DropTableSelectedEntry[]
     selectedItems?: string[]
     itemOverrides?: Record<string, DropTableItemOverride>
   }) => Promise<DropTableLibraryEntry>
@@ -168,6 +170,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     id: string
     name?: string
     description?: string
+    selectedEntries?: DropTableSelectedEntry[]
     selectedItems?: string[]
     itemOverrides?: Record<string, DropTableItemOverride>
   }) => ipcRenderer.invoke('update-drop-table', input),

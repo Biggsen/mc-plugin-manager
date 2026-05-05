@@ -5,6 +5,7 @@ import type {
   DropTableLibraryEntry,
   DropTableLibraryDeleteResult,
   DropTableItemOverride,
+  DropTableSelectedEntry,
 } from '../../types'
 import { loadDropTableLibrary, saveDropTableLibrary } from '../../dropTableLibrary'
 import { loadBundledItemIndex } from '../../itemIndex'
@@ -43,6 +44,34 @@ function sanitizeOverrides(overrides: Record<string, DropTableItemOverride>): Re
   return out
 }
 
+function sanitizeOverrideValue(input: DropTableItemOverride | undefined): DropTableItemOverride | undefined {
+  const row: DropTableItemOverride = {}
+  if (typeof input?.chance === 'number' && Number.isFinite(input.chance)) row.chance = input.chance
+  if (input?.amount !== undefined) {
+    const amount = String(input.amount).trim()
+    if (amount.length > 0) row.amount = amount
+  }
+  if (typeof input?.minLevel === 'number' && Number.isFinite(input.minLevel)) row.minLevel = input.minLevel
+  if (typeof input?.maxLevel === 'number' && Number.isFinite(input.maxLevel)) row.maxLevel = input.maxLevel
+  return Object.keys(row).length > 0 ? row : undefined
+}
+
+function sanitizeSelectedEntries(entries: DropTableSelectedEntry[]): DropTableSelectedEntry[] {
+  const out: DropTableSelectedEntry[] = []
+  for (const raw of entries) {
+    const itemId = normalizeItemId(String(raw?.itemId ?? ''))
+    if (!itemId) continue
+    const entryId =
+      typeof raw?.entryId === 'string' && raw.entryId.trim().length > 0 ? raw.entryId.trim() : randomUUID()
+    out.push({
+      entryId,
+      itemId,
+      override: sanitizeOverrideValue(raw.override),
+    })
+  }
+  return out
+}
+
 export function registerDropTableLibraryHandlers(): void {
   ipcMain.handle('scan-item-index', async () => {
     const { items, warnings, sourcePath } = loadBundledItemIndex()
@@ -69,6 +98,7 @@ export function registerDropTableLibraryHandlers(): void {
         id: randomUUID(),
         name,
         description: typeof input?.description === 'string' ? input.description : undefined,
+        selectedEntries: [],
         selectedItems: [],
         itemOverrides: {},
         createdAt: iso,
@@ -88,6 +118,7 @@ export function registerDropTableLibraryHandlers(): void {
         id: string
         name?: string
         description?: string
+        selectedEntries?: DropTableSelectedEntry[]
         selectedItems?: string[]
         itemOverrides?: Record<string, DropTableItemOverride>
       }
@@ -109,12 +140,21 @@ export function registerDropTableLibraryHandlers(): void {
       if (input.description !== undefined) {
         next.description = input.description
       }
-      if (input.selectedItems !== undefined) {
+      const selectedEntriesInput = input.selectedEntries
+      const hasSelectedEntries = selectedEntriesInput !== undefined
+      if (hasSelectedEntries) {
+        next.selectedEntries = sanitizeSelectedEntries(selectedEntriesInput)
+        // Keep legacy projections in sync for older readers.
+        next.selectedItems = next.selectedEntries.map((entry) => entry.itemId)
+        next.itemOverrides = {}
+      }
+      // Only apply legacy fields when the v2 instance-based shape is not provided.
+      if (!hasSelectedEntries && input.selectedItems !== undefined) {
         next.selectedItems = [
-          ...new Set(input.selectedItems.map((s) => normalizeItemId(String(s)))).values(),
+          ...input.selectedItems.map((s) => normalizeItemId(String(s))),
         ].filter(Boolean)
       }
-      if (input.itemOverrides !== undefined) {
+      if (!hasSelectedEntries && input.itemOverrides !== undefined) {
         next.itemOverrides = sanitizeOverrides(input.itemOverrides)
       }
       next.updatedAt = new Date().toISOString()

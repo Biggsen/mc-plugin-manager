@@ -84,7 +84,7 @@ export function DropTablesScreen({ server, onServerUpdate, onOpenDropTableLibrar
                     <Stack gap={0}>
                       <Text fw={600}>{t.name}</Text>
                       <Text size="xs" c="dimmed">
-                        {t.selectedItems.length} items · id {t.id.slice(0, 8)}…
+                        {(t.selectedEntries?.length ?? t.selectedItems.length)} items · id {t.id.slice(0, 8)}…
                       </Text>
                     </Stack>
                   }

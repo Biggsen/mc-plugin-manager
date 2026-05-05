@@ -18,6 +18,7 @@ import styles from './DropTableEditorScreen.module.css'
 import type {
   DropTableLibraryDeleteResult,
   DropTableItemOverride,
+  DropTableSelectedEntry,
   ItemIndexEntry,
 } from '../types'
 
@@ -82,17 +83,22 @@ export function DropTableEditorScreen({ tableId, onBack, onSaved }: DropTableEdi
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
   const [selectedSortColumn, setSelectedSortColumn] = useState<'itemId' | 'unitBuy' | 'chance' | 'avgValue'>('itemId')
   const [selectedSortDirection, setSelectedSortDirection] = useState<'asc' | 'desc'>('asc')
+  const [visibleLevelFilter, setVisibleLevelFilter] = useState<string | null>(null)
 
   const [nameDraft, setNameDraft] = useState('')
   const [descDraft, setDescDraft] = useState('')
-  const [selectedItemsDraft, setSelectedItemsDraft] = useState<string[]>([])
-  const [overridesDraft, setOverridesDraft] = useState<Record<string, DropTableItemOverride>>({})
+  const [selectedEntriesDraft, setSelectedEntriesDraft] = useState<DropTableSelectedEntry[]>([])
 
   const [loadError, setLoadError] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [listScrollTop, setListScrollTop] = useState(0)
   const [listViewportHeight, setListViewportHeight] = useState(420)
+
+  const selectedItemsDraft = useMemo(
+    () => selectedEntriesDraft.map((entry) => entry.itemId),
+    [selectedEntriesDraft]
+  )
 
   const tableIdRef = useRef<string | undefined>(tableId)
   const listViewportRef = useRef<HTMLDivElement | null>(null)
@@ -130,7 +136,11 @@ export function DropTableEditorScreen({ tableId, onBack, onSaved }: DropTableEdi
           : Number(maxPriceFilter)
     const filtered = itemsIndex
       .filter((it) => {
-        const matchesSearch = q.length < 1 || it.name.toLowerCase().includes(q)
+        const matchesSearch =
+          q.length < 1 ||
+          it.name.toLowerCase().includes(q) ||
+          it.id.toLowerCase().includes(q) ||
+          it.rawKey.toLowerCase().includes(q)
         const matchesCategory =
           !categoryFilter || (it.category?.toLowerCase() ?? '') === categoryFilter.toLowerCase()
         const unitBuy = it.unitBuy
@@ -156,15 +166,22 @@ export function DropTableEditorScreen({ tableId, onBack, onSaved }: DropTableEdi
     return filtered
   }, [itemsIndex, search, categoryFilter, minPriceFilter, maxPriceFilter, sortColumn, sortDirection])
 
-  const sortedSelectedItems = useMemo(() => {
-    const next = [...selectedItemsDraft]
+  const visibleSelectedEntries = useMemo(() => {
+    if (!visibleLevelFilter) return selectedEntriesDraft
+    const level = Number(visibleLevelFilter)
+    if (!Number.isFinite(level)) return selectedEntriesDraft
+    return selectedEntriesDraft.filter((entry) => inferLevelBand(entry.override?.minLevel, entry.override?.maxLevel) === level)
+  }, [selectedEntriesDraft, visibleLevelFilter])
+
+  const sortedSelectedEntries = useMemo(() => {
+    const next = [...visibleSelectedEntries]
     next.sort((a, b) => {
       let base = 0
       if (selectedSortColumn === 'itemId') {
-        base = a.localeCompare(b)
+        base = a.itemId.localeCompare(b.itemId)
       } else if (selectedSortColumn === 'chance') {
-        const aOverride = overridesDraft[a]?.chance
-        const bOverride = overridesDraft[b]?.chance
+        const aOverride = a.override?.chance
+        const bOverride = b.override?.chance
         const av =
           typeof aOverride === 'number' && Number.isFinite(aOverride)
             ? aOverride
@@ -175,10 +192,10 @@ export function DropTableEditorScreen({ tableId, onBack, onSaved }: DropTableEdi
             : DEFAULT_ITEM_CHANCE
         base = av - bv
       } else if (selectedSortColumn === 'avgValue') {
-        const avUnitBuy = itemById.get(a)?.unitBuy
-        const bvUnitBuy = itemById.get(b)?.unitBuy
-        const avAmount = parseAverageAmount(overridesDraft[a]?.amount)
-        const bvAmount = parseAverageAmount(overridesDraft[b]?.amount)
+        const avUnitBuy = itemById.get(a.itemId)?.unitBuy
+        const bvUnitBuy = itemById.get(b.itemId)?.unitBuy
+        const avAmount = parseAverageAmount(a.override?.amount)
+        const bvAmount = parseAverageAmount(b.override?.amount)
         const av =
           typeof avUnitBuy === 'number' && Number.isFinite(avUnitBuy) && typeof avAmount === 'number'
             ? avUnitBuy * avAmount
@@ -189,29 +206,47 @@ export function DropTableEditorScreen({ tableId, onBack, onSaved }: DropTableEdi
             : Number.NEGATIVE_INFINITY
         base = av - bv
       } else {
-        const av = itemById.get(a)?.unitBuy ?? Number.POSITIVE_INFINITY
-        const bv = itemById.get(b)?.unitBuy ?? Number.POSITIVE_INFINITY
+        const av = itemById.get(a.itemId)?.unitBuy ?? Number.POSITIVE_INFINITY
+        const bv = itemById.get(b.itemId)?.unitBuy ?? Number.POSITIVE_INFINITY
         base = av - bv
       }
       return selectedSortDirection === 'asc' ? base : -base
     })
     return next
-  }, [selectedItemsDraft, selectedSortColumn, selectedSortDirection, itemById, overridesDraft])
+  }, [visibleSelectedEntries, selectedSortColumn, selectedSortDirection, itemById])
 
   const dropTableStats = useMemo(() => {
-    let totalChance = 0
-    for (const itemId of selectedItemsDraft) {
-      const overrideChance = overridesDraft[itemId]?.chance
-      if (typeof overrideChance === 'number' && Number.isFinite(overrideChance)) {
-        totalChance += overrideChance
-        continue
+    const perLevel = LEVEL_BANDS.map((band) => {
+      let levelChance = 0
+      let itemCount = 0
+      for (const row of selectedEntriesDraft) {
+        const chance =
+          typeof row.override?.chance === 'number' && Number.isFinite(row.override.chance)
+            ? row.override.chance
+            : DEFAULT_ITEM_CHANCE
+        const minLevel = row.override?.minLevel
+        const maxLevel = row.override?.maxLevel
+        const normalizedMin =
+          typeof minLevel === 'number' && Number.isFinite(minLevel) ? minLevel : Number.NEGATIVE_INFINITY
+        const normalizedMax =
+          typeof maxLevel === 'number' && Number.isFinite(maxLevel) ? maxLevel : Number.POSITIVE_INFINITY
+        const overlapsBand = normalizedMin <= band.max && normalizedMax >= band.min
+        if (overlapsBand) {
+          levelChance += chance
+          itemCount += 1
+        }
       }
-      totalChance += DEFAULT_ITEM_CHANCE
-    }
-    const overallChance = clamp(totalChance, 0, 1)
-    const oneInKills = overallChance > 0 ? 1 / overallChance : undefined
-    return { totalChance, overallChance, oneInKills }
-  }, [selectedItemsDraft, overridesDraft])
+      const levelOverallChance = clamp(levelChance, 0, 1)
+      return {
+        level: band.level,
+        itemCount,
+        totalChance: levelChance,
+        overallChance: levelOverallChance,
+        oneInKills: levelOverallChance > 0 ? 1 / levelOverallChance : undefined,
+      }
+    })
+    return { perLevel }
+  }, [selectedEntriesDraft])
 
   const virtualRange = useMemo(() => {
     const start = Math.max(0, Math.floor(listScrollTop / LIST_ROW_HEIGHT) - LIST_OVERSCAN_ROWS)
@@ -226,17 +261,25 @@ export function DropTableEditorScreen({ tableId, onBack, onSaved }: DropTableEdi
   )
 
   function buildSavePayload() {
+    const legacyOverrides: Record<string, DropTableItemOverride> = {}
+    for (const row of selectedEntriesDraft) {
+      if (row.override && Object.keys(row.override).length > 0 && !(row.itemId in legacyOverrides)) {
+        legacyOverrides[row.itemId] = row.override
+      }
+    }
     return {
       name: nameDraft,
       description: descDraft,
+      selectedEntries: selectedEntriesDraft,
       selectedItems: selectedItemsDraft,
-      itemOverrides: overridesDraft,
+      itemOverrides: legacyOverrides,
     }
   }
 
   function snapshotPayload(payload: {
     name: string
     description: string
+    selectedEntries: DropTableSelectedEntry[]
     selectedItems: string[]
     itemOverrides: Record<string, DropTableItemOverride>
   }): string {
@@ -276,11 +319,19 @@ export function DropTableEditorScreen({ tableId, onBack, onSaved }: DropTableEdi
         }
         setNameDraft(row.name)
         setDescDraft(row.description ?? '')
-        setSelectedItemsDraft([...row.selectedItems])
-        setOverridesDraft({ ...(row.itemOverrides ?? {}) })
+        const selectedEntries =
+          Array.isArray(row.selectedEntries) && row.selectedEntries.length > 0
+            ? row.selectedEntries
+            : row.selectedItems.map((itemId, idx) => ({
+                entryId: `${itemId}_${idx + 1}`,
+                itemId,
+                override: row.itemOverrides?.[itemId] ?? row.itemOverrides?.[itemId.toLowerCase()],
+              }))
+        setSelectedEntriesDraft(selectedEntries)
         lastSavedSnapshotRef.current = snapshotPayload({
           name: row.name,
           description: row.description ?? '',
+          selectedEntries,
           selectedItems: [...row.selectedItems],
           itemOverrides: { ...(row.itemOverrides ?? {}) },
         })
@@ -288,6 +339,7 @@ export function DropTableEditorScreen({ tableId, onBack, onSaved }: DropTableEdi
         lastSavedSnapshotRef.current = snapshotPayload({
           name: '',
           description: '',
+          selectedEntries: [],
           selectedItems: [],
           itemOverrides: {},
         })
@@ -317,22 +369,32 @@ export function DropTableEditorScreen({ tableId, onBack, onSaved }: DropTableEdi
   function addItem(rawId: string) {
     const id = normalizeItemId(rawId)
     if (!id || !itemById.has(id)) return
-    if (selectedItemsDraft.includes(id)) return
-    setSelectedItemsDraft((prev) => [...prev, id].sort((a, b) => a.localeCompare(b)))
+    const usedBands = new Set<number>()
+    for (const row of selectedEntriesDraft) {
+      if (row.itemId !== id) continue
+      const band = inferLevelBand(row.override?.minLevel, row.override?.maxLevel)
+      if (band) usedBands.add(band)
+    }
+    const nextBand = LEVEL_BANDS.find((band) => !usedBands.has(band.level))
+    const override: DropTableItemOverride | undefined = nextBand
+      ? { minLevel: nextBand.min, maxLevel: nextBand.max }
+      : undefined
+    setSelectedEntriesDraft((prev) => [
+      ...prev,
+      {
+        entryId: `${id}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+        itemId: id,
+        override,
+      },
+    ])
   }
 
   function toggleItem(rawId: string) {
-    const id = normalizeItemId(rawId)
-    if (!id || !itemById.has(id)) return
-    if (selectedItemsDraft.includes(id)) {
-      removeItem(id)
-      return
-    }
-    addItem(id)
+    addItem(rawId)
   }
 
   function addRandomItem() {
-    const candidates = searchResults.filter((it) => !selectedItemsDraft.includes(it.id))
+    const candidates = searchResults
     if (candidates.length === 0) {
       setLoadError('No available items to add from the current list')
       return
@@ -342,96 +404,70 @@ export function DropTableEditorScreen({ tableId, onBack, onSaved }: DropTableEdi
   }
 
   function addAllItems() {
-    const toAdd = searchResults
-      .map((it) => it.id)
-      .filter((id) => !selectedItemsDraft.includes(id))
+    const toAdd = searchResults.map((it) => it.id)
     if (toAdd.length === 0) {
       setLoadError('No available items to add from the current list')
       return
     }
-    setSelectedItemsDraft((prev) => [...new Set([...prev, ...toAdd])].sort((a, b) => a.localeCompare(b)))
+    for (const id of toAdd) addItem(id)
   }
 
-  function removeItem(id: string) {
-    setSelectedItemsDraft((prev) => prev.filter((x) => x !== id))
-    setOverridesDraft((prev) => {
-      const next = { ...prev }
-      delete next[id]
-      return next
-    })
-    setOpenOverrides((prev) => ({ ...prev, [id]: false }))
+  function removeItem(entryId: string) {
+    setSelectedEntriesDraft((prev) => prev.filter((x) => x.entryId !== entryId))
   }
 
-  function setItemAmount(itemId: string, amount: string) {
-    const key = normalizeItemId(itemId)
-    setOverridesDraft((prev) => {
-      const existing = prev[key] ?? {}
-      const trimmed = amount.trim()
-      const nextEntry: DropTableItemOverride = { ...existing }
-      if (trimmed.length > 0) nextEntry.amount = trimmed
-      else delete nextEntry.amount
-      const next = { ...prev, [key]: nextEntry }
-      if (Object.keys(nextEntry).length === 0) delete next[key]
-      return next
-    })
+  function setItemAmount(entryId: string, amount: string) {
+    setSelectedEntriesDraft((prev) =>
+      prev.map((row) => {
+        if (row.entryId !== entryId) return row
+        const trimmed = amount.trim()
+        const nextOverride: DropTableItemOverride = { ...(row.override ?? {}) }
+        if (trimmed.length > 0) nextOverride.amount = trimmed
+        else delete nextOverride.amount
+        return { ...row, override: Object.keys(nextOverride).length > 0 ? nextOverride : undefined }
+      })
+    )
   }
 
-  function nudgeItemChance(itemId: string, delta: number) {
-    const key = normalizeItemId(itemId)
-    const override = overridesDraft[key]
+  function nudgeItemChance(entryId: string, delta: number) {
+    const override = selectedEntriesDraft.find((row) => row.entryId === entryId)?.override
     const baseChance =
       typeof override?.chance === 'number' && Number.isFinite(override.chance)
         ? override.chance
         : DEFAULT_ITEM_CHANCE
     const nextChance = clamp(baseChance + delta, 0, 1)
-    setOverridesDraft((prev) => {
-      const existing = prev[key] ?? {}
-      const nextEntry: DropTableItemOverride = { ...existing, chance: Number(nextChance.toFixed(6)) }
-      return { ...prev, [key]: nextEntry }
-    })
+    setSelectedEntriesDraft((prev) =>
+      prev.map((row) =>
+        row.entryId === entryId
+          ? {
+              ...row,
+              override: {
+                ...(row.override ?? {}),
+                chance: Number(nextChance.toFixed(6)),
+              },
+            }
+          : row
+      )
+    )
   }
 
-  function setItemMinLevel(itemId: string, value: number | string) {
-    const key = normalizeItemId(itemId)
-    setOverridesDraft((prev) => {
-      const existing = prev[key] ?? {}
-      const nextEntry: DropTableItemOverride = { ...existing }
-      const n = typeof value === 'number' ? value : Number(value)
-      if (Number.isFinite(n)) nextEntry.minLevel = n
-      else delete nextEntry.minLevel
-      const next = { ...prev, [key]: nextEntry }
-      if (Object.keys(nextEntry).length === 0) delete next[key]
-      return next
-    })
-  }
-
-  function setItemMaxLevel(itemId: string, value: number | string) {
-    const key = normalizeItemId(itemId)
-    setOverridesDraft((prev) => {
-      const existing = prev[key] ?? {}
-      const nextEntry: DropTableItemOverride = { ...existing }
-      const n = typeof value === 'number' ? value : Number(value)
-      if (Number.isFinite(n)) nextEntry.maxLevel = n
-      else delete nextEntry.maxLevel
-      const next = { ...prev, [key]: nextEntry }
-      if (Object.keys(nextEntry).length === 0) delete next[key]
-      return next
-    })
-  }
-
-  function setItemLevelBand(itemId: string, level: 1 | 2 | 3 | 4 | 5) {
-    const key = normalizeItemId(itemId)
+  function setItemLevelBand(entryId: string, level: 1 | 2 | 3 | 4 | 5) {
     const band = LEVEL_BANDS.find((b) => b.level === level)
     if (!band) return
-    setOverridesDraft((prev) => {
-      const existing = prev[key] ?? {}
-      const nextEntry: DropTableItemOverride = {
-        ...existing,
-        minLevel: band.min,
-        maxLevel: band.max,
-      }
-      return { ...prev, [key]: nextEntry }
-    })
+    setSelectedEntriesDraft((prev) =>
+      prev.map((row) =>
+        row.entryId === entryId
+          ? {
+              ...row,
+              override: {
+                ...(row.override ?? {}),
+                minLevel: band.min,
+                maxLevel: band.max,
+              },
+            }
+          : row
+      )
+    )
   }
 
   async function handleSave(options?: { closeAfterSave?: boolean }) {
@@ -482,7 +518,7 @@ export function DropTableEditorScreen({ tableId, onBack, onSaved }: DropTableEdi
     return () => {
       if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current)
     }
-  }, [nameDraft, descDraft, selectedItemsDraft, overridesDraft])
+  }, [nameDraft, descDraft, selectedEntriesDraft])
 
   async function handleDelete() {
     const id = tableIdRef.current
@@ -600,7 +636,7 @@ export function DropTableEditorScreen({ tableId, onBack, onSaved }: DropTableEdi
             </Button>
           </Group>
           <TextInput
-          placeholder="Search by item name..."
+          placeholder="Search by item name or ID..."
             value={search}
             onChange={(e) => setSearch(e.currentTarget.value)}
           />
@@ -713,7 +749,8 @@ export function DropTableEditorScreen({ tableId, onBack, onSaved }: DropTableEdi
           style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }}
         >
           <Text fw={600} size="sm" mb="xs">
-            Selected items ({selectedItemsDraft.length})
+            Selected items ({sortedSelectedEntries.length}
+            {visibleLevelFilter ? ` of ${selectedItemsDraft.length}` : ''})
           </Text>
           <Paper withBorder p="xs" mb="xs">
             <Stack gap={2}>
@@ -723,15 +760,37 @@ export function DropTableEditorScreen({ tableId, onBack, onSaved }: DropTableEdi
               <Text size="xs" c="dimmed">
                 Based on total item chance sum (for cap-select: 1 style behavior).
               </Text>
-              <Text size="sm">
-                Sum of chances: {dropTableStats.totalChance.toFixed(6)} ({(dropTableStats.totalChance * 100).toFixed(2)}%)
+              <Text size="xs" c="dimmed" mt={4}>
+                Per level band:
               </Text>
-              <Text size="sm">
-                Overall chance per kill: {(dropTableStats.overallChance * 100).toFixed(2)}% (
-                {dropTableStats.oneInKills ? `~1 in ${Math.max(1, Math.round(dropTableStats.oneInKills))} kills` : 'no drops'})
-              </Text>
+              {dropTableStats.perLevel.map((band) => (
+                <Text key={band.level} size="xs">
+                  L{band.level} ({LEVEL_BANDS[band.level - 1].min}-{LEVEL_BANDS[band.level - 1].max}) [{band.itemCount}{' '}
+                  {band.itemCount === 1 ? 'item' : 'items'}]:{' '}
+                  {(band.totalChance * 100).toFixed(2)}% ({band.oneInKills ? `~1 in ${Math.max(1, Math.round(band.oneInKills))}` : 'no drops'})
+                </Text>
+              ))}
             </Stack>
           </Paper>
+          <Group mb="xs" gap="xs" align="end">
+            <Select
+              label="Show only level"
+              placeholder="None"
+              clearable
+              value={visibleLevelFilter}
+              onChange={setVisibleLevelFilter}
+              data={LEVEL_BANDS.map((band) => ({
+                value: String(band.level),
+                label: `L${band.level} (${band.min}-${band.max})`,
+              }))}
+              w={220}
+            />
+            {visibleLevelFilter && (
+              <Text size="xs" c="dimmed" mb={6}>
+                Preview filter only (saved data unchanged)
+              </Text>
+            )}
+          </Group>
           <Group wrap="nowrap" mb="xs">
             <Button
               size="compact-xs"
@@ -789,18 +848,19 @@ export function DropTableEditorScreen({ tableId, onBack, onSaved }: DropTableEdi
             >
               Avg Value {selectedSortColumn === 'avgValue' ? (selectedSortDirection === 'asc' ? '↑' : '↓') : ''}
             </Button>
-            <Text size="xs" c="dimmed" w={56}>
+            <Text size="xs" c="dimmed" w={56} ta="left">
               Amount
             </Text>
-            <Text size="xs" c="dimmed" w={160}>
+            <Text size="xs" c="dimmed" w={160} ta="left">
               Levels
             </Text>
+            <Box w={24} />
           </Group>
           <ScrollArea style={{ flex: 1, minHeight: 0 }}>
             <Stack gap={2}>
-              {sortedSelectedItems.map((itemId) => {
-                const meta = itemById.get(itemId)
-                const override = overridesDraft[itemId]
+              {sortedSelectedEntries.map((entry) => {
+                const meta = itemById.get(entry.itemId)
+                const override = entry.override
                 const unitBuy = meta?.unitBuy
                 const effectiveChance =
                   typeof override?.chance === 'number' && Number.isFinite(override.chance)
@@ -813,10 +873,10 @@ export function DropTableEditorScreen({ tableId, onBack, onSaved }: DropTableEdi
                     : undefined
                 const selectedLevelBand = inferLevelBand(override?.minLevel, override?.maxLevel)
                 return (
-                  <Stack key={itemId} gap={2} py={2}>
+                  <Stack key={entry.entryId} gap={2} py={2}>
                     <Group wrap="nowrap">
                       <Text size="sm" style={{ flex: 1 }} lineClamp={1}>
-                        {itemId}
+                        {entry.itemId}
                       </Text>
                       <Text size="sm" c="dimmed" w={78}>
                         {typeof unitBuy === 'number' ? `$${unitBuy}` : '-'}
@@ -827,7 +887,7 @@ export function DropTableEditorScreen({ tableId, onBack, onSaved }: DropTableEdi
                           variant="default"
                           px={0}
                           miw={16}
-                          onClick={() => nudgeItemChance(itemId, -CHANCE_STEP)}
+                          onClick={() => nudgeItemChance(entry.entryId, -CHANCE_STEP)}
                         >
                           -
                         </Button>
@@ -839,7 +899,7 @@ export function DropTableEditorScreen({ tableId, onBack, onSaved }: DropTableEdi
                           variant="default"
                           px={0}
                           miw={16}
-                          onClick={() => nudgeItemChance(itemId, CHANCE_STEP)}
+                          onClick={() => nudgeItemChance(entry.entryId, CHANCE_STEP)}
                         >
                           +
                         </Button>
@@ -852,7 +912,7 @@ export function DropTableEditorScreen({ tableId, onBack, onSaved }: DropTableEdi
                         size="xs"
                         value={String(override?.amount ?? '')}
                         onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                          setItemAmount(itemId, e.currentTarget.value)
+                          setItemAmount(entry.entryId, e.currentTarget.value)
                         }
                         placeholder="1"
                       />
@@ -864,13 +924,24 @@ export function DropTableEditorScreen({ tableId, onBack, onSaved }: DropTableEdi
                             variant={selectedLevelBand === band.level ? 'filled' : 'default'}
                             px={6}
                             miw={24}
-                            onClick={() => setItemLevelBand(itemId, band.level)}
+                            onClick={() => setItemLevelBand(entry.entryId, band.level)}
                             title={`Level ${band.level}: ${band.min}-${band.max}`}
                           >
                             {band.level}
                           </Button>
                         ))}
                       </Group>
+                      <Button
+                        size="compact-xs"
+                        variant="subtle"
+                        color="red"
+                        px={6}
+                        miw={24}
+                        onClick={() => removeItem(entry.entryId)}
+                        title="Remove this entry"
+                      >
+                        x
+                      </Button>
                     </Group>
                   </Stack>
                 )

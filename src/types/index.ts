@@ -270,6 +270,13 @@ export interface DropTableItemOverride {
   maxLevel?: number
 }
 
+export interface DropTableSelectedEntry {
+  /** Stable row id so duplicate item selections can coexist. */
+  entryId: string
+  itemId: string
+  override?: DropTableItemOverride
+}
+
 /** Per-server: references into the global drop table library. */
 export interface DropTablesServerAssignment {
   libraryTableIds: string[]
@@ -281,7 +288,11 @@ export interface DropTableLibraryEntry {
   /** LevelledMobs `drop-table` key in customdrops.yml (unique in library). */
   name: string
   description?: string
+  /** Preferred v2 shape: ordered per-instance entries; supports duplicate item ids. */
+  selectedEntries?: DropTableSelectedEntry[]
+  /** Legacy shape retained for compatibility/migration. */
   selectedItems: string[]
+  /** Legacy shape retained for compatibility/migration. */
   itemOverrides?: Record<string, DropTableItemOverride>
   createdAt: string
   updatedAt: string
@@ -301,6 +312,7 @@ export interface ItemIndexEntry {
 export interface ResolvedDropTable {
   tableName: string
   libraryEntryId: string
+  selectedEntries?: DropTableSelectedEntry[]
   selectedItems: string[]
   itemOverrides?: Record<string, DropTableItemOverride>
   itemValues: Record<string, number | undefined>

@@ -1,8 +1,37 @@
-import type { ServerProfile, ResolvedDropTable } from './types'
+import type { DropTableSelectedEntry, ServerProfile, ResolvedDropTable } from './types'
 import { loadDropTableLibrary } from './dropTableLibrary'
 import { loadBundledItemIndex, itemIndexToUnitBuyMap } from './itemIndex'
 import { normalizeItemId } from './dropTableNormalize'
 import { listServerIds, loadServerProfile, saveServerProfile } from './storage'
+
+function normalizeResolvedEntries(
+  selectedEntries: DropTableSelectedEntry[] | undefined,
+  selectedItems: string[],
+  itemOverrides: Record<string, { chance?: number; amount?: string; minLevel?: number; maxLevel?: number }> | undefined
+): DropTableSelectedEntry[] {
+  if (Array.isArray(selectedEntries) && selectedEntries.length > 0) {
+    const out: DropTableSelectedEntry[] = []
+    for (const row of selectedEntries) {
+      const itemId = normalizeItemId(String(row.itemId ?? ''))
+      if (!itemId) continue
+      out.push({
+        entryId: typeof row.entryId === 'string' && row.entryId.trim().length > 0 ? row.entryId : `${itemId}_${out.length + 1}`,
+        itemId,
+        override: row.override,
+      })
+    }
+    return out
+  }
+
+  return selectedItems.map((itemId, idx) => {
+    const normalized = normalizeItemId(String(itemId))
+    return {
+      entryId: `${normalized}_${idx + 1}`,
+      itemId: normalized,
+      override: itemOverrides?.[normalized] ?? itemOverrides?.[normalized.toLowerCase()],
+    }
+  })
+}
 
 export function resolveDropTablesForServer(profile: ServerProfile): {
   resolved: ResolvedDropTable[]
@@ -29,26 +58,29 @@ export function resolveDropTablesForServer(profile: ServerProfile): {
       warnings.push(`Library entry "${entry.id}" has empty name — skipped`)
       continue
     }
-    const selected = (entry.selectedItems ?? [])
-      .map((s) => normalizeItemId(String(s)))
-      .filter((id) => {
-        if (!knownItemIds.has(id)) {
-          warnings.push(`Unknown item "${id}" in table "${tableName}" — skipped`)
+    const selectedEntries = normalizeResolvedEntries(
+      entry.selectedEntries,
+      entry.selectedItems ?? [],
+      entry.itemOverrides
+    ).filter((row) => {
+        if (!knownItemIds.has(row.itemId)) {
+          warnings.push(`Unknown item "${row.itemId}" in table "${tableName}" — skipped`)
           return false
         }
         return true
       })
-    if (selected.length === 0) {
+    if (selectedEntries.length === 0) {
       continue
     }
     const itemValues: Record<string, number | undefined> = {}
-    for (const itemId of selected) {
-      itemValues[itemId] = unitBuyByItem[itemId]
+    for (const row of selectedEntries) {
+      itemValues[row.itemId] = unitBuyByItem[row.itemId]
     }
     resolved.push({
       tableName,
       libraryEntryId: entry.id,
-      selectedItems: [...selected].sort((a, b) => a.localeCompare(b)),
+      selectedEntries,
+      selectedItems: selectedEntries.map((row) => row.itemId),
       itemOverrides: entry.itemOverrides,
       itemValues,
     })

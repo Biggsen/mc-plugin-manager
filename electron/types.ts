@@ -26,6 +26,7 @@ export type {
   ComparePresetMutationResult,
   ComparePresetDeleteResult,
   DropTableItemOverride,
+  DropTableSelectedEntry,
   DropTablesServerAssignment,
   DropTableLibraryEntry,
   ItemIndexEntry,

@@ -51,6 +51,9 @@ function isValidLibraryEntry(row: unknown): row is DropTableLibraryEntry {
   if (r.itemOverrides !== undefined && (typeof r.itemOverrides !== 'object' || r.itemOverrides === null)) {
     return false
   }
+  if (r.selectedEntries !== undefined && !Array.isArray(r.selectedEntries)) {
+    return false
+  }
   return true
 }
 
