@@ -39,8 +39,7 @@ function mapWorldForLM(world: 'overworld' | 'nether' | 'end'): string {
  */
 export function generateOwnedLMRules(
   regions: RegionRecord[],
-  levelledMobs?: LevelledMobsMeta,
-  availableDropTableIds?: Set<string>
+  levelledMobs?: LevelledMobsMeta
 ): OwnedLMRules {
   const result: OwnedLMRules = {
     regionBandRules: [],
@@ -84,9 +83,6 @@ export function generateOwnedLMRules(
     const regionName = snakeToTitleCase(region.id)
     const difficultyTitle = titleCase(difficulty)
     const worldName = mapWorldForLM(region.world)
-    const category = String(region.category ?? '').trim().toLowerCase()
-    const useDropTableId =
-      category.length > 0 && availableDropTableIds?.has(category) ? category : undefined
     const generatedRule: Record<string, unknown> = {
       'custom-rule': `${regionName} - ${difficultyTitle}`,
       'is-enabled': true,
@@ -95,11 +91,9 @@ export function generateOwnedLMRules(
         worlds: worldName,
         'worldguard-regions': region.id,
       },
-    }
-    if (useDropTableId) {
-      generatedRule.settings = {
-        'use-droptable-id': useDropTableId,
-      }
+      settings: {
+        'use-droptable-id': `${difficulty}_drops`,
+      },
     }
 
     result.regionBandRules.push(generatedRule)

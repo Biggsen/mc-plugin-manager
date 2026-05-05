@@ -82,11 +82,9 @@ export interface ServerProfile {
     worldGuardRegionsNetherWorldFolder?: string
     /** MyCommand Tebex store subdomain (left side of `.tebex.io`). */
     mcTebexSubdomain?: string
-    /** Folder containing item catalog JSON files (e.g. ores.json, drops.json). */
-    dropTablesCatalogDir?: string
   }
-  /** LevelledMobs CustomDrops table customization model. */
-  dropTables?: DropTablesConfig
+  /** Which global drop-table library entries apply to this server (by library entry id). */
+  dropTables?: DropTablesServerAssignment
   /** Per-plugin successful emit serial (1-based), keyed by plugin id. */
   generatorVersions?: Partial<Record<GeneratorVersionKey, number>>
   /** DiscordSRV build inputs (legacy single-target shape). */
@@ -270,21 +268,51 @@ export interface DropTableItemOverride {
   amount?: number | string
 }
 
-export interface DropTableDefinition {
+/** Per-server: references into the global drop table library. */
+export interface DropTablesServerAssignment {
+  libraryTableIds: string[]
+}
+
+/** One row in the global library (editable in Drop Table Library screen). */
+export interface DropTableLibraryEntry {
+  id: string
+  /** LevelledMobs `drop-table` key in customdrops.yml (unique in library). */
+  name: string
+  description?: string
+  /** Optional saved filter preferences for editor prefill. */
+  filterMinPrice?: number
+  /** Optional saved filter preferences for editor prefill. */
+  filterMaxPrice?: number
   selectedItems: string[]
   itemOverrides?: Record<string, DropTableItemOverride>
+  createdAt: string
+  updatedAt: string
 }
 
-export interface DropTablesConfig {
-  tables: Record<string, DropTableDefinition>
+/** Bundled `all.json` row for search / economy (normalized item id). */
+export interface ItemIndexEntry {
+  id: string
+  rawKey: string
+  name: string
+  category?: string
+  stack?: number | string
+  unitBuy?: number
 }
 
-export interface DropTableCatalogSummary {
+/** Resolved for LM / LMCD emit (main process build). */
+export interface ResolvedDropTable {
   tableName: string
-  sourcePath: string
-  itemIds: string[]
+  libraryEntryId: string
+  selectedItems: string[]
+  itemOverrides?: Record<string, DropTableItemOverride>
   itemValues: Record<string, number | undefined>
-  itemCount: number
+}
+
+export interface DropTableLibraryDeleteResult {
+  ok: boolean
+  error?: string
+  /** Servers that had this table id removed from their assignment lists. */
+  removedFromServers?: { id: string; name: string }[]
 }
 
 /** Row for build history list (from saved report.json). */

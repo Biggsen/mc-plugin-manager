@@ -35,14 +35,26 @@ interface ElectronAPI {
     regionId: string,
     updates: { anchors?: string[]; description?: string }
   ) => Promise<ServerProfile | null>
-  scanDropTableCatalogs: () => Promise<{
-    catalogs: import('./types').DropTableCatalogSummary[]
+  scanItemIndex: () => Promise<{
+    items: import('./types').ItemIndexEntry[]
     warnings: string[]
-    sourceDir: string
+    sourcePath: string
   }>
-  updateDropTablesConfig: (
+  listDropTableLibrary: () => Promise<import('./types').DropTableLibraryEntry[]>
+  createDropTable: (input?: { name?: string; description?: string }) => Promise<import('./types').DropTableLibraryEntry>
+  updateDropTable: (input: {
+    id: string
+    name?: string
+    description?: string
+    filterMinPrice?: number
+    filterMaxPrice?: number
+    selectedItems?: string[]
+    itemOverrides?: Record<string, import('./types').DropTableItemOverride>
+  }) => Promise<import('./types').DropTableLibraryEntry>
+  deleteDropTable: (id: string) => Promise<import('./types').DropTableLibraryDeleteResult>
+  updateServerDropTables: (
     serverId: string,
-    payload: { config: import('./types').DropTablesConfig }
+    payload: { libraryTableIds: string[] }
   ) => Promise<ServerProfile | null>
   buildConfigs: (
     serverId: string,

@@ -37,6 +37,23 @@ export async function initDataDirectory(): Promise<void> {
   }
 }
 
+function normalizeDropTablesOnProfile(profile: ServerProfile): void {
+  const dt = profile.dropTables as unknown
+  if (!dt || typeof dt !== 'object') {
+    profile.dropTables = { libraryTableIds: [] }
+    return
+  }
+  if ('libraryTableIds' in dt && Array.isArray((dt as { libraryTableIds: unknown }).libraryTableIds)) {
+    profile.dropTables = {
+      libraryTableIds: (dt as { libraryTableIds: unknown[] }).libraryTableIds.filter(
+        (x): x is string => typeof x === 'string'
+      ),
+    }
+    return
+  }
+  profile.dropTables = { libraryTableIds: [] }
+}
+
 export function loadServerProfile(serverId: string): ServerProfile | null {
   const profilePath = getServerProfilePath(serverId)
   if (!existsSync(profilePath)) {
@@ -45,7 +62,9 @@ export function loadServerProfile(serverId: string): ServerProfile | null {
 
   try {
     const content = readFileSync(profilePath, 'utf-8')
-    return JSON.parse(content) as ServerProfile
+    const profile = JSON.parse(content) as ServerProfile
+    normalizeDropTablesOnProfile(profile)
+    return profile
   } catch (error) {
     console.error(`Failed to load server profile ${serverId}:`, error)
     return null

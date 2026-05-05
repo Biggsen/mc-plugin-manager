@@ -53,6 +53,39 @@ all_ground_mobs:
 all_aquatic_mobs:
   -
 
-drop-table: {}
+drop-table:
+  armor_and_weapons:
+    - IRON_HELMET:
+        groupid: iron_armor
+        group-limits:
+          cap-per-item: -1
+          cap-total: 2
+          cap-equipped: 2
+        equipped: 0.05
+        chance: 0.005
+    - IRON_CHESTPLATE:
+        groupid: iron_armor
+        equipped: 0.05
+        chance: 0.005
+    - IRON_LEGGINGS:
+        groupid: iron_armor
+        equipped: 0.05
+        chance: 0.005
+    - IRON_BOOTS:
+        groupid: iron_armor
+        equipped: 0.05
+        chance: 0.005
+    - IRON_SWORD:
+        groupid: iron_weapons
+        group-limits:
+          cap-per-item: -1
+          cap-total: 1
+          cap-equipped: 1
+        equipped: 0.05
+        chance: 0.005
+    - IRON_AXE:
+        groupid: iron_weapons
+        equipped: 0.05
+        chance: 0.005
 
 file-version: 12

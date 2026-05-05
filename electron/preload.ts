@@ -14,8 +14,10 @@ import type {
   ComparePreset,
   ComparePresetMutationResult,
   ComparePresetDeleteResult,
-  DropTablesConfig,
-  DropTableCatalogSummary,
+  ItemIndexEntry,
+  DropTableLibraryEntry,
+  DropTableLibraryDeleteResult,
+  DropTableItemOverride,
 } from './types'
 
 // Define the IPC API interface
@@ -58,14 +60,22 @@ export interface ElectronAPI {
     regionId: string,
     updates: { anchors?: string[]; description?: string }
   ) => Promise<ServerProfile | null>
-  scanDropTableCatalogs: () => Promise<{
-    catalogs: DropTableCatalogSummary[]
-    warnings: string[]
-    sourceDir: string
-  }>
-  updateDropTablesConfig: (
+  scanItemIndex: () => Promise<{ items: ItemIndexEntry[]; warnings: string[]; sourcePath: string }>
+  listDropTableLibrary: () => Promise<DropTableLibraryEntry[]>
+  createDropTable: (input?: { name?: string; description?: string }) => Promise<DropTableLibraryEntry>
+  updateDropTable: (input: {
+    id: string
+    name?: string
+    description?: string
+    filterMinPrice?: number
+    filterMaxPrice?: number
+    selectedItems?: string[]
+    itemOverrides?: Record<string, DropTableItemOverride>
+  }) => Promise<DropTableLibraryEntry>
+  deleteDropTable: (id: string) => Promise<DropTableLibraryDeleteResult>
+  updateServerDropTables: (
     serverId: string,
-    payload: { config: DropTablesConfig }
+    payload: { libraryTableIds: string[] }
   ) => Promise<ServerProfile | null>
   
   // Build
@@ -152,11 +162,22 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.invoke('update-onboarding', serverId, onboarding),
   updateRegionLoreBook: (serverId: string, regionId: string, updates: { anchors?: string[]; description?: string }) =>
     ipcRenderer.invoke('update-region-lore-book', serverId, regionId, updates),
-  scanDropTableCatalogs: () => ipcRenderer.invoke('scan-drop-table-catalogs'),
-  updateDropTablesConfig: (
-    serverId: string,
-    payload: { config: DropTablesConfig }
-  ) => ipcRenderer.invoke('update-drop-tables-config', serverId, payload),
+  scanItemIndex: () => ipcRenderer.invoke('scan-item-index'),
+  listDropTableLibrary: () => ipcRenderer.invoke('list-drop-table-library'),
+  createDropTable: (input?: { name?: string; description?: string }) =>
+    ipcRenderer.invoke('create-drop-table', input),
+  updateDropTable: (input: {
+    id: string
+    name?: string
+    description?: string
+    filterMinPrice?: number
+    filterMaxPrice?: number
+    selectedItems?: string[]
+    itemOverrides?: Record<string, DropTableItemOverride>
+  }) => ipcRenderer.invoke('update-drop-table', input),
+  deleteDropTable: (id: string) => ipcRenderer.invoke('delete-drop-table', id),
+  updateServerDropTables: (serverId: string, payload: { libraryTableIds: string[] }) =>
+    ipcRenderer.invoke('update-server-drop-tables', serverId, payload),
   buildConfigs: (
     serverId: string,
     inputs: {

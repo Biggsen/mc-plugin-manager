@@ -1,7 +1,7 @@
 const yaml = require('yaml')
 const { readFileSync } = require('fs')
 
-import type { DropTablesConfig, DropTableCatalogSummary } from './types'
+import type { ResolvedDropTable } from './types'
 
 interface GeneratedCustomDrops {
   dropTables: Record<string, unknown[]>
@@ -12,9 +12,10 @@ function clamp(n: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, n))
 }
 
+/** Baseline per-item chance from economy value: softer curve + higher floor than v1. */
 function computeChanceFromUnitBuy(unitBuy: number): number {
-  const chance = 0.45 / Math.pow(unitBuy, 0.85)
-  return clamp(chance, 0.0005, 0.15)
+  const chance = 0.9 / Math.pow(unitBuy, 0.72)
+  return clamp(chance, 0.001, 0.15)
 }
 
 function normalizeItemId(raw: string): string {
@@ -39,18 +40,23 @@ function parseEnchantedBookEntry(itemId: string): { enchantment: string; level: 
   return { enchantment, level }
 }
 
+function parseDifficultyGroupId(tableName: string): string | undefined {
+  const lower = String(tableName ?? '').trim().toLowerCase()
+  const match = /^(easy|normal|hard|severe|deadly)_drops$/.exec(lower)
+  return match ? match[1] : undefined
+}
+
 function toItemNode(
   itemId: string,
   override?: { chance?: number; amount?: number | string },
   unitBuy?: number,
-  includeRareGroupLimit?: boolean,
-  includeCommonGroupLimit?: boolean
+  groupId?: string,
+  includeGroupLimit?: boolean
 ): Record<string, Record<string, unknown>> {
   const normalized = normalizeItemId(itemId)
   const enchantedBook = parseEnchantedBookEntry(normalized)
   const outputItemId = enchantedBook ? 'ENCHANTED_BOOK' : normalized
   const entry: Record<string, unknown> = {}
-  const isRare = typeof unitBuy === 'number' && Number.isFinite(unitBuy) && unitBuy >= 100
   if (typeof override?.chance === 'number') {
     entry.chance = override.chance
   } else if (typeof unitBuy === 'number' && Number.isFinite(unitBuy) && unitBuy > 0) {
@@ -60,16 +66,9 @@ function toItemNode(
   if (override?.amount !== undefined && override?.amount !== 1 && override?.amount !== '1') {
     entry.amount = override.amount
   }
-  if (isRare) {
-    entry.groupid = 'rare'
-    if (includeRareGroupLimit) {
-      entry['group-limits'] = {
-        'cap-total': 1,
-      }
-    }
-  } else {
-    entry.groupid = 'common'
-    if (includeCommonGroupLimit) {
+  if (groupId) {
+    entry.groupid = groupId
+    if (includeGroupLimit) {
       entry['group-limits'] = {
         'cap-total': 1,
       }
@@ -83,61 +82,32 @@ function toItemNode(
   return { [outputItemId]: entry }
 }
 
-export function generateOwnedLMCustomDropTables(
-  config: DropTablesConfig | undefined,
-  catalogs: DropTableCatalogSummary[]
-): GeneratedCustomDrops {
+export function generateOwnedLMCustomDropTables(resolvedTables: ResolvedDropTable[]): GeneratedCustomDrops {
   const warnings: string[] = []
   const dropTables: Record<string, unknown[]> = {}
-  const catalogItemsByTable = new Map<string, Set<string>>()
-  const catalogValuesByTable = new Map<string, Record<string, number | undefined>>()
 
-  for (const catalog of catalogs) {
-    catalogItemsByTable.set(catalog.tableName, new Set(catalog.itemIds))
-    catalogValuesByTable.set(catalog.tableName, catalog.itemValues ?? {})
-  }
-
-  const tables = config?.tables ?? {}
-  for (const tableName of Object.keys(tables)) {
-    const table = tables[tableName]
-    if (!table || !Array.isArray(table.selectedItems) || table.selectedItems.length === 0) {
+  for (const rt of resolvedTables) {
+    const tableName = rt.tableName
+    if (!tableName || !Array.isArray(rt.selectedItems) || rt.selectedItems.length === 0) {
       continue
     }
-    const knownItems = catalogItemsByTable.get(tableName)
-    if (!knownItems) {
-      warnings.push(`Skipping table "${tableName}": no valid catalog file found`)
-      continue
-    }
+    const itemValues = rt.itemValues ?? {}
+    const groupId = parseDifficultyGroupId(tableName)
 
-    const normalizedItemIds = table.selectedItems
-      .map((rawId: string) => normalizeItemId(rawId))
-      .filter((itemId: string) => {
-        if (!knownItems.has(itemId)) {
-          warnings.push(`Skipping item "${itemId}" in table "${tableName}": not found in catalog`)
-          return false
-        }
-        return true
-      })
-      .sort((a: string, b: string) => a.localeCompare(b))
+    const normalizedItemIds = [...new Set(rt.selectedItems.map((rawId: string) => normalizeItemId(rawId)))].sort(
+      (a: string, b: string) => a.localeCompare(b)
+    )
     const entries: unknown[] = []
-    let rareGroupLimitAssigned = false
-    let commonGroupLimitAssigned = false
+    let groupLimitAssigned = false
     for (const itemId of normalizedItemIds) {
-        const rawOverride = table.itemOverrides?.[itemId] || table.itemOverrides?.[itemId.toLowerCase()]
-        const unitBuy = catalogValuesByTable.get(tableName)?.[itemId]
-        const isRare = typeof unitBuy === 'number' && Number.isFinite(unitBuy) && unitBuy >= 100
-        const includeRareGroupLimit = isRare && !rareGroupLimitAssigned
-        const includeCommonGroupLimit = !isRare && !commonGroupLimitAssigned
-        if (includeRareGroupLimit) {
-          rareGroupLimitAssigned = true
-        }
-        if (includeCommonGroupLimit) {
-          commonGroupLimitAssigned = true
-        }
-        entries.push(
-          toItemNode(itemId, rawOverride, unitBuy, includeRareGroupLimit, includeCommonGroupLimit)
-        )
+      const rawOverride = rt.itemOverrides?.[itemId] || rt.itemOverrides?.[itemId.toLowerCase()]
+      const unitBuy = itemValues[itemId]
+      const includeGroupLimit = Boolean(groupId) && !groupLimitAssigned
+      if (includeGroupLimit) {
+        groupLimitAssigned = true
       }
+      entries.push(toItemNode(itemId, rawOverride, unitBuy, groupId, includeGroupLimit))
+    }
 
     if (entries.length > 0) {
       dropTables[tableName] = entries
