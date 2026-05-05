@@ -46,8 +46,6 @@ interface ElectronAPI {
     id: string
     name?: string
     description?: string
-    filterMinPrice?: number
-    filterMaxPrice?: number
     selectedItems?: string[]
     itemOverrides?: Record<string, import('./types').DropTableItemOverride>
   }) => Promise<import('./types').DropTableLibraryEntry>

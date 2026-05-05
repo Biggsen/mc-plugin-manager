@@ -32,7 +32,12 @@ function sanitizeOverrides(overrides: Record<string, DropTableItemOverride>): Re
     if (!nk) continue
     const row: DropTableItemOverride = {}
     if (typeof v?.chance === 'number' && Number.isFinite(v.chance)) row.chance = v.chance
-    if (v?.amount !== undefined && v?.amount !== '') row.amount = v.amount
+    if (v?.amount !== undefined) {
+      const amount = String(v.amount).trim()
+      if (amount.length > 0) row.amount = amount
+    }
+    if (typeof v?.minLevel === 'number' && Number.isFinite(v.minLevel)) row.minLevel = v.minLevel
+    if (typeof v?.maxLevel === 'number' && Number.isFinite(v.maxLevel)) row.maxLevel = v.maxLevel
     if (Object.keys(row).length) out[nk] = row
   }
   return out
@@ -83,8 +88,6 @@ export function registerDropTableLibraryHandlers(): void {
         id: string
         name?: string
         description?: string
-        filterMinPrice?: number
-        filterMaxPrice?: number
         selectedItems?: string[]
         itemOverrides?: Record<string, DropTableItemOverride>
       }
@@ -105,18 +108,6 @@ export function registerDropTableLibraryHandlers(): void {
       }
       if (input.description !== undefined) {
         next.description = input.description
-      }
-      if (Object.prototype.hasOwnProperty.call(input, 'filterMinPrice')) {
-        next.filterMinPrice =
-          typeof input.filterMinPrice === 'number' && Number.isFinite(input.filterMinPrice)
-            ? Math.max(0, input.filterMinPrice)
-            : undefined
-      }
-      if (Object.prototype.hasOwnProperty.call(input, 'filterMaxPrice')) {
-        next.filterMaxPrice =
-          typeof input.filterMaxPrice === 'number' && Number.isFinite(input.filterMaxPrice)
-            ? Math.max(0, input.filterMaxPrice)
-            : undefined
       }
       if (input.selectedItems !== undefined) {
         next.selectedItems = [

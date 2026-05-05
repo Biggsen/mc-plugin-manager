@@ -8,15 +8,7 @@ interface GeneratedCustomDrops {
   warnings: string[]
 }
 
-function clamp(n: number, min: number, max: number): number {
-  return Math.min(max, Math.max(min, n))
-}
-
-/** Baseline per-item chance from economy value: softer curve + higher floor than v1. */
-function computeChanceFromUnitBuy(unitBuy: number): number {
-  const chance = 0.9 / Math.pow(unitBuy, 0.72)
-  return clamp(chance, 0.001, 0.15)
-}
+const DEFAULT_ITEM_CHANCE = 0.01 // 1.00%
 
 function normalizeItemId(raw: string): string {
   return raw.trim().replace(/[^a-zA-Z0-9_]/g, '_').replace(/_+/g, '_').toUpperCase()
@@ -48,8 +40,7 @@ function parseDifficultyGroupId(tableName: string): string | undefined {
 
 function toItemNode(
   itemId: string,
-  override?: { chance?: number; amount?: number | string },
-  unitBuy?: number,
+  override?: { chance?: number; amount?: string; minLevel?: number; maxLevel?: number },
   groupId?: string,
   includeGroupLimit?: boolean
 ): Record<string, Record<string, unknown>> {
@@ -59,12 +50,17 @@ function toItemNode(
   const entry: Record<string, unknown> = {}
   if (typeof override?.chance === 'number') {
     entry.chance = override.chance
-  } else if (typeof unitBuy === 'number' && Number.isFinite(unitBuy) && unitBuy > 0) {
-    // Derived baseline chance from item economy value.
-    entry.chance = Number(computeChanceFromUnitBuy(unitBuy).toFixed(6))
+  } else {
+    entry.chance = DEFAULT_ITEM_CHANCE
   }
-  if (override?.amount !== undefined && override?.amount !== 1 && override?.amount !== '1') {
+  if (typeof override?.amount === 'string' && override.amount.trim() !== '' && override.amount !== '1') {
     entry.amount = override.amount
+  }
+  if (typeof override?.minLevel === 'number' && Number.isFinite(override.minLevel)) {
+    entry.minLevel = override.minLevel
+  }
+  if (typeof override?.maxLevel === 'number' && Number.isFinite(override.maxLevel)) {
+    entry.maxLevel = override.maxLevel
   }
   if (groupId) {
     entry.groupid = groupId
@@ -91,7 +87,6 @@ export function generateOwnedLMCustomDropTables(resolvedTables: ResolvedDropTabl
     if (!tableName || !Array.isArray(rt.selectedItems) || rt.selectedItems.length === 0) {
       continue
     }
-    const itemValues = rt.itemValues ?? {}
     const groupId = parseDifficultyGroupId(tableName)
 
     const normalizedItemIds = [...new Set(rt.selectedItems.map((rawId: string) => normalizeItemId(rawId)))].sort(
@@ -101,12 +96,11 @@ export function generateOwnedLMCustomDropTables(resolvedTables: ResolvedDropTabl
     let groupLimitAssigned = false
     for (const itemId of normalizedItemIds) {
       const rawOverride = rt.itemOverrides?.[itemId] || rt.itemOverrides?.[itemId.toLowerCase()]
-      const unitBuy = itemValues[itemId]
       const includeGroupLimit = Boolean(groupId) && !groupLimitAssigned
       if (includeGroupLimit) {
         groupLimitAssigned = true
       }
-      entries.push(toItemNode(itemId, rawOverride, unitBuy, groupId, includeGroupLimit))
+      entries.push(toItemNode(itemId, rawOverride, groupId, includeGroupLimit))
     }
 
     if (entries.length > 0) {

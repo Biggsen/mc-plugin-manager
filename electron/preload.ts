@@ -67,8 +67,6 @@ export interface ElectronAPI {
     id: string
     name?: string
     description?: string
-    filterMinPrice?: number
-    filterMaxPrice?: number
     selectedItems?: string[]
     itemOverrides?: Record<string, DropTableItemOverride>
   }) => Promise<DropTableLibraryEntry>
@@ -170,8 +168,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
     id: string
     name?: string
     description?: string
-    filterMinPrice?: number
-    filterMaxPrice?: number
     selectedItems?: string[]
     itemOverrides?: Record<string, DropTableItemOverride>
   }) => ipcRenderer.invoke('update-drop-table', input),

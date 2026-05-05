@@ -265,7 +265,9 @@ export interface BuildReport {
 
 export interface DropTableItemOverride {
   chance?: number
-  amount?: number | string
+  amount?: string
+  minLevel?: number
+  maxLevel?: number
 }
 
 /** Per-server: references into the global drop table library. */
@@ -279,10 +281,6 @@ export interface DropTableLibraryEntry {
   /** LevelledMobs `drop-table` key in customdrops.yml (unique in library). */
   name: string
   description?: string
-  /** Optional saved filter preferences for editor prefill. */
-  filterMinPrice?: number
-  /** Optional saved filter preferences for editor prefill. */
-  filterMaxPrice?: number
   selectedItems: string[]
   itemOverrides?: Record<string, DropTableItemOverride>
   createdAt: string

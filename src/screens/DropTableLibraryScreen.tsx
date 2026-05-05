@@ -102,11 +102,6 @@ export function DropTableLibraryScreen({ onCreateTable, onEditTable }: DropTable
               <Text size="sm" c="dimmed">
                 {selected.description?.trim() || 'No description'}
               </Text>
-              <Text size="sm" c="dimmed">
-                Price filter: min{' '}
-                {typeof selected.filterMinPrice === 'number' ? `$${selected.filterMinPrice}` : 'Any'} / max{' '}
-                {typeof selected.filterMaxPrice === 'number' ? `$${selected.filterMaxPrice}` : 'Any'}
-              </Text>
               <Text size="sm">Contains {selected.selectedItems.length} items</Text>
 
               <Paper withBorder p="xs">
