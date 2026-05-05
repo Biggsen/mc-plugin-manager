@@ -1,6 +1,4 @@
 defaults:
-  chance: 0.2
-  overall-chance: 0.4
   amount: 1
   equipped: 0.0
   equip-offhand: false
@@ -10,18 +8,6 @@ defaults:
   nomultiplier: true
   nospawner: false
   use-chunk-kill-max: true
-  overall-permission: ''
-  override: false
-  minLevel: -1
-  maxLevel: -1
-  item-flags: ''
-  groupid: ''
-  group-limits:
-    cap-select: 1
-    cap-per-item: -1
-    cap-total: -1
-    cap-equipped: -1
-    retries: 0
   run-on-spawn: false
   run-on-death: true
   delay: 0
@@ -55,37 +41,245 @@ all_aquatic_mobs:
 
 drop-table:
   armor_and_weapons:
-    - IRON_HELMET:
-        groupid: iron_armor
+    - LEATHER_HELMET:
+        groupid: leather_armor
         group-limits:
           cap-per-item: -1
           cap-total: 2
           cap-equipped: 2
         equipped: 0.05
         chance: 0.005
+        overall-chance: 1
+        minLevel: 1
+        maxLevel: 25
+    - LEATHER_CHESTPLATE:
+        groupid: leather_armor
+        equipped: 0.05
+        chance: 0.005
+        minLevel: 1
+        maxLevel: 25
+    - LEATHER_LEGGINGS:
+        groupid: leather_armor
+        equipped: 0.05
+        chance: 0.005
+        minLevel: 1
+        maxLevel: 25
+    - LEATHER_BOOTS:
+        groupid: leather_armor
+        equipped: 0.05
+        chance: 0.005
+        minLevel: 1
+        maxLevel: 25
+    - COPPER_HELMET:
+        groupid: copper_armor
+        group-limits:
+          cap-per-item: -1
+          cap-total: 2
+          cap-equipped: 2
+        equipped: 0.05
+        chance: 0.005
+        overall-chance: 1
+        minLevel: 8
+        maxLevel: 35
+    - COPPER_CHESTPLATE:
+        groupid: copper_armor
+        equipped: 0.05
+        chance: 0.005
+        minLevel: 8
+        maxLevel: 35
+    - COPPER_LEGGINGS:
+        groupid: copper_armor
+        equipped: 0.05
+        chance: 0.005
+        minLevel: 8
+        maxLevel: 35
+    - COPPER_BOOTS:
+        groupid: copper_armor
+        equipped: 0.05
+        chance: 0.005
+        minLevel: 8
+        maxLevel: 35
+    - IRON_HELMET:
+        groupid: iron_armor
+        group-limits:
+          cap-per-item: -1
+          cap-total: 3
+          cap-equipped: 3
+        equipped: 0.05
+        chance: 0.005
+        overall-chance: 1
+        minLevel: 18
+        maxLevel: 50
     - IRON_CHESTPLATE:
         groupid: iron_armor
         equipped: 0.05
         chance: 0.005
+        minLevel: 18
+        maxLevel: 50
     - IRON_LEGGINGS:
         groupid: iron_armor
         equipped: 0.05
         chance: 0.005
+        minLevel: 18
+        maxLevel: 50
     - IRON_BOOTS:
         groupid: iron_armor
         equipped: 0.05
         chance: 0.005
-    - IRON_SWORD:
-        groupid: iron_weapons
+        minLevel: 18
+        maxLevel: 50
+    - GOLDEN_HELMET:
+        groupid: golden_armor
+        group-limits:
+          cap-per-item: -1
+          cap-total: 3
+          cap-equipped: 3
+        equipped: 0.05
+        chance: 0.005
+        overall-chance: 1
+        minLevel: 30
+        maxLevel: 50
+    - GOLDEN_CHESTPLATE:
+        groupid: golden_armor
+        equipped: 0.05
+        chance: 0.005
+        minLevel: 30
+        maxLevel: 50
+    - GOLDEN_LEGGINGS:
+        groupid: golden_armor
+        equipped: 0.05
+        chance: 0.005
+        minLevel: 30
+        maxLevel: 50
+    - GOLDEN_BOOTS:
+        groupid: golden_armor
+        equipped: 0.05
+        chance: 0.005
+        minLevel: 30
+        maxLevel: 50
+    - DIAMOND_HELMET:
+        groupid: diamond_armor
+        group-limits:
+          cap-per-item: -1
+          cap-total: 2
+          cap-equipped: 2
+        equipped: 0.03
+        chance: 0.003
+        overall-chance: 1
+        minLevel: 40
+        maxLevel: 50
+    - DIAMOND_CHESTPLATE:
+        groupid: diamond_armor
+        equipped: 0.03
+        chance: 0.003
+        minLevel: 40
+        maxLevel: 50
+    - DIAMOND_LEGGINGS:
+        groupid: diamond_armor
+        equipped: 0.03
+        chance: 0.003
+        minLevel: 40
+        maxLevel: 50
+    - DIAMOND_BOOTS:
+        groupid: diamond_armor
+        equipped: 0.03
+        chance: 0.003
+        minLevel: 40
+        maxLevel: 50
+    - WOODEN_SWORD:
+        groupid: weapons_tiers
         group-limits:
           cap-per-item: -1
           cap-total: 1
           cap-equipped: 1
         equipped: 0.05
         chance: 0.005
-    - IRON_AXE:
-        groupid: iron_weapons
+        overall-chance: 1
+        minLevel: 1
+        maxLevel: 12
+    - WOODEN_AXE:
+        groupid: weapons_tiers
         equipped: 0.05
         chance: 0.005
+        minLevel: 1
+        maxLevel: 12
+    - WOODEN_SPEAR:
+        groupid: weapons_tiers
+        equipped: 0.05
+        chance: 0.005
+        minLevel: 1
+        maxLevel: 12
+    - COPPER_SWORD:
+        groupid: weapons_tiers
+        equipped: 0.05
+        chance: 0.005
+        minLevel: 6
+        maxLevel: 22
+    - COPPER_AXE:
+        groupid: weapons_tiers
+        equipped: 0.05
+        chance: 0.005
+        minLevel: 6
+        maxLevel: 22
+    - COPPER_SPEAR:
+        groupid: weapons_tiers
+        equipped: 0.03
+        chance: 0.003
+        minLevel: 6
+        maxLevel: 22
+    - IRON_SWORD:
+        groupid: weapons_tiers
+        equipped: 0.05
+        chance: 0.005
+        minLevel: 18
+        maxLevel: 45
+    - IRON_AXE:
+        groupid: weapons_tiers
+        equipped: 0.05
+        chance: 0.005
+        minLevel: 18
+        maxLevel: 45
+    - IRON_SPEAR:
+        groupid: weapons_tiers
+        equipped: 0.03
+        chance: 0.003
+        minLevel: 18
+        maxLevel: 45
+    - GOLDEN_SWORD:
+        groupid: weapons_tiers
+        equipped: 0.05
+        chance: 0.005
+        minLevel: 35
+        maxLevel: 50
+    - GOLDEN_AXE:
+        groupid: weapons_tiers
+        equipped: 0.05
+        chance: 0.005
+        minLevel: 35
+        maxLevel: 50
+    - GOLDEN_SPEAR:
+        groupid: weapons_tiers
+        equipped: 0.03
+        chance: 0.003
+        minLevel: 35
+        maxLevel: 50
+    - DIAMOND_SWORD:
+        groupid: weapons_tiers
+        equipped: 0.03
+        chance: 0.003
+        minLevel: 40
+        maxLevel: 50
+    - DIAMOND_AXE:
+        groupid: weapons_tiers
+        equipped: 0.03
+        chance: 0.003
+        minLevel: 40
+        maxLevel: 50
+    - DIAMOND_SPEAR:
+        groupid: weapons_tiers
+        equipped: 0.03
+        chance: 0.003
+        minLevel: 40
+        maxLevel: 50
 
 file-version: 12
