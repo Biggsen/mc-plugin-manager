@@ -824,7 +824,7 @@ export function DropTableEditorScreen({ tableId, onBack, onSaved }: DropTableEdi
                       <Group gap={4} w={82} wrap="nowrap">
                         <Button
                           size="compact-xs"
-                          variant="subtle"
+                          variant="default"
                           px={0}
                           miw={16}
                           onClick={() => nudgeItemChance(itemId, -CHANCE_STEP)}
@@ -836,7 +836,7 @@ export function DropTableEditorScreen({ tableId, onBack, onSaved }: DropTableEdi
                         </Text>
                         <Button
                           size="compact-xs"
-                          variant="subtle"
+                          variant="default"
                           px={0}
                           miw={16}
                           onClick={() => nudgeItemChance(itemId, CHANCE_STEP)}
