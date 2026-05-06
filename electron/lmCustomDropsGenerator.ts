@@ -32,12 +32,6 @@ function parseEnchantedBookEntry(itemId: string): { enchantment: string; level: 
   return { enchantment, level }
 }
 
-function parseDifficultyGroupId(tableName: string): string | undefined {
-  const lower = String(tableName ?? '').trim().toLowerCase()
-  const match = /^(easy|normal|hard|severe|deadly)_drops$/.exec(lower)
-  return match ? match[1] : undefined
-}
-
 function toItemNode(
   itemId: string,
   override?: { chance?: number; amount?: string; minLevel?: number; maxLevel?: number },
@@ -66,7 +60,7 @@ function toItemNode(
     entry.groupid = groupId
     if (includeGroupLimit) {
       entry['group-limits'] = {
-        'cap-total': 1,
+        'cap-select': 1,
       }
     }
   }
@@ -93,17 +87,17 @@ export function generateOwnedLMCustomDropTables(resolvedTables: ResolvedDropTabl
             override: rt.itemOverrides?.[itemId] ?? rt.itemOverrides?.[itemId.toLowerCase()],
           }))
 
-    if (!tableName || entryRows.length === 0) {
+    const groupId = String(tableName ?? '').trim()
+    if (!groupId || entryRows.length === 0) {
       continue
     }
-    const groupId = parseDifficultyGroupId(tableName)
     const entries: unknown[] = []
     let groupLimitAssigned = false
     for (const row of entryRows) {
       const itemId = normalizeItemId(String(row.itemId ?? ''))
       if (!itemId) continue
       const rawOverride = row.override ?? rt.itemOverrides?.[itemId] ?? rt.itemOverrides?.[itemId.toLowerCase()]
-      const includeGroupLimit = Boolean(groupId) && !groupLimitAssigned
+      const includeGroupLimit = !groupLimitAssigned
       if (includeGroupLimit) {
         groupLimitAssigned = true
       }
