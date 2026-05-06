@@ -91,9 +91,6 @@ export function generateOwnedLMRules(
         worlds: worldName,
         'worldguard-regions': region.id,
       },
-      settings: {
-        'use-droptable-id': `${difficulty}_drops`,
-      },
     }
 
     result.regionBandRules.push(generatedRule)
