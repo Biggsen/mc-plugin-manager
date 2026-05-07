@@ -451,6 +451,27 @@ export function DropTableEditorScreen({ tableId, onBack, onSaved }: DropTableEdi
     )
   }
 
+  function nudgeLevelChance(level: 1 | 2 | 3 | 4 | 5, delta: number) {
+    setSelectedEntriesDraft((prev) =>
+      prev.map((row) => {
+        const band = inferLevelBand(row.override?.minLevel, row.override?.maxLevel)
+        if (band !== level) return row
+        const baseChance =
+          typeof row.override?.chance === 'number' && Number.isFinite(row.override.chance)
+            ? row.override.chance
+            : DEFAULT_ITEM_CHANCE
+        const nextChance = clamp(baseChance + delta, 0, 1)
+        return {
+          ...row,
+          override: {
+            ...(row.override ?? {}),
+            chance: Number(nextChance.toFixed(6)),
+          },
+        }
+      })
+    )
+  }
+
   function setItemLevelBand(entryId: string, level: 1 | 2 | 3 | 4 | 5) {
     const band = LEVEL_BANDS.find((b) => b.level === level)
     if (!band) return
@@ -785,6 +806,34 @@ export function DropTableEditorScreen({ tableId, onBack, onSaved }: DropTableEdi
               }))}
               w={220}
             />
+            <Group gap={4} mb={6}>
+              <Button
+                size="compact-xs"
+                variant="default"
+                disabled={!visibleLevelFilter}
+                onClick={() => {
+                  const level = Number(visibleLevelFilter)
+                  if (!Number.isFinite(level) || level < 1 || level > 5) return
+                  nudgeLevelChance(level as 1 | 2 | 3 | 4 | 5, -CHANCE_STEP)
+                }}
+                title="Decrease all item chances in this level by 0.10%"
+              >
+                -0.10%
+              </Button>
+              <Button
+                size="compact-xs"
+                variant="default"
+                disabled={!visibleLevelFilter}
+                onClick={() => {
+                  const level = Number(visibleLevelFilter)
+                  if (!Number.isFinite(level) || level < 1 || level > 5) return
+                  nudgeLevelChance(level as 1 | 2 | 3 | 4 | 5, CHANCE_STEP)
+                }}
+                title="Increase all item chances in this level by 0.10%"
+              >
+                +0.10%
+              </Button>
+            </Group>
             {visibleLevelFilter && (
               <Text size="xs" c="dimmed" mb={6}>
                 Preview filter only (saved data unchanged)
