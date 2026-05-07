@@ -36,52 +36,49 @@ presets:
     name: 'LVL Strategy - Easy'
     strategies:
       weighted-random:
-        1-3: 6
-        4-6: 4
-        7-10: 2
-        11-14: 1
+        1-2: 6
+        3-4: 4
+        5-6: 2
 
   lvlstrategy-normal:
     name: 'LVL Strategy - Normal'
     strategies:
       weighted-random:
-        8-10: 2
-        11-14: 6
-        15-18: 4
-        19-20: 2
-        21-24: 1
+        4-5: 5
+        6-7: 5
+        8-9: 3
+        10-12: 2
 
   lvlstrategy-hard:
     name: 'LVL Strategy - Hard'
     strategies:
       weighted-random:
-        18-20: 2
-        21-24: 6
-        25-28: 4
-        29-30: 2
-        31-34: 1
+        8-10: 4
+        11-13: 5
+        14-16: 4
+        17-20: 3
+        21-30: 1
 
   lvlstrategy-severe:
     name: 'LVL Strategy - Severe'
     strategies:
       weighted-random:
-        28-30: 2
-        31-34: 6
-        35-38: 4
-        39-40: 2
-        41-45: 1
+        15-18: 4
+        19-22: 5
+        23-26: 4
+        27-30: 3
+        31-40: 2
 
   lvlstrategy-deadly:
     name: 'LVL Strategy - Deadly'
     strategies:
       weighted-random:
-        38-40: 2
-        41-44: 6
-        45-47: 4
+        30-34: 4
+        35-39: 5
+        40-44: 4
+        45-47: 3
         48-49: 2
         50-50: 1
-
-
 
 #
 #   ---------------  -  ------------------------------
