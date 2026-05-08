@@ -21,9 +21,8 @@ const {
 } = require('../ceGenerator')
 const { generateOwnedTABSections, mergeTABConfig } = require('../tabGenerator')
 const { generateOwnedLMRules, mergeLMConfig } = require('../lmGenerator')
-const {
-  loadBundledDropTableCatalogs,
-} = require('../lmCustomDropsCatalog')
+const { resolveDropTablesForServer, allLibraryTableNames } = require('../dropTableResolve')
+const { loadBundledItemIndex } = require('../itemIndex')
 const {
   generateOwnedLMCustomDropTables,
   mergeLMCustomDropsConfig,
@@ -181,23 +180,13 @@ export function buildPluginContent(
       return { content, configPath, isDefault }
     }
     case 'lm': {
-      const { catalogs } = loadBundledDropTableCatalogs()
-      const catalogTableIds = new Set(catalogs.map((catalog: { tableName: string }) => catalog.tableName))
-      const configuredTables = profile.dropTables?.tables ?? {}
-      const availableDropTableIds = new Set(
-        Object.keys(configuredTables).filter((tableName) => {
-          if (!catalogTableIds.has(tableName)) return false
-          const selected = configuredTables[tableName]?.selectedItems
-          return Array.isArray(selected) && selected.length > 0
-        })
-      )
-      const ownedLMRules = generateOwnedLMRules(
-        profile.regions,
-        profile.regionsMeta?.levelledMobs,
-        availableDropTableIds
-      )
+      const ownedLMRules = generateOwnedLMRules(profile.regions, profile.regionsMeta?.levelledMobs)
       const content = mergeLMConfig(configPath, ownedLMRules)
-      return { content, configPath, isDefault }
+      return {
+        content,
+        configPath,
+        isDefault,
+      }
     }
     case 'mc': {
       const hasLore = serverProfileHasLore(profile)
@@ -211,16 +200,16 @@ export function buildPluginContent(
       return { content, configPath, isDefault }
     }
     case 'lmcd': {
-      const { catalogs, warnings } = loadBundledDropTableCatalogs()
-      const dropTablesConfig = profile.dropTables
-      const generated = generateOwnedLMCustomDropTables(dropTablesConfig, catalogs)
-      const ownedDropTables = Object.keys(dropTablesConfig?.tables ?? {})
+      const { warnings: indexWarnings } = loadBundledItemIndex()
+      const { resolved, warnings: resolveWarnings } = resolveDropTablesForServer(profile)
+      const generated = generateOwnedLMCustomDropTables(resolved)
+      const ownedDropTables = allLibraryTableNames()
       const content = mergeLMCustomDropsConfig(configPath, generated, ownedDropTables)
       return {
         content,
         configPath,
         isDefault,
-        warnings: [...warnings, ...generated.warnings],
+        warnings: [...indexWarnings, ...resolveWarnings, ...generated.warnings],
         ownedDropTables,
       }
     }

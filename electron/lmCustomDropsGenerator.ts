@@ -1,21 +1,14 @@
 const yaml = require('yaml')
 const { readFileSync } = require('fs')
 
-import type { DropTablesConfig, DropTableCatalogSummary } from './types'
+import type { ResolvedDropTable } from './types'
 
 interface GeneratedCustomDrops {
   dropTables: Record<string, unknown[]>
   warnings: string[]
 }
 
-function clamp(n: number, min: number, max: number): number {
-  return Math.min(max, Math.max(min, n))
-}
-
-function computeChanceFromUnitBuy(unitBuy: number): number {
-  const chance = 0.45 / Math.pow(unitBuy, 0.85)
-  return clamp(chance, 0.0005, 0.15)
-}
+const DEFAULT_ITEM_CHANCE = 0.01 // 1.00%
 
 function normalizeItemId(raw: string): string {
   return raw.trim().replace(/[^a-zA-Z0-9_]/g, '_').replace(/_+/g, '_').toUpperCase()
@@ -41,37 +34,33 @@ function parseEnchantedBookEntry(itemId: string): { enchantment: string; level: 
 
 function toItemNode(
   itemId: string,
-  override?: { chance?: number; amount?: number | string },
-  unitBuy?: number,
-  includeRareGroupLimit?: boolean,
-  includeCommonGroupLimit?: boolean
+  override?: { chance?: number; amount?: string; minLevel?: number; maxLevel?: number },
+  groupId?: string,
+  includeGroupLimit?: boolean
 ): Record<string, Record<string, unknown>> {
   const normalized = normalizeItemId(itemId)
   const enchantedBook = parseEnchantedBookEntry(normalized)
   const outputItemId = enchantedBook ? 'ENCHANTED_BOOK' : normalized
   const entry: Record<string, unknown> = {}
-  const isRare = typeof unitBuy === 'number' && Number.isFinite(unitBuy) && unitBuy >= 100
   if (typeof override?.chance === 'number') {
     entry.chance = override.chance
-  } else if (typeof unitBuy === 'number' && Number.isFinite(unitBuy) && unitBuy > 0) {
-    // Derived baseline chance from item economy value.
-    entry.chance = Number(computeChanceFromUnitBuy(unitBuy).toFixed(6))
+  } else {
+    entry.chance = DEFAULT_ITEM_CHANCE
   }
-  if (override?.amount !== undefined && override?.amount !== 1 && override?.amount !== '1') {
+  if (typeof override?.amount === 'string' && override.amount.trim() !== '' && override.amount !== '1') {
     entry.amount = override.amount
   }
-  if (isRare) {
-    entry.groupid = 'rare'
-    if (includeRareGroupLimit) {
+  if (typeof override?.minLevel === 'number' && Number.isFinite(override.minLevel)) {
+    entry.minLevel = override.minLevel
+  }
+  if (typeof override?.maxLevel === 'number' && Number.isFinite(override.maxLevel)) {
+    entry.maxLevel = override.maxLevel
+  }
+  if (groupId) {
+    entry.groupid = groupId
+    if (includeGroupLimit) {
       entry['group-limits'] = {
-        'cap-total': 1,
-      }
-    }
-  } else {
-    entry.groupid = 'common'
-    if (includeCommonGroupLimit) {
-      entry['group-limits'] = {
-        'cap-total': 1,
+        'cap-select': 1,
       }
     }
   }
@@ -83,61 +72,37 @@ function toItemNode(
   return { [outputItemId]: entry }
 }
 
-export function generateOwnedLMCustomDropTables(
-  config: DropTablesConfig | undefined,
-  catalogs: DropTableCatalogSummary[]
-): GeneratedCustomDrops {
+export function generateOwnedLMCustomDropTables(resolvedTables: ResolvedDropTable[]): GeneratedCustomDrops {
   const warnings: string[] = []
   const dropTables: Record<string, unknown[]> = {}
-  const catalogItemsByTable = new Map<string, Set<string>>()
-  const catalogValuesByTable = new Map<string, Record<string, number | undefined>>()
 
-  for (const catalog of catalogs) {
-    catalogItemsByTable.set(catalog.tableName, new Set(catalog.itemIds))
-    catalogValuesByTable.set(catalog.tableName, catalog.itemValues ?? {})
-  }
+  for (const rt of resolvedTables) {
+    const tableName = rt.tableName
+    const entryRows =
+      Array.isArray(rt.selectedEntries) && rt.selectedEntries.length > 0
+        ? rt.selectedEntries
+        : (rt.selectedItems ?? []).map((itemId) => ({
+            entryId: itemId,
+            itemId,
+            override: rt.itemOverrides?.[itemId] ?? rt.itemOverrides?.[itemId.toLowerCase()],
+          }))
 
-  const tables = config?.tables ?? {}
-  for (const tableName of Object.keys(tables)) {
-    const table = tables[tableName]
-    if (!table || !Array.isArray(table.selectedItems) || table.selectedItems.length === 0) {
+    const groupId = String(tableName ?? '').trim()
+    if (!groupId || entryRows.length === 0) {
       continue
     }
-    const knownItems = catalogItemsByTable.get(tableName)
-    if (!knownItems) {
-      warnings.push(`Skipping table "${tableName}": no valid catalog file found`)
-      continue
-    }
-
-    const normalizedItemIds = table.selectedItems
-      .map((rawId: string) => normalizeItemId(rawId))
-      .filter((itemId: string) => {
-        if (!knownItems.has(itemId)) {
-          warnings.push(`Skipping item "${itemId}" in table "${tableName}": not found in catalog`)
-          return false
-        }
-        return true
-      })
-      .sort((a: string, b: string) => a.localeCompare(b))
     const entries: unknown[] = []
-    let rareGroupLimitAssigned = false
-    let commonGroupLimitAssigned = false
-    for (const itemId of normalizedItemIds) {
-        const rawOverride = table.itemOverrides?.[itemId] || table.itemOverrides?.[itemId.toLowerCase()]
-        const unitBuy = catalogValuesByTable.get(tableName)?.[itemId]
-        const isRare = typeof unitBuy === 'number' && Number.isFinite(unitBuy) && unitBuy >= 100
-        const includeRareGroupLimit = isRare && !rareGroupLimitAssigned
-        const includeCommonGroupLimit = !isRare && !commonGroupLimitAssigned
-        if (includeRareGroupLimit) {
-          rareGroupLimitAssigned = true
-        }
-        if (includeCommonGroupLimit) {
-          commonGroupLimitAssigned = true
-        }
-        entries.push(
-          toItemNode(itemId, rawOverride, unitBuy, includeRareGroupLimit, includeCommonGroupLimit)
-        )
+    let groupLimitAssigned = false
+    for (const row of entryRows) {
+      const itemId = normalizeItemId(String(row.itemId ?? ''))
+      if (!itemId) continue
+      const rawOverride = row.override ?? rt.itemOverrides?.[itemId] ?? rt.itemOverrides?.[itemId.toLowerCase()]
+      const includeGroupLimit = !groupLimitAssigned
+      if (includeGroupLimit) {
+        groupLimitAssigned = true
       }
+      entries.push(toItemNode(itemId, rawOverride, groupId, includeGroupLimit))
+    }
 
     if (entries.length > 0) {
       dropTables[tableName] = entries

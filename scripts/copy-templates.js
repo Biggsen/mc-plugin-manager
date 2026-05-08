@@ -7,6 +7,8 @@ const sourceDir = path.join(__dirname, '..', 'reference', 'plugin config files',
 const targetDir = path.join(__dirname, '..', 'dist-electron', 'assets', 'templates')
 const dataSourceDir = path.join(__dirname, '..', 'reference', 'data')
 const dataTargetDir = path.join(__dirname, '..', 'dist-electron', 'assets', 'data')
+/** Single merged item catalog used by drop-table editor / builds (see electron/itemIndex.ts). */
+const ITEM_INDEX_JSON = 'all.json'
 
 // Old monolithic ipc.js in dist-electron shadows ipc/index.js when main uses require('./ipc').
 const staleIpcJs = path.join(__dirname, '..', 'dist-electron', 'ipc.js')
@@ -126,18 +128,23 @@ if (fs.existsSync(guideBooksSourceDir)) {
   }
 }
 
-// Copy bundled drop table catalog JSON files to dist-electron/assets/data
+// Copy merged item index only (packaged app excludes reference/; see scripts/package-electron.js)
 if (!fs.existsSync(dataTargetDir)) {
   fs.mkdirSync(dataTargetDir, { recursive: true })
-}
-if (fs.existsSync(dataSourceDir)) {
-  const dataFiles = fs.readdirSync(dataSourceDir).filter((f) => f.endsWith('.json'))
-  for (const file of dataFiles) {
-    const src = path.join(dataSourceDir, file)
-    const dest = path.join(dataTargetDir, file)
-    fs.copyFileSync(src, dest)
-    console.log(`Copied data file: ${file}`)
+} else {
+  for (const f of fs.readdirSync(dataTargetDir)) {
+    if (f.endsWith('.json') && f !== ITEM_INDEX_JSON) {
+      fs.unlinkSync(path.join(dataTargetDir, f))
+    }
   }
 }
+const itemIndexSrc = path.join(dataSourceDir, ITEM_INDEX_JSON)
+const itemIndexDest = path.join(dataTargetDir, ITEM_INDEX_JSON)
+if (!fs.existsSync(itemIndexSrc)) {
+  console.error(`Error: Item index not found: ${itemIndexSrc}`)
+  process.exit(1)
+}
+fs.copyFileSync(itemIndexSrc, itemIndexDest)
+console.log(`Copied data file: ${ITEM_INDEX_JSON}`)
 
 console.log(`Successfully copied ${copiedCount} template files to ${targetDir}`)

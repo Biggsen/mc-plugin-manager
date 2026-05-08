@@ -82,11 +82,9 @@ export interface ServerProfile {
     worldGuardRegionsNetherWorldFolder?: string
     /** MyCommand Tebex store subdomain (left side of `.tebex.io`). */
     mcTebexSubdomain?: string
-    /** Folder containing item catalog JSON files (e.g. ores.json, drops.json). */
-    dropTablesCatalogDir?: string
   }
-  /** LevelledMobs CustomDrops table customization model. */
-  dropTables?: DropTablesConfig
+  /** Which global drop-table library entries apply to this server (by library entry id). */
+  dropTables?: DropTablesServerAssignment
   /** Per-plugin successful emit serial (1-based), keyed by plugin id. */
   generatorVersions?: Partial<Record<GeneratorVersionKey, number>>
   /** DiscordSRV build inputs (legacy single-target shape). */
@@ -267,24 +265,64 @@ export interface BuildReport {
 
 export interface DropTableItemOverride {
   chance?: number
-  amount?: number | string
+  amount?: string
+  minLevel?: number
+  maxLevel?: number
 }
 
-export interface DropTableDefinition {
+export interface DropTableSelectedEntry {
+  /** Stable row id so duplicate item selections can coexist. */
+  entryId: string
+  itemId: string
+  override?: DropTableItemOverride
+}
+
+/** Per-server: references into the global drop table library. */
+export interface DropTablesServerAssignment {
+  libraryTableIds: string[]
+}
+
+/** One row in the global library (editable in Drop Table Library screen). */
+export interface DropTableLibraryEntry {
+  id: string
+  /** LevelledMobs `drop-table` key in customdrops.yml (unique in library). */
+  name: string
+  description?: string
+  /** Preferred v2 shape: ordered per-instance entries; supports duplicate item ids. */
+  selectedEntries?: DropTableSelectedEntry[]
+  /** Legacy shape retained for compatibility/migration. */
+  selectedItems: string[]
+  /** Legacy shape retained for compatibility/migration. */
+  itemOverrides?: Record<string, DropTableItemOverride>
+  createdAt: string
+  updatedAt: string
+}
+
+/** Bundled `all.json` row for search / economy (normalized item id). */
+export interface ItemIndexEntry {
+  id: string
+  rawKey: string
+  name: string
+  category?: string
+  stack?: number | string
+  unitBuy?: number
+}
+
+/** Resolved for LM / LMCD emit (main process build). */
+export interface ResolvedDropTable {
+  tableName: string
+  libraryEntryId: string
+  selectedEntries?: DropTableSelectedEntry[]
   selectedItems: string[]
   itemOverrides?: Record<string, DropTableItemOverride>
-}
-
-export interface DropTablesConfig {
-  tables: Record<string, DropTableDefinition>
-}
-
-export interface DropTableCatalogSummary {
-  tableName: string
-  sourcePath: string
-  itemIds: string[]
   itemValues: Record<string, number | undefined>
-  itemCount: number
+}
+
+export interface DropTableLibraryDeleteResult {
+  ok: boolean
+  error?: string
+  /** Servers that had this table id removed from their assignment lists. */
+  removedFromServers?: { id: string; name: string }[]
 }
 
 /** Row for build history list (from saved report.json). */

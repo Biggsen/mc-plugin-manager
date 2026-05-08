@@ -1,0 +1,19 @@
+.row {
+  position: absolute;
+  left: 0;
+  right: 0;
+  display: block;
+  cursor: pointer;
+}
+
+.rowUnselected:hover {
+  background-color: rgba(46, 125, 50, 0.2);
+}
+
+.rowOdd {
+  background-color: rgba(55, 55, 55, 0.42);
+}
+
+.rowSelected {
+  background-color: rgba(64, 192, 87, 0.32);
+}

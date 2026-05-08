@@ -40,12 +40,14 @@ interface ServerDetailScreenProps {
   server: ServerProfile
   onBack: () => void
   onServerProfileChange?: (server: ServerProfile) => void
+  onOpenDropTableLibrary?: () => void
 }
 
 export function ServerDetailScreen({
   server: initialServer,
   onBack,
   onServerProfileChange,
+  onOpenDropTableLibrary,
 }: ServerDetailScreenProps) {
   const [server, setServer] = useState<ServerProfile>(initialServer)
   const [activeSection, setActiveSection] = useState<SectionValue>('import')
@@ -312,7 +314,11 @@ export function ServerDetailScreen({
           <OnboardingScreen server={server} onServerUpdate={handleServerUpdate} />
         )}
         {activeSection === 'dropTables' && (
-          <DropTablesScreen server={server} onServerUpdate={handleServerUpdate} />
+          <DropTablesScreen
+            server={server}
+            onServerUpdate={handleServerUpdate}
+            onOpenDropTableLibrary={onOpenDropTableLibrary}
+          />
         )}
         {activeSection === 'build' && (
           <BuildScreen server={server} onServerUpdate={handleServerUpdate} />
