@@ -1,0 +1,476 @@
+Crate:
+  # https://docs.crazycrew.us/docs/plugins/crazycrates/misc/crate-types
+
+  # Make sure to check out the wiki for anything not explained here.
+  # https://docs.crazycrew.us/docs/category/crazycrates
+
+  # See CosmicCrate.yml or CasinoCrate.yml to see how the Cosmic/Casino CrateType works.
+  CrateType: CSGO
+  # Starting amount of keys when the player 1st joins.
+  StartingKeys: 0
+  # The amount of keys required to use the crate.
+  RequiredKeys: 0
+  # Max amount of crates that can be opened at once using /crates mass-open
+  Max-Mass-Open: 10
+  # If the crate shows in the /crates.
+  # If the type is QuickCrate/CrateOnTheGo/FireCracker, They will not work as they require a Physical Crate.
+  InGUI: true
+  # Slot the item is in the GUI.
+  Slot: 15
+  # Enables/Disables the Broadcasts message when they open a crate.
+  OpeningBroadCast: true
+  Permission: false
+  # Message that is broadcast when opening the crate.
+  BroadCast: "%prefix%<bold><gold>%player%</bold><reset> <gray>is opening a <bold><red>Heart Crate.</bold>"
+  # This section is related to commands opening when a crate is opened.
+  opening-command:
+    # If the commands should be sent or not.
+    toggle: false
+    # The commands to run when the crate opens.
+    # Supports all placeholderapi placeholders
+    # Supports %prefix which returns our prefix, %player% which uses the player name
+    commands:
+      - "put your command here."
+  sound:
+    # The sound options when the animation is cycling.
+    cycle-sound:
+      # If sound should be enabled or not.
+      toggle: true
+      # The type of sound to use.
+      # https://minecraft.wiki/w/Sounds.json#Java_Edition_values
+      value: "block.note_block.xylophone"
+      # The volume of the pitch.
+      volume: 1.0
+      # The speed of the sound.
+      pitch: 1.0
+    # The sound options when an item is clicked.
+    click-sound:
+      # If sound should be enabled or not.
+      toggle: true
+      # The type of sound to use. Custom sounds from texture packs are supported!
+      # https://minecraft.wiki/w/Sounds.json#Java_Edition_values
+      value: "ui.button.click"
+      # The volume of the pitch.
+      volume: 1.0
+      # The speed of the sound.
+      pitch: 1.0
+    # The sound options when a crate ends.
+    stop-sound:
+      # If sound should be enabled or not.
+      toggle: true
+      # The type of sound to use. Custom sounds from texture packs are supported!
+      # https://minecraft.wiki/w/Sounds.json#Java_Edition_values
+      value: "entity.player.levelup"
+      # The volume of the pitch.
+      volume: 1.0
+      # The speed of the sound.
+      pitch: 1.0
+  # A default message if the prize doesn't have any Messages
+  # i.e. Messages: [] or the value isn't there.
+  Prize-Message:
+    - "<gray>You have won <red>%reward% <gray>from <red>%crate%."
+  # A list of commands to run by default on every prize.
+  # If you do not want these commands to run, set this to []
+  Prize-Commands: []
+  # Global Settings
+  Settings:
+    # This defines whether we should track how many times players opened this crate
+    # True means track, False means don't track.
+    Tracking-Crate-Opening: false
+    # Handles settings related to the border
+    Border:
+      # Settings related to the glass border
+      Glass-Border:
+        Toggle: true # Should the glass border be enabled?
+    # Broadcast a message to the server
+    Broadcast:
+      # If the messages should be sent.
+      Toggle: false
+      # The messages to broadcast.
+      Messages:
+        - "<red>%player% won the prize <yellow>%reward%."
+      # If the player has this permission, they don't get the broadcast.
+      Permission: ""
+    # Settings related to rewards.
+    Rewards:
+      # Should a yes/no popup be made, to ask if they want to keep the prize?
+      Re-Roll-Spin: false
+      # Should there be a limit to how many times they can re-roll?
+      Permission:
+        # Should this be enabled?
+        Toggle: false
+        # Should this persist restarts? i.e. writes to disk the amount of respins, and reads the amount of respins.
+        Persist: false
+        # This will define how many permissions will be registered to the server per crate.
+        # i.e. crazycrates.respin.<crate_name>.1-20
+        # It will simply register multiple permissions, so it shows up in things like LuckPerms.
+        Max-Cap: 20
+  # Item the crate is in the GUI
+  Item: "lodestone"
+  # The custom model data of the item, -1 is disabled.
+  Custom-Model-Data: -1
+  # The item model, Mojang introduced this in 1.21.4... this replaces custom model data!
+  # Set this to blank for it to do nothing.
+  Model:
+    # The namespace i.e. nexo
+    Namespace: ""
+    # The id i.e. emerald_helmet
+    Id: ""
+  # If the crate in the main /crates is glowing or not.
+  Glowing: false
+  # Name of the item in the GUI.
+  Name: "<bold><red>Heart Crate</bold>"
+  # The lore of the item in the GUI.
+  Lore:
+    - "<gray>Drawn from the heart of the land."
+    - "<gray>Its origin holds greater value."
+    - ""
+    - "<gray>Available keys: <yellow>%keys%"
+    - "<gray>(<yellow>!<gray>) Right click to inspect."
+  Preview:
+    # The name of the inventory for the preview menu.
+    Name: "<red>Heart Crate Preview"
+    # Turn on and off the preview for this crate.
+    Toggle: true
+    # How many lines should the preview be? You can use 1-6.
+    ChestLines: 6
+    Glass:
+      # Turn the glass border in the preview on and off.
+      Toggle: true
+      # The name of the border item.
+      Name: " "
+      # The item that shows in the border. Can be glass or any other item.
+      Item: "gray_stained_glass_pane"
+      # The custom model data of the item, -1 is disabled.
+      Custom-Model-Data: -1
+      # The item model, Mojang introduced this in 1.21.4... this replaces custom model data!
+      # Set this to blank for it to do nothing.
+      Model:
+        # The namespace i.e. nexo
+        Namespace: ""
+        # The id i.e. emerald_helmet
+        Id: ""
+  # Settings related to animations...
+  Animation:
+    # This is only when an animation starts.
+    Name: "Uncovering relics..."
+  PhysicalKey:
+    # Name of the Key.
+    Name: "<bold><green>Heart Crate Key</bold>"
+    # Lore of the Key.
+    Lore:
+      - "<gray>A special Key"
+      - "<gray>For a special Crate."
+    # The item the key is.
+    Item: "lime_dye"
+    # The custom model data of the item, -1 is disabled.
+    Custom-Model-Data: -1
+    # The item model, Mojang introduced this in 1.21.4... this replaces custom model data!
+    # Set this to blank for it to do nothing.
+    Model:
+      # The namespace i.e. nexo
+      Namespace: ""
+      # The id i.e. emerald_helmet
+      Id: ""
+    # Makes the key look enchanted.
+    Glowing: true
+  # Settings for the holograms.
+  Hologram:
+    # Toggle on and off the holograms for the crates.
+    Toggle: true
+    # The height of the hologram above the crate.
+    Height: 1.5
+    # The distance the hologram can be seen.
+    Range: 8
+    # How often should the hologram update? -1 is disabled.
+    Update-Interval: -1
+    # The background color of the hologram. It uses hex colors. This only works with CMI/FancyHolograms
+    # Set the color to transparent if you don't want any color.
+    Color: "transparent"
+    # The message that will be displayed above the crate.
+    # Note: MiniMessage or Color Codes being supported is depending on the 'holograms' plugin.
+    Message:
+      - "<bold><green>Heart Crate</bold>"
+  # All the prizes that can be obtained in the Crate.
+  # These prizes do not require any extra configuration
+  # They will give the prizes based on what's already below.
+  # See the AdvancedExample.yml for a more advanced crate.
+  Prizes:
+    "1":
+      DisplayName: "<white>1x totem of undying"
+      DisplayItem: "totem_of_undying"
+      Settings: { Custom-Model-Data: -1, Model: { Namespace: "", Id: "" } }
+      DisplayAmount: 1
+      Weight: 60
+      Items:
+        - "item:totem_of_undying, amount:1"
+
+    "2":
+      DisplayName: "<white>16x glow ink sac"
+      DisplayItem: "glow_ink_sac"
+      Settings: { Custom-Model-Data: -1, Model: { Namespace: "", Id: "" } }
+      DisplayAmount: 16
+      Weight: 60
+      Items:
+        - "item:glow_ink_sac, amount:16"
+
+    "3":
+      DisplayName: "<white>16x ender pearl"
+      DisplayItem: "ender_pearl"
+      Settings: { Custom-Model-Data: -1, Model: { Namespace: "", Id: "" } }
+      DisplayAmount: 16
+      Weight: 60
+      Items:
+        - "item:ender_pearl, amount:16"
+
+    "4":
+      DisplayName: "<white>4x empty map"
+      DisplayItem: "map"
+      Settings: { Custom-Model-Data: -1, Model: { Namespace: "", Id: "" } }
+      DisplayAmount: 4
+      Weight: 60
+      Items:
+        - "item:map, amount:4"
+
+    "5":
+      DisplayName: "<white>4x lapis lazuli block"
+      DisplayItem: "lapis_block"
+      Settings: { Custom-Model-Data: -1, Model: { Namespace: "", Id: "" } }
+      DisplayAmount: 4
+      Weight: 60
+      Items:
+        - "item:lapis_block, amount:4"
+
+    "6":
+      DisplayName: "<white>8x obsidian"
+      DisplayItem: "obsidian"
+      Settings: { Custom-Model-Data: -1, Model: { Namespace: "", Id: "" } }
+      DisplayAmount: 8
+      Weight: 60
+      Items:
+        - "item:obsidian, amount:8"
+
+    "7":
+      DisplayName: "<white>1x enchanted golden apple"
+      DisplayItem: "enchanted_golden_apple"
+      Settings: { Custom-Model-Data: -1, Model: { Namespace: "", Id: "" } }
+      DisplayAmount: 1
+      Weight: 50
+      Items:
+        - "item:enchanted_golden_apple, amount:1"
+
+    "8":
+      DisplayName: "<white>1x enchanted book (thorns iii)"
+      DisplayItem: "enchanted_book"
+      Settings: { Custom-Model-Data: -1, Model: { Namespace: "", Id: "" } }
+      DisplayAmount: 1
+      Weight: 50
+      Items:
+        - "item:enchanted_book, amount:1, thorns:3"
+
+    "9":
+      DisplayName: "<white>1x netherite ingot"
+      DisplayItem: "netherite_ingot"
+      Settings: { Custom-Model-Data: -1, Model: { Namespace: "", Id: "" } }
+      DisplayAmount: 1
+      Weight: 50
+      Items:
+        - "item:netherite_ingot, amount:1"
+
+    "10":
+      DisplayName: "<white>4x block of iron"
+      DisplayItem: "iron_block"
+      Settings: { Custom-Model-Data: -1, Model: { Namespace: "", Id: "" } }
+      DisplayAmount: 4
+      Weight: 50
+      Items:
+        - "item:iron_block, amount:4"
+
+    "11":
+      DisplayName: "<white>1x shulker box"
+      DisplayItem: "shulker_box"
+      Settings: { Custom-Model-Data: -1, Model: { Namespace: "", Id: "" } }
+      DisplayAmount: 1
+      Weight: 50
+      Items:
+        - "item:shulker_box, amount:1"
+
+    "12":
+      DisplayName: "<white>6x bottle o' enchanting"
+      DisplayItem: "experience_bottle"
+      Settings: { Custom-Model-Data: -1, Model: { Namespace: "", Id: "" } }
+      DisplayAmount: 6
+      Weight: 50
+      Items:
+        - "item:experience_bottle, amount:6"
+
+    "13":
+      DisplayName: "<white>1x enchanted book (smite v)"
+      DisplayItem: "enchanted_book"
+      Settings: { Custom-Model-Data: -1, Model: { Namespace: "", Id: "" } }
+      DisplayAmount: 1
+      Weight: 50
+      Items:
+        - "item:enchanted_book, amount:1, smite:5"
+
+    "14":
+      DisplayName: "<white>1x enchanted book (depth strider iii)"
+      DisplayItem: "enchanted_book"
+      Settings: { Custom-Model-Data: -1, Model: { Namespace: "", Id: "" } }
+      DisplayAmount: 1
+      Weight: 50
+      Items:
+        - "item:enchanted_book, amount:1, depth_strider:3"
+
+    "15":
+      DisplayName: "<white>1x enchanted book (fire protection iv)"
+      DisplayItem: "enchanted_book"
+      Settings: { Custom-Model-Data: -1, Model: { Namespace: "", Id: "" } }
+      DisplayAmount: 1
+      Weight: 50
+      Items:
+        - "item:enchanted_book, amount:1, fire_protection:4"
+
+    "16":
+      DisplayName: "<white>1x enchanted book (looting iii)"
+      DisplayItem: "enchanted_book"
+      Settings: { Custom-Model-Data: -1, Model: { Namespace: "", Id: "" } }
+      DisplayAmount: 1
+      Weight: 40
+      Items:
+        - "item:enchanted_book, amount:1, looting:3"
+
+    "17":
+      DisplayName: "<white>1x enchanted book (mending)"
+      DisplayItem: "enchanted_book"
+      Settings: { Custom-Model-Data: -1, Model: { Namespace: "", Id: "" } }
+      DisplayAmount: 1
+      Weight: 40
+      Items:
+        - "item:enchanted_book, amount:1, mending:1"
+
+    "18":
+      DisplayName: "<white>1x enchanted trident"
+      DisplayItem: "trident"
+      Settings: { Custom-Model-Data: -1, Model: { Namespace: "", Id: "" } }
+      DisplayAmount: 1
+      Weight: 40
+      Items:
+        - "item:trident, amount:1, unbreaking:3"
+
+    "19":
+      DisplayName: "<white>4x heart of the sea"
+      DisplayItem: "heart_of_the_sea"
+      Settings: { Custom-Model-Data: -1, Model: { Namespace: "", Id: "" } }
+      DisplayAmount: 4
+      Weight: 25
+      Items:
+        - "item:heart_of_the_sea, amount:4"
+
+    "20":
+      DisplayName: "<white>1x netherite shovel"
+      DisplayItem: "netherite_shovel"
+      Settings: { Custom-Model-Data: -1, Model: { Namespace: "", Id: "" } }
+      DisplayAmount: 1
+      Weight: 25
+      Items:
+        - "item:netherite_shovel, amount:1"
+
+    "21":
+      DisplayName: "<white>1x nether star"
+      DisplayItem: "nether_star"
+      Settings: { Custom-Model-Data: -1, Model: { Namespace: "", Id: "" } }
+      DisplayAmount: 1
+      Weight: 15
+      Items:
+        - "item:nether_star, amount:1"
+
+    "22":
+      DisplayName: "<white>1x beacon"
+      DisplayItem: "beacon"
+      Settings: { Custom-Model-Data: -1, Model: { Namespace: "", Id: "" } }
+      DisplayAmount: 1
+      Weight: 15
+      Items:
+        - "item:beacon, amount:1"
+
+    "23":
+      DisplayName: "<white>1x netherite axe"
+      DisplayItem: "netherite_axe"
+      Settings: { Custom-Model-Data: -1, Model: { Namespace: "", Id: "" } }
+      DisplayAmount: 1
+      Weight: 10
+      Items:
+        - "item:netherite_axe, amount:1"
+
+    "24":
+      DisplayName: "<white>1x netherite pickaxe"
+      DisplayItem: "netherite_pickaxe"
+      Settings: { Custom-Model-Data: -1, Model: { Namespace: "", Id: "" } }
+      DisplayAmount: 1
+      Weight: 10
+      Items:
+        - "item:netherite_pickaxe, amount:1"
+
+    "25":
+      DisplayName: "<white>1x netherite helmet"
+      DisplayItem: "netherite_helmet"
+      Settings: { Custom-Model-Data: -1, Model: { Namespace: "", Id: "" } }
+      DisplayAmount: 1
+      Weight: 5
+      Items:
+        - "item:netherite_helmet, amount:1"
+
+    "26":
+      DisplayName: "<white>1x enchanted elytra"
+      DisplayItem: "elytra"
+      Settings: { Custom-Model-Data: -1, Model: { Namespace: "", Id: "" } }
+      DisplayAmount: 1
+      Weight: 5
+      Items:
+        - "item:elytra, amount:1, unbreaking:3"
+
+    "27":
+      DisplayName: "<white>2x block of diamond"
+      DisplayItem: "diamond_block"
+      Settings: { Custom-Model-Data: -1, Model: { Namespace: "", Id: "" } }
+      DisplayAmount: 2
+      Weight: 5
+      Items:
+        - "item:diamond_block, amount:2"
+
+    "28":
+      DisplayName: "<white>1x enchanted netherite sword"
+      DisplayItem: "netherite_sword"
+      Settings: { Custom-Model-Data: -1, Model: { Namespace: "", Id: "" } }
+      DisplayAmount: 1
+      Weight: 5
+      Items:
+        - "item:netherite_sword, amount:1, sharpness:3"
+
+    "29":
+      DisplayName: "<white>1x netherite leggings"
+      DisplayItem: "netherite_leggings"
+      Settings: { Custom-Model-Data: -1, Model: { Namespace: "", Id: "" } }
+      DisplayAmount: 1
+      Weight: 5
+      Items:
+        - "item:netherite_leggings, amount:1"
+
+    "30":
+      DisplayName: "<white>1x netherite chestplate"
+      DisplayItem: "netherite_chestplate"
+      Settings: { Custom-Model-Data: -1, Model: { Namespace: "", Id: "" } }
+      DisplayAmount: 1
+      Weight: 5
+      Items:
+        - "item:netherite_chestplate, amount:1"
+
+    "31":
+      DisplayName: "<white>1x netherite boots"
+      DisplayItem: "netherite_boots"
+      Settings: { Custom-Model-Data: -1, Model: { Namespace: "", Id: "" } }
+      DisplayAmount: 1
+      Weight: 5
+      Items:
+        - "item:netherite_boots, amount:1"

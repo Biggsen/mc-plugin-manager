@@ -68,6 +68,26 @@ export function getPmGeneratedEntries(): { entries: PmGeneratedEntry[]; bookGuiW
       relativePath: 'GriefPreventionData/config.yml',
     },
     {
+      id: 'crazycrates-config',
+      label: 'CrazyCrates (config.yml)',
+      relativePath: path.join('CrazyCrates', 'config.yml'),
+    },
+    {
+      id: 'crazycrates-crate-heart',
+      label: 'CrazyCrates (crates/HeartCrate.yml)',
+      relativePath: path.join('CrazyCrates', 'crates', 'HeartCrate.yml'),
+    },
+    {
+      id: 'crazycrates-crate-region',
+      label: 'CrazyCrates (crates/RegionCrate.yml)',
+      relativePath: path.join('CrazyCrates', 'crates', 'RegionCrate.yml'),
+    },
+    {
+      id: 'crazycrates-crate-village',
+      label: 'CrazyCrates (crates/VillageCrate.yml)',
+      relativePath: path.join('CrazyCrates', 'crates', 'VillageCrate.yml'),
+    },
+    {
       id: 'essentials-config',
       label: 'EssentialsX (config.yml)',
       relativePath: path.join('essentials', 'config.yml'),

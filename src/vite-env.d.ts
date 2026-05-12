@@ -68,6 +68,7 @@ interface ElectronAPI {
       generateCW?: boolean
       generateDiscordSRV?: boolean
       generateGriefPrevention?: boolean
+      generateCrazyCrates?: boolean
       generateWorldGuardRegions?: boolean
       worldGuardRegionsPath?: string
       worldGuardRegionsWorldFolder?: string

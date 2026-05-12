@@ -37,6 +37,12 @@ import type {
 import { resolveConfigServerName } from '../../shared/resolveConfigServerName'
 import { getGuideBooksSourceDir } from '../../utils/guideBooksDir'
 import { getGriefPreventionBundledConfigPath } from '../../utils/griefPreventionBundledConfig'
+import {
+  CRAZY_CRATES_CRATE_TEMPLATES,
+  CRAZY_CRATES_MAIN_TEMPLATE,
+  crazyCratesPropagatedCrateFilename,
+  getCrazyCratesBundledTemplatePath,
+} from '../../utils/crazyCratesBundledConfig'
 
 export function registerBuildHandlers(): void {
   ipcMain.handle(
@@ -56,6 +62,7 @@ export function registerBuildHandlers(): void {
         generateEssentials?: boolean
         generateDiscordSRV?: boolean
         generateGriefPrevention?: boolean
+        generateCrazyCrates?: boolean
         generateWorldGuardRegions?: boolean
         worldGuardRegionsPath?: string
         /** World folder under WorldGuard/worlds/ when propagating (default world). */
@@ -98,13 +105,14 @@ export function registerBuildHandlers(): void {
           !inputs.generateEssentials &&
           !inputs.generateDiscordSRV &&
           !inputs.generateGriefPrevention &&
+          !inputs.generateCrazyCrates &&
           !inputs.generateWorldGuardRegions &&
           !inputs.generateWorldGuardRegionsNether
         ) {
           return {
             success: false,
             error:
-              'At least one plugin (AA, BookGUI, CE, TAB, LM, LM CustomDrops, MC, CommandWhitelist, EssentialsX, DiscordSRV, GriefPreventionData, WorldGuard overworld regions.yml, or WorldGuard nether regions.yml) must be selected',
+              'At least one plugin (AA, BookGUI, CE, TAB, LM, LM CustomDrops, MC, CommandWhitelist, EssentialsX, DiscordSRV, GriefPreventionData, CrazyCrates, WorldGuard overworld regions.yml, or WorldGuard nether regions.yml) must be selected',
           }
         }
         if (!inputs.outDir || inputs.outDir.trim().length === 0) {
@@ -159,6 +167,7 @@ export function registerBuildHandlers(): void {
         let essentialsGenerated = false
         let discordsrvGenerated = false
         let griefPreventionGenerated = false
+        let crazyCratesGenerated = false
         let worldGuardRegionsGenerated = false
         let worldGuardRegionsNetherGenerated = false
         const configSources: BuildResult['configSources'] = {}
@@ -521,6 +530,65 @@ export function registerBuildHandlers(): void {
           }
         }
 
+        if (inputs.generateCrazyCrates) {
+          try {
+            const nextGeneratorVersion = versionForEmit('crazycrates')
+            const crazyCratesHeaderArgs = {
+              plugin: 'crazycrates' as const,
+              profileId: serverId,
+              buildId,
+              nextVersion: nextGeneratorVersion,
+              generatedAt: timestamp,
+              buildNote: headerStampNote,
+              testEmit: testBuild,
+            }
+            const buildDir = ensureBuildDirectory(serverId, buildId)
+            const configFlatName = `${serverNameSanitized}-crazycrates-config.yml`
+            const mainBundled = getCrazyCratesBundledTemplatePath(CRAZY_CRATES_MAIN_TEMPLATE)
+            const mainRaw = fs.readFileSync(mainBundled, 'utf-8')
+            const mainContent = prependGeneratorVersionHeader(mainRaw, crazyCratesHeaderArgs)
+            if (propagate) {
+              const crateRoot = path.join(inputs.outDir, 'CrazyCrates')
+              fs.mkdirSync(crateRoot, { recursive: true })
+              fs.writeFileSync(path.join(crateRoot, 'config.yml'), mainContent, 'utf-8')
+            } else {
+              fs.writeFileSync(path.join(inputs.outDir, configFlatName), mainContent, 'utf-8')
+            }
+            fs.writeFileSync(path.join(buildDir, configFlatName), mainContent, 'utf-8')
+
+            for (const tmpl of CRAZY_CRATES_CRATE_TEMPLATES) {
+              const bundledPath = getCrazyCratesBundledTemplatePath(tmpl)
+              const rawBody = fs.readFileSync(bundledPath, 'utf-8')
+              const content = prependGeneratorVersionHeader(rawBody, crazyCratesHeaderArgs)
+              const propagatedName = crazyCratesPropagatedCrateFilename(tmpl)
+              const stem = path.basename(propagatedName, '.yml')
+              const crateFlatName = `${serverNameSanitized}-crazycrates-crate-${stem}.yml`
+              if (propagate) {
+                const cratesDir = path.join(inputs.outDir, 'CrazyCrates', 'crates')
+                fs.mkdirSync(cratesDir, { recursive: true })
+                fs.writeFileSync(path.join(cratesDir, propagatedName), content, 'utf-8')
+              } else {
+                fs.writeFileSync(path.join(inputs.outDir, crateFlatName), content, 'utf-8')
+              }
+              fs.writeFileSync(path.join(buildDir, crateFlatName), content, 'utf-8')
+            }
+
+            persistGeneratorVersion('crazycrates', nextGeneratorVersion)
+            crazyCratesGenerated = true
+            configSources.crazycrates = {
+              path: 'Bundled CrazyCrates templates',
+              isDefault: true,
+            }
+          } catch (error: unknown) {
+            const err = error as Error
+            return {
+              success: false,
+              error: err.message || 'CrazyCrates config copy failed',
+              buildId,
+            }
+          }
+        }
+
         if (inputs.generateWorldGuardRegions) {
           const srcPath = (inputs.worldGuardRegionsPath ?? '').trim()
           if (!srcPath) {
@@ -656,6 +724,7 @@ export function registerBuildHandlers(): void {
             essentials: essentialsGenerated,
             discordsrv: discordsrvGenerated,
             griefprevention: griefPreventionGenerated,
+            crazycrates: crazyCratesGenerated,
             worldguardregions: worldGuardRegionsGenerated,
             worldguardregionsnether: worldGuardRegionsNetherGenerated,
           },

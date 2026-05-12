@@ -27,6 +27,7 @@ export type GeneratorVersionKey =
   | 'discordsrv'
   | 'bookgui'
   | 'griefprevention'
+  | 'crazycrates'
   | 'worldguardregions'
   | 'worldguardregionsnether'
 
@@ -193,6 +194,7 @@ export interface BuildResult {
     essentials?: { path: string; isDefault: boolean }
     discordsrv?: { path: string; isDefault: boolean }
     griefprevention?: { path: string; isDefault: boolean }
+    crazycrates?: { path: string; isDefault: boolean }
     worldguardregions?: { path: string; isDefault: boolean }
     worldguardregionsnether?: { path: string; isDefault: boolean }
   }
@@ -234,6 +236,8 @@ export interface BuildReport {
     discordsrv?: boolean
     /** Bundled GriefPreventionData/config.yml copy; treat absent as false. */
     griefprevention?: boolean
+    /** Bundled CrazyCrates config + crate YAML copies; treat absent as false. */
+    crazycrates?: boolean
     /** WorldGuard regions.yml from user-provided source (e.g. Region Forge). */
     worldguardregions?: boolean
     worldguardregionsnether?: boolean
@@ -250,6 +254,7 @@ export interface BuildReport {
     essentials?: { path: string; isDefault: boolean }
     discordsrv?: { path: string; isDefault: boolean }
     griefprevention?: { path: string; isDefault: boolean }
+    crazycrates?: { path: string; isDefault: boolean }
     worldguardregions?: { path: string; isDefault: boolean }
     worldguardregionsnether?: { path: string; isDefault: boolean }
   }
