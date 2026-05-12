@@ -70,6 +70,7 @@ interface ElectronAPI {
       generateGriefPrevention?: boolean
       generateCrazyCrates?: boolean
       generateLuckPerms?: boolean
+      generatePlaceholderAPI?: boolean
       generateWorldGuardRegions?: boolean
       worldGuardRegionsPath?: string
       worldGuardRegionsWorldFolder?: string

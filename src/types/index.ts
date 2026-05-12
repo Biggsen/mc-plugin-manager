@@ -29,6 +29,7 @@ export type GeneratorVersionKey =
   | 'griefprevention'
   | 'crazycrates'
   | 'luckperms'
+  | 'placeholderapi'
   | 'worldguardregions'
   | 'worldguardregionsnether'
 
@@ -197,6 +198,7 @@ export interface BuildResult {
     griefprevention?: { path: string; isDefault: boolean }
     crazycrates?: { path: string; isDefault: boolean }
     luckperms?: { path: string; isDefault: boolean }
+    placeholderapi?: { path: string; isDefault: boolean }
     worldguardregions?: { path: string; isDefault: boolean }
     worldguardregionsnether?: { path: string; isDefault: boolean }
   }
@@ -242,6 +244,8 @@ export interface BuildReport {
     crazycrates?: boolean
     /** Bundled LuckPerms .gz export (binary copy); treat absent as false. */
     luckperms?: boolean
+    /** Bundled PlaceholderAPI tree (YAML + binaries); treat absent as false. */
+    placeholderapi?: boolean
     /** WorldGuard regions.yml from user-provided source (e.g. Region Forge). */
     worldguardregions?: boolean
     worldguardregionsnether?: boolean
@@ -260,6 +264,7 @@ export interface BuildReport {
     griefprevention?: { path: string; isDefault: boolean }
     crazycrates?: { path: string; isDefault: boolean }
     luckperms?: { path: string; isDefault: boolean }
+    placeholderapi?: { path: string; isDefault: boolean }
     worldguardregions?: { path: string; isDefault: boolean }
     worldguardregionsnether?: { path: string; isDefault: boolean }
   }
@@ -366,6 +371,8 @@ export interface PluginFolderCompareResult {
   rightRoot: string
   /** Set when bundled guide books could not be listed — BookGUI rows are omitted. */
   bookGuiWarning?: string
+  /** Set when bundled PlaceholderAPI templates could not be listed — those rows are omitted. */
+  placeholderApiWarning?: string
   files: PluginFolderCompareFileResult[]
   summary: {
     identical: number

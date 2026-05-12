@@ -145,6 +145,41 @@ for (const name of binaryTemplates) {
   }
 }
 
+// PlaceholderAPI plugin-shaped subtree: YAML stripped; other files (e.g. .jar) copied byte-for-byte
+const placeholderApiSrc = path.join(sourceDir, 'PlaceholderAPI')
+const placeholderApiDst = path.join(targetDir, 'PlaceholderAPI')
+if (!fs.existsSync(placeholderApiSrc)) {
+  console.error(`Error: PlaceholderAPI bundle folder not found: ${placeholderApiSrc}`)
+  process.exit(1)
+}
+let placeholderApiFileCount = 0
+function copyPlaceholderApiTree(srcDir, relPrefix) {
+  for (const ent of fs.readdirSync(srcDir, { withFileTypes: true })) {
+    const srcPath = path.join(srcDir, ent.name)
+    const rel = relPrefix ? path.join(relPrefix, ent.name) : ent.name
+    if (ent.isDirectory()) {
+      copyPlaceholderApiTree(srcPath, rel)
+    } else {
+      const destPath = path.join(placeholderApiDst, rel)
+      fs.mkdirSync(path.dirname(destPath), { recursive: true })
+      const lower = ent.name.toLowerCase()
+      if (lower.endsWith('.yml') || lower.endsWith('.yaml')) {
+        const content = fs.readFileSync(srcPath, 'utf-8')
+        fs.writeFileSync(destPath, stripVersionHeaders(content), 'utf-8')
+      } else {
+        fs.copyFileSync(srcPath, destPath)
+      }
+      console.log(`Copied PlaceholderAPI: ${rel}`)
+      placeholderApiFileCount++
+    }
+  }
+}
+copyPlaceholderApiTree(placeholderApiSrc, '')
+if (placeholderApiFileCount === 0) {
+  console.error('Error: PlaceholderAPI bundle folder contained no files')
+  process.exit(1)
+}
+
 // Copy guide books (BookGUI) to dist-electron/assets/templates/guide-books
 const guideBooksSourceDir = path.join(__dirname, '..', 'reference', 'plugin config files', 'guide books')
 const guideBooksTargetDir = path.join(targetDir, 'guide-books')

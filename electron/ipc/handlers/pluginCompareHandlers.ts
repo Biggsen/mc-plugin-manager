@@ -37,8 +37,14 @@ export function registerPluginCompareHandlers(): void {
       const right = validatePluginsRoot(String(rightRoot ?? ''))
       if (!right.ok) return { ok: false, error: `Right folder: ${right.error}` }
 
-      const { entries, bookGuiWarning } = getPmGeneratedEntries()
-      const result = comparePmPluginFolders(left.resolved, right.resolved, entries, bookGuiWarning)
+      const { entries, bookGuiWarning, placeholderApiWarning } = getPmGeneratedEntries()
+      const result = comparePmPluginFolders(
+        left.resolved,
+        right.resolved,
+        entries,
+        bookGuiWarning,
+        placeholderApiWarning
+      )
       return { ok: true, result }
     }
   )

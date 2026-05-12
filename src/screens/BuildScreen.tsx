@@ -71,6 +71,7 @@ const BUILD_PLUGINS = [
   { id: 'lmcd', label: 'LevelledMobs CustomDrops', overrideLabel: 'LevelledMobs customdrops.yml (optional override)', dialogTitle: 'Select LevelledMobs customdrops.yml', generateKey: 'generateLMCustomDrops', pathKey: 'lmCustomDropsPath' },
   { id: 'luckperms', label: 'LuckPerms', generateKey: 'generateLuckPerms', overrideLabel: undefined, dialogTitle: undefined, pathKey: undefined },
   { id: 'mc', label: 'MyCommand', overrideLabel: 'MyCommand commands.yml (optional override)', dialogTitle: 'Select MyCommand commands.yml', generateKey: 'generateMC', pathKey: 'mcPath' },
+  { id: 'placeholderapi', label: 'PlaceholderAPI', generateKey: 'generatePlaceholderAPI', overrideLabel: undefined, dialogTitle: undefined, pathKey: undefined },
   { id: 'tab', label: 'TAB', overrideLabel: 'TAB config.yml (optional override)', dialogTitle: 'Select TAB config.yml', generateKey: 'generateTAB', pathKey: 'tabPath' },
   { id: 'griefprevention', label: 'GriefPreventionData', generateKey: 'generateGriefPrevention', overrideLabel: undefined, dialogTitle: undefined, pathKey: undefined },
   {
@@ -105,6 +106,7 @@ const PLUGIN_VERSION_KEY_BY_ID: Record<BuildPluginId, GeneratorVersionKey> = {
   lmcd: 'lmcd',
   luckperms: 'luckperms',
   mc: 'mc',
+  placeholderapi: 'placeholderapi',
   tab: 'tab',
   griefprevention: 'griefprevention',
   worldguardregions: 'worldguardregions',

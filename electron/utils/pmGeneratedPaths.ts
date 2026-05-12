@@ -10,6 +10,7 @@ import { PLUGIN_OUTPUT_RELATIVE, getCEEventFragmentPropagatedRelativePath } from
 import { getWorldGuardRegionsPropagatedRelativePath } from './worldGuardRegionsPaths'
 import { CE_EVENT_FRAGMENT_BASENAMES } from '../ceGenerator'
 import { getGuideBooksSourceDir } from './guideBooksDir'
+import { listPlaceholderApiBundledRelativePaths } from './placeholderApiBundledDir'
 
 export interface PmGeneratedEntry {
   id: string
@@ -31,7 +32,11 @@ const PLUGIN_LABELS: Record<PluginType, string> = {
  * Ordered list of PM-generated files to compare between two plugin trees.
  * BookGUI entries come from bundled guide book filenames; if the bundle is missing, they are omitted.
  */
-export function getPmGeneratedEntries(): { entries: PmGeneratedEntry[]; bookGuiWarning?: string } {
+export function getPmGeneratedEntries(): {
+  entries: PmGeneratedEntry[]
+  bookGuiWarning?: string
+  placeholderApiWarning?: string
+} {
   const entries: PmGeneratedEntry[] = []
 
   for (const id of PLUGIN_TYPES) {
@@ -130,5 +135,22 @@ export function getPmGeneratedEntries(): { entries: PmGeneratedEntry[]; bookGuiW
       'BookGUI guide books could not be listed (bundled templates missing). BookGUI files are skipped from this compare.'
   }
 
-  return { entries, bookGuiWarning }
+  let placeholderApiWarning: string | undefined
+  try {
+    const rels = listPlaceholderApiBundledRelativePaths()
+    for (const rel of rels) {
+      const displayRel = rel.replace(/\\/g, '/')
+      const safeId = displayRel.replace(/\//g, '-')
+      entries.push({
+        id: `placeholderapi:${safeId}`,
+        label: `PlaceholderAPI (${displayRel})`,
+        relativePath: path.join('PlaceholderAPI', rel),
+      })
+    }
+  } catch {
+    placeholderApiWarning =
+      'PlaceholderAPI bundled templates could not be listed (assets missing). PlaceholderAPI files are skipped from this compare.'
+  }
+
+  return { entries, bookGuiWarning, placeholderApiWarning }
 }

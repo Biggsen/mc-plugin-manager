@@ -47,6 +47,10 @@ import {
   getLuckPermsBundledExportPath,
   LUCKPERMS_BUNDLED_EXPORT_FILENAME,
 } from '../../utils/luckPermsBundledExport'
+import {
+  getPlaceholderApiBundledRoot,
+  listPlaceholderApiBundledRelativePaths,
+} from '../../utils/placeholderApiBundledDir'
 
 export function registerBuildHandlers(): void {
   ipcMain.handle(
@@ -68,6 +72,7 @@ export function registerBuildHandlers(): void {
         generateGriefPrevention?: boolean
         generateCrazyCrates?: boolean
         generateLuckPerms?: boolean
+        generatePlaceholderAPI?: boolean
         generateWorldGuardRegions?: boolean
         worldGuardRegionsPath?: string
         /** World folder under WorldGuard/worlds/ when propagating (default world). */
@@ -112,13 +117,14 @@ export function registerBuildHandlers(): void {
           !inputs.generateGriefPrevention &&
           !inputs.generateCrazyCrates &&
           !inputs.generateLuckPerms &&
+          !inputs.generatePlaceholderAPI &&
           !inputs.generateWorldGuardRegions &&
           !inputs.generateWorldGuardRegionsNether
         ) {
           return {
             success: false,
             error:
-              'At least one plugin (AA, BookGUI, CE, TAB, LM, LM CustomDrops, MC, CommandWhitelist, EssentialsX, DiscordSRV, GriefPreventionData, CrazyCrates, LuckPerms, WorldGuard overworld regions.yml, or WorldGuard nether regions.yml) must be selected',
+              'At least one plugin (AA, BookGUI, CE, TAB, LM, LM CustomDrops, MC, CommandWhitelist, EssentialsX, DiscordSRV, GriefPreventionData, CrazyCrates, LuckPerms, PlaceholderAPI, WorldGuard overworld regions.yml, or WorldGuard nether regions.yml) must be selected',
           }
         }
         if (!inputs.outDir || inputs.outDir.trim().length === 0) {
@@ -175,6 +181,7 @@ export function registerBuildHandlers(): void {
         let griefPreventionGenerated = false
         let crazyCratesGenerated = false
         let luckPermsGenerated = false
+        let placeholderApiGenerated = false
         let worldGuardRegionsGenerated = false
         let worldGuardRegionsNetherGenerated = false
         const configSources: BuildResult['configSources'] = {}
@@ -626,6 +633,63 @@ export function registerBuildHandlers(): void {
           }
         }
 
+        if (inputs.generatePlaceholderAPI) {
+          try {
+            const nextGeneratorVersion = versionForEmit('placeholderapi')
+            const placeholderHeaderArgs = {
+              plugin: 'placeholderapi' as const,
+              profileId: serverId,
+              buildId,
+              nextVersion: nextGeneratorVersion,
+              generatedAt: timestamp,
+              buildNote: headerStampNote,
+              testEmit: testBuild,
+            }
+            const bundledRoot = getPlaceholderApiBundledRoot()
+            const relativePaths = listPlaceholderApiBundledRelativePaths()
+            const buildDir = ensureBuildDirectory(serverId, buildId)
+            for (const rel of relativePaths) {
+              const srcPath = path.join(bundledRoot, rel)
+              const flatName = `${serverNameSanitized}-placeholderapi-${rel.replace(/[/\\]/g, '-')}`
+              const ext = path.extname(rel).toLowerCase()
+              if (ext === '.yml' || ext === '.yaml') {
+                const rawBody = fs.readFileSync(srcPath, 'utf-8')
+                const content = prependGeneratorVersionHeader(rawBody, placeholderHeaderArgs)
+                if (propagate) {
+                  const destPath = path.join(inputs.outDir, 'PlaceholderAPI', rel)
+                  fs.mkdirSync(path.dirname(destPath), { recursive: true })
+                  fs.writeFileSync(destPath, content, 'utf-8')
+                } else {
+                  fs.writeFileSync(path.join(inputs.outDir, flatName), content, 'utf-8')
+                }
+                fs.writeFileSync(path.join(buildDir, flatName), content, 'utf-8')
+              } else {
+                if (propagate) {
+                  const destPath = path.join(inputs.outDir, 'PlaceholderAPI', rel)
+                  fs.mkdirSync(path.dirname(destPath), { recursive: true })
+                  fs.copyFileSync(srcPath, destPath)
+                } else {
+                  fs.copyFileSync(srcPath, path.join(inputs.outDir, flatName))
+                }
+                fs.copyFileSync(srcPath, path.join(buildDir, flatName))
+              }
+            }
+            persistGeneratorVersion('placeholderapi', nextGeneratorVersion)
+            placeholderApiGenerated = true
+            configSources.placeholderapi = {
+              path: 'Bundled PlaceholderAPI templates',
+              isDefault: true,
+            }
+          } catch (error: unknown) {
+            const err = error as Error
+            return {
+              success: false,
+              error: err.message || 'PlaceholderAPI bundle copy failed',
+              buildId,
+            }
+          }
+        }
+
         if (inputs.generateWorldGuardRegions) {
           const srcPath = (inputs.worldGuardRegionsPath ?? '').trim()
           if (!srcPath) {
@@ -763,6 +827,7 @@ export function registerBuildHandlers(): void {
             griefprevention: griefPreventionGenerated,
             crazycrates: crazyCratesGenerated,
             luckperms: luckPermsGenerated,
+            placeholderapi: placeholderApiGenerated,
             worldguardregions: worldGuardRegionsGenerated,
             worldguardregionsnether: worldGuardRegionsNetherGenerated,
           },
