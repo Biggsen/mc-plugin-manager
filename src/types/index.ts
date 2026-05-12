@@ -28,6 +28,7 @@ export type GeneratorVersionKey =
   | 'bookgui'
   | 'griefprevention'
   | 'crazycrates'
+  | 'luckperms'
   | 'worldguardregions'
   | 'worldguardregionsnether'
 
@@ -195,6 +196,7 @@ export interface BuildResult {
     discordsrv?: { path: string; isDefault: boolean }
     griefprevention?: { path: string; isDefault: boolean }
     crazycrates?: { path: string; isDefault: boolean }
+    luckperms?: { path: string; isDefault: boolean }
     worldguardregions?: { path: string; isDefault: boolean }
     worldguardregionsnether?: { path: string; isDefault: boolean }
   }
@@ -238,6 +240,8 @@ export interface BuildReport {
     griefprevention?: boolean
     /** Bundled CrazyCrates config + crate YAML copies; treat absent as false. */
     crazycrates?: boolean
+    /** Bundled LuckPerms .gz export (binary copy); treat absent as false. */
+    luckperms?: boolean
     /** WorldGuard regions.yml from user-provided source (e.g. Region Forge). */
     worldguardregions?: boolean
     worldguardregionsnether?: boolean
@@ -255,6 +259,7 @@ export interface BuildReport {
     discordsrv?: { path: string; isDefault: boolean }
     griefprevention?: { path: string; isDefault: boolean }
     crazycrates?: { path: string; isDefault: boolean }
+    luckperms?: { path: string; isDefault: boolean }
     worldguardregions?: { path: string; isDefault: boolean }
     worldguardregionsnether?: { path: string; isDefault: boolean }
   }

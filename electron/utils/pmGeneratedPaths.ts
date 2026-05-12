@@ -88,6 +88,11 @@ export function getPmGeneratedEntries(): { entries: PmGeneratedEntry[]; bookGuiW
       relativePath: path.join('CrazyCrates', 'crates', 'VillageCrate.yml'),
     },
     {
+      id: 'luckperms-exploration-gz',
+      label: 'LuckPerms (perms-exploration.json.gz)',
+      relativePath: path.join('LuckPerms', 'perms-exploration.json.gz'),
+    },
+    {
       id: 'essentials-config',
       label: 'EssentialsX (config.yml)',
       relativePath: path.join('essentials', 'config.yml'),

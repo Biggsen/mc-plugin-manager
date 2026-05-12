@@ -43,6 +43,10 @@ import {
   crazyCratesPropagatedCrateFilename,
   getCrazyCratesBundledTemplatePath,
 } from '../../utils/crazyCratesBundledConfig'
+import {
+  getLuckPermsBundledExportPath,
+  LUCKPERMS_BUNDLED_EXPORT_FILENAME,
+} from '../../utils/luckPermsBundledExport'
 
 export function registerBuildHandlers(): void {
   ipcMain.handle(
@@ -63,6 +67,7 @@ export function registerBuildHandlers(): void {
         generateDiscordSRV?: boolean
         generateGriefPrevention?: boolean
         generateCrazyCrates?: boolean
+        generateLuckPerms?: boolean
         generateWorldGuardRegions?: boolean
         worldGuardRegionsPath?: string
         /** World folder under WorldGuard/worlds/ when propagating (default world). */
@@ -106,13 +111,14 @@ export function registerBuildHandlers(): void {
           !inputs.generateDiscordSRV &&
           !inputs.generateGriefPrevention &&
           !inputs.generateCrazyCrates &&
+          !inputs.generateLuckPerms &&
           !inputs.generateWorldGuardRegions &&
           !inputs.generateWorldGuardRegionsNether
         ) {
           return {
             success: false,
             error:
-              'At least one plugin (AA, BookGUI, CE, TAB, LM, LM CustomDrops, MC, CommandWhitelist, EssentialsX, DiscordSRV, GriefPreventionData, CrazyCrates, WorldGuard overworld regions.yml, or WorldGuard nether regions.yml) must be selected',
+              'At least one plugin (AA, BookGUI, CE, TAB, LM, LM CustomDrops, MC, CommandWhitelist, EssentialsX, DiscordSRV, GriefPreventionData, CrazyCrates, LuckPerms, WorldGuard overworld regions.yml, or WorldGuard nether regions.yml) must be selected',
           }
         }
         if (!inputs.outDir || inputs.outDir.trim().length === 0) {
@@ -168,6 +174,7 @@ export function registerBuildHandlers(): void {
         let discordsrvGenerated = false
         let griefPreventionGenerated = false
         let crazyCratesGenerated = false
+        let luckPermsGenerated = false
         let worldGuardRegionsGenerated = false
         let worldGuardRegionsNetherGenerated = false
         const configSources: BuildResult['configSources'] = {}
@@ -589,6 +596,36 @@ export function registerBuildHandlers(): void {
           }
         }
 
+        if (inputs.generateLuckPerms) {
+          try {
+            const nextGeneratorVersion = versionForEmit('luckperms')
+            const bundledPath = getLuckPermsBundledExportPath()
+            const flatName = `${serverNameSanitized}-luckperms-${LUCKPERMS_BUNDLED_EXPORT_FILENAME}`
+            const buildDir = ensureBuildDirectory(serverId, buildId)
+            if (propagate) {
+              const lpRoot = path.join(inputs.outDir, 'LuckPerms')
+              fs.mkdirSync(lpRoot, { recursive: true })
+              fs.copyFileSync(bundledPath, path.join(lpRoot, LUCKPERMS_BUNDLED_EXPORT_FILENAME))
+            } else {
+              fs.copyFileSync(bundledPath, path.join(inputs.outDir, flatName))
+            }
+            fs.copyFileSync(bundledPath, path.join(buildDir, flatName))
+            persistGeneratorVersion('luckperms', nextGeneratorVersion)
+            luckPermsGenerated = true
+            configSources.luckperms = {
+              path: 'Bundled LuckPerms export (.gz)',
+              isDefault: true,
+            }
+          } catch (error: unknown) {
+            const err = error as Error
+            return {
+              success: false,
+              error: err.message || 'LuckPerms export copy failed',
+              buildId,
+            }
+          }
+        }
+
         if (inputs.generateWorldGuardRegions) {
           const srcPath = (inputs.worldGuardRegionsPath ?? '').trim()
           if (!srcPath) {
@@ -725,6 +762,7 @@ export function registerBuildHandlers(): void {
             discordsrv: discordsrvGenerated,
             griefprevention: griefPreventionGenerated,
             crazycrates: crazyCratesGenerated,
+            luckperms: luckPermsGenerated,
             worldguardregions: worldGuardRegionsGenerated,
             worldguardregionsnether: worldGuardRegionsNetherGenerated,
           },

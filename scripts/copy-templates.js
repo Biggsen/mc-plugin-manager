@@ -37,6 +37,9 @@ const templates = [
   'tab-config.yml'
 ]
 
+/** Copied byte-for-byte (no UTF-8 read / header strip). */
+const binaryTemplates = ['perms-exploration.json.gz']
+
 // Strip version headers from content
 // Version headers are comment blocks that start with "# MC Plugin Manager" or similar patterns
 // We'll strip consecutive comment lines at the start that match version header patterns
@@ -116,6 +119,32 @@ for (const template of templates) {
   }
 }
 
+let binaryCopiedCount = 0
+for (const name of binaryTemplates) {
+  const sourcePath = path.join(sourceDir, name)
+  const targetPath = path.join(targetDir, name)
+  if (!fs.existsSync(sourcePath)) {
+    console.error(`Error: Source file not found: ${sourcePath}`)
+    process.exit(1)
+  }
+  fs.copyFileSync(sourcePath, targetPath)
+  console.log(`Copied (binary): ${name}`)
+  binaryCopiedCount++
+}
+if (binaryCopiedCount !== binaryTemplates.length) {
+  console.error(
+    `Error: Expected to copy ${binaryTemplates.length} binary template(s), but copied ${binaryCopiedCount}`
+  )
+  process.exit(1)
+}
+for (const name of binaryTemplates) {
+  const targetPath = path.join(targetDir, name)
+  if (!fs.existsSync(targetPath)) {
+    console.error(`Error: Binary target file was not created: ${targetPath}`)
+    process.exit(1)
+  }
+}
+
 // Copy guide books (BookGUI) to dist-electron/assets/templates/guide-books
 const guideBooksSourceDir = path.join(__dirname, '..', 'reference', 'plugin config files', 'guide books')
 const guideBooksTargetDir = path.join(targetDir, 'guide-books')
@@ -151,4 +180,6 @@ if (!fs.existsSync(itemIndexSrc)) {
 fs.copyFileSync(itemIndexSrc, itemIndexDest)
 console.log(`Copied data file: ${ITEM_INDEX_JSON}`)
 
-console.log(`Successfully copied ${copiedCount} template files to ${targetDir}`)
+console.log(
+  `Successfully copied ${copiedCount} text template(s) and ${binaryCopiedCount} binary file(s) to ${targetDir}`
+)
