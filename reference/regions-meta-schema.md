@@ -75,8 +75,12 @@ When `kind` is `water`, **`structureType` must be omitted.**
 | `desert_well`     | Desert Wells |
 | `igloo`           | Igloos |
 | `jungle_temple`   | Jungle Temples |
+| `ocean_ruin`      | Ocean Ruins |
 | `pillager_outpost`| Pillager Outposts |
 | `trail_ruins`     | Trail Ruins |
+| `woodland_mansion`| Woodland Mansions |
+| `swamp_hut`       | Swamp Huts |
+| `shipwreck`       | Shipwrecks |
 
 ### 3.3 `discover` Object
 
@@ -232,6 +236,9 @@ structureFamilies:
   desert_well:
     label: Desert Wells
     counter: desert_wells_found
+  ocean_ruin:
+    label: Ocean Ruins
+    counter: ocean_ruins_found
 ```
 
 ---
@@ -440,6 +447,7 @@ regions:
 | 1.9    | §10 full example and §12 validation notes aligned with shipped Region Forge export: no `recipeId` in `discover`; `structureFamilies` lists only types referenced in the example. §3.4: note that Forge omits `recipeId` for all kinds. |
 | 1.9    | §7.1: document that unknown keys on each structure family object are ignored (aligns with §3.1). |
 | 2.0    | Added **`kind: water`** (oceans, seas, lakes): live regions for LM/TAB bands, excluded from main exploration metrics; **`discover.method: passive`** for no CE/AA discovery output; importer derives `recipeId: none`. Extended **`biomes`** to `kind: water`. §6.1: `regionBands` may target water ids. §12: validation notes for unknown kinds and invalid `discover.method`. |
+| 2.1    | §3.2: canonical `structureType` includes **`ocean_ruin`** (and **`woodland_mansion`**, **`swamp_hut`**, **`shipwreck`** for parity with Region Forge). §7.1 example: **`ocean_ruins_found`** counter for Ocean Ruins. |
 
 ---
 
