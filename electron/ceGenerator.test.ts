@@ -105,6 +105,15 @@ describe('generateOwnedCEEvents', () => {
     expect(Array.isArray(ev?.actions?.default)).toBe(true)
   })
 
+  it('discover_once keeps hyphenated WorldGuard id in condition and uses hyphen-aware aach id', () => {
+    const regions: RegionRecord[] = [region('east-wing', 'region', 'overworld', 'on_enter')]
+    const events = generateOwnedCEEvents(regions, onboarding)
+    const ev = events['east-wing_discover_once']
+    expect(ev?.conditions).toEqual(['%region% == east-wing'])
+    const actions = ev!.actions!.default as string[]
+    expect(actions.some((a) => a.includes('aach give discoverEastWing'))).toBe(true)
+  })
+
   it('discover_once event for village includes village-specific actions', () => {
     const regions: RegionRecord[] = [region('oak_village', 'village', 'overworld', 'on_enter')]
     const events = generateOwnedCEEvents(regions, onboarding)

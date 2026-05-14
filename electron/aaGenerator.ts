@@ -1,7 +1,7 @@
 const yaml = require('yaml')
 
 import type { RegionRecord } from './types'
-import { snakeToTitleCase } from './shared/stringFormatters'
+import { snakeToTitleCase, splitRegionIdWords } from './shared/stringFormatters'
 import { computeRegionCounts } from './utils/regionStats'
 
 interface AACommand {
@@ -330,8 +330,7 @@ function calculateTiers(
  * - heart_of_monkvos -> HeartOfMonkvos
  */
 function snakeToPascalCase(str: string): string {
-  return str
-    .split('_')
+  return splitRegionIdWords(str)
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
     .join('')
 }
@@ -342,9 +341,10 @@ function snakeToPascalCase(str: string): string {
  * - warriotos -> discover_warriotos
  * - heart_of_warriotos -> discover_heart_of_warriotos
  * - ebon_of_wither -> discover_ebon_of_wither
+ * - east-wing -> discover_east_wing
  */
 function regionIdToSnakeCaseName(regionId: string): string {
-  return 'discover_' + regionId.toLowerCase()
+  return 'discover_' + regionId.toLowerCase().replace(/-/g, '_')
 }
 
 /**
@@ -372,9 +372,8 @@ function getRegionName(regionId: string, kind: string): string {
  *   (ebon_of_wither -> discoverEbonofWither)
  */
 function generateCommandId(regionId: string): string {
-  // Split by underscores
-  const parts = regionId.split('_')
-  
+  const parts = splitRegionIdWords(regionId)
+
   // Check if this is a heart region (starts with "heart_of")
   const isHeart = regionId.startsWith('heart_of_')
   

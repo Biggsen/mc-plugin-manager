@@ -3,13 +3,22 @@
  */
 
 /**
- * Convert snake_case to Title Case (with spaces).
+ * Split region-style ids on underscores and hyphens (e.g. inner-core, inner_core, inner-mid-core).
+ */
+export function splitRegionIdWords(id: string): string[] {
+  return id.split(/[_-]+/).filter((w) => w.length > 0)
+}
+
+/**
+ * Convert snake_case / hyphenated region ids to Title Case (with spaces).
  * Keeps "of" lowercase in the middle.
- * Examples: cherrybrook -> Cherrybrook, heart_of_monkvos -> Heart of Monkvos
+ * Examples: cherrybrook -> Cherrybrook, heart_of_monkvos -> Heart of Monkvos, east-wing -> East Wing
  */
 export function snakeToTitleCase(str: string): string {
-  return str
-    .split('_')
+  if (!str) return ''
+  const words = splitRegionIdWords(str)
+  if (words.length === 0) return ''
+  return words
     .map((word, index) => {
       if (index > 0 && word.toLowerCase() === 'of') {
         return 'of'

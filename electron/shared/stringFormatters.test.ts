@@ -23,6 +23,15 @@ describe('snakeToTitleCase', () => {
   it('empty string returns empty', () => {
     expect(snakeToTitleCase('')).toBe('')
   })
+
+  it('splits on hyphens for title case', () => {
+    expect(snakeToTitleCase('east-wing')).toBe('East Wing')
+    expect(snakeToTitleCase('foo-bar_baz')).toBe('Foo Bar Baz')
+  })
+
+  it('keeps "of" lowercase with hyphen separators', () => {
+    expect(snakeToTitleCase('heart-of-monkvos')).toBe('Heart of Monkvos')
+  })
 })
 
 describe('formatRegionTitle', () => {
