@@ -20,7 +20,8 @@ export function comparePmPluginFolders(
   leftRoot: string,
   rightRoot: string,
   entries: PmGeneratedEntry[],
-  bookGuiWarning?: string
+  bookGuiWarning?: string,
+  placeholderApiWarning?: string
 ): PluginFolderCompareResult {
   const files: PluginFolderCompareFileResult[] = []
   const summary = {
@@ -163,6 +164,7 @@ export function comparePmPluginFolders(
     leftRoot,
     rightRoot,
     ...(bookGuiWarning ? { bookGuiWarning } : {}),
+    ...(placeholderApiWarning ? { placeholderApiWarning } : {}),
     files,
     summary,
   }

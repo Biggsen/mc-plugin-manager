@@ -92,6 +92,9 @@ export interface ElectronAPI {
       generateCW?: boolean
       generateDiscordSRV?: boolean
       generateGriefPrevention?: boolean
+      generateCrazyCrates?: boolean
+      generateLuckPerms?: boolean
+      generatePlaceholderAPI?: boolean
       generateWorldGuardRegions?: boolean
       worldGuardRegionsPath?: string
       worldGuardRegionsWorldFolder?: string
@@ -190,6 +193,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
       generateCW?: boolean
       generateDiscordSRV?: boolean
       generateGriefPrevention?: boolean
+      generateCrazyCrates?: boolean
+      generateLuckPerms?: boolean
+      generatePlaceholderAPI?: boolean
       generateWorldGuardRegions?: boolean
       worldGuardRegionsPath?: string
       worldGuardRegionsWorldFolder?: string

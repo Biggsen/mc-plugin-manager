@@ -1,3 +1,4 @@
+import { formatRegionLabel } from '@shared/stringFormatters'
 import type { RegionKind, RegionRecord, ServerProfile } from '../types'
 
 export interface ExportedRegion {
@@ -15,15 +16,8 @@ export interface RegionExportDocument {
   regions: ExportedRegion[]
 }
 
-function formatRegionId(id: string): string {
-  return id
-    .split('_')
-    .map((s) => s.charAt(0).toUpperCase() + s.slice(1).toLowerCase())
-    .join(' ')
-}
-
 function regionDisplayName(region: RegionRecord): string {
-  return region.discover.displayNameOverride ?? formatRegionId(region.id)
+  return formatRegionLabel(region)
 }
 
 function toExportedRegion(region: RegionRecord): ExportedRegion {

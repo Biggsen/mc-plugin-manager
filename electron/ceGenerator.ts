@@ -3,6 +3,7 @@ const yaml = require('yaml')
 import { generateCommandId } from './aaGenerator'
 import type { StructureFamiliesMap } from './aaGenerator'
 import type { RegionRecord, OnboardingConfig } from './types'
+import { formatRegionLabel, formatRegionTitle } from './shared/stringFormatters'
 import { YAML_STRINGIFY_OPTIONS } from './utils/yamlOptions'
 
 type CEEvent = {
@@ -30,11 +31,7 @@ function getAACommandId(region: RegionRecord): string {
 }
 
 function formatRegionDisplayName(region: RegionRecord): string {
-  if (region.discover.displayNameOverride) return region.discover.displayNameOverride
-  return region.id
-    .split('_')
-    .map((s) => s.charAt(0).toUpperCase() + s.slice(1).toLowerCase())
-    .join(' ')
+  return formatRegionLabel(region)
 }
 
 const DIFFICULTY_TO_DIFF: Record<string, number> = {
@@ -128,10 +125,7 @@ function generateDiscoverOnceEvent(
     )
   } else {
     const parentRegionId = region.id.startsWith('heart_of_') ? region.id.slice(9) : region.id
-    const parentDisplayName = parentRegionId
-      .split('_')
-      .map((s) => s.charAt(0).toUpperCase() + s.slice(1).toLowerCase())
-      .join(' ')
+    const parentDisplayName = formatRegionTitle(parentRegionId)
     actions = [
       `console_command: aach give ${cmd} %player%`,
       `console_message: [EXPMETRIC] server={SERVER_NAME} type=discovery entity=heart player=%player% uuid=%player_uuid% region=${parentDisplayName} diff=0`,

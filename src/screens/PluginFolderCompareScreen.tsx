@@ -573,6 +573,12 @@ export function PluginFolderCompareScreen({ onBack }: PluginFolderCompareScreenP
         </Alert>
       )}
 
+      {result?.placeholderApiWarning && (
+        <Alert color="yellow" title="PlaceholderAPI">
+          {result.placeholderApiWarning}
+        </Alert>
+      )}
+
       {result && (
         <Stack gap="sm">
           <Group gap="xs">

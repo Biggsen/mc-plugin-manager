@@ -12,6 +12,7 @@ import {
   rewardDisplayFromCeExecuteLine,
   structuresFoundTierSpecs,
   structuresFoundTenDisplayNames,
+  generateCommandId,
 } from './aaGenerator'
 
 import type { RegionRecord } from './types'
@@ -62,6 +63,38 @@ describe('structureTypeToSingularTitle', () => {
     expect(structureTypeToSingularTitle('ancient_city')).toBe('Ancient City')
     expect(structureTypeToSingularTitle('trail_ruins')).toBe('Trail Ruin')
     expect(structureTypeToSingularTitle('pillager_outpost')).toBe('Pillager Outpost')
+  })
+})
+
+describe('generateCommandId', () => {
+  it('treats hyphens like underscores for PascalCase', () => {
+    expect(generateCommandId('east-wing')).toBe('discoverEastWing')
+    expect(generateCommandId('foo-bar_baz')).toBe('discoverFooBarBaz')
+  })
+
+  it('keeps nether "of" lowercase with hyphen segments', () => {
+    expect(generateCommandId('ebon-of-wither')).toBe('discoverEbonofWither')
+  })
+
+  it('capitalizes "Of" in heart ids', () => {
+    expect(generateCommandId('heart_of_cherry-brook')).toBe('discoverHeartOfCherryBrook')
+  })
+})
+
+describe('generateAACommands hyphenated ids', () => {
+  it('uses hyphen-aware command id, Name with underscores, and title in Goal', () => {
+    const regions: RegionRecord[] = [
+      {
+        world: 'overworld',
+        id: 'east-wing',
+        kind: 'region',
+        discover: { method: 'on_enter', recipeId: 'region' },
+      },
+    ]
+    const cmds = generateAACommands(regions)
+    expect(cmds.discoverEastWing).toBeDefined()
+    expect(cmds.discoverEastWing?.Name).toBe('discover_east_wing')
+    expect(cmds.discoverEastWing?.Goal).toBe('Discover East Wing Region')
   })
 })
 

@@ -21,6 +21,7 @@ import {
   IconDownload,
 } from '@tabler/icons-react'
 import type { ServerProfile, RegionRecord } from '../types'
+import { formatRegionLabel } from '@shared/stringFormatters'
 import {
   buildRegionExportDocument,
   downloadJsonDocument,
@@ -68,13 +69,6 @@ function getRegionGroup(region: RegionRecord): RegionGroupKey | null {
     if (region.kind === 'region') return 'regions'
   }
   return null
-}
-
-function formatRegionId(id: string): string {
-  return id
-    .split('_')
-    .map((s) => s.charAt(0).toUpperCase() + s.slice(1).toLowerCase())
-    .join(' ')
 }
 
 function kindIcon(kind: RegionRecord['kind']) {
@@ -254,7 +248,7 @@ export function RegionsScreen({ server }: RegionsScreenProps) {
   )
 
   function getSortLabel(region: RegionRecord): string {
-    return (region.discover.displayNameOverride ?? formatRegionId(region.id)).toLowerCase()
+    return formatRegionLabel(region).toLowerCase()
   }
 
   for (const key of Object.keys(grouped) as RegionGroupKey[]) {
@@ -268,7 +262,7 @@ export function RegionsScreen({ server }: RegionsScreenProps) {
       <Accordion variant="separated" radius="md" multiple defaultValue={[]}>
         {regionList.map((region) => {
           const value = `${region.world}:${region.id}`
-          const label = region.discover.displayNameOverride ?? formatRegionId(region.id)
+          const label = formatRegionLabel(region)
 
           return (
             <Accordion.Item key={value} value={value}>

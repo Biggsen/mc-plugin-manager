@@ -22,6 +22,10 @@ const templates = [
   'advancedachievements-config.yml',
   'commandwhitelist-config.yml',
   'conditionalevents-config.yml',
+  'crazycrates-config.yml',
+  'crazycrates-crates-HeartCrate.yml',
+  'crazycrates-crates-RegionCrate.yml',
+  'crazycrates-crates-VillageCrate.yml',
   'discordsrv-config.yml',
   'discordsrv-messages.yml',
   'essentials-config.yml',
@@ -32,6 +36,9 @@ const templates = [
   'mycommand-commands.yml',
   'tab-config.yml'
 ]
+
+/** Copied byte-for-byte (no UTF-8 read / header strip). */
+const binaryTemplates = ['perms-exploration.json.gz']
 
 // Strip version headers from content
 // Version headers are comment blocks that start with "# MC Plugin Manager" or similar patterns
@@ -112,6 +119,67 @@ for (const template of templates) {
   }
 }
 
+let binaryCopiedCount = 0
+for (const name of binaryTemplates) {
+  const sourcePath = path.join(sourceDir, name)
+  const targetPath = path.join(targetDir, name)
+  if (!fs.existsSync(sourcePath)) {
+    console.error(`Error: Source file not found: ${sourcePath}`)
+    process.exit(1)
+  }
+  fs.copyFileSync(sourcePath, targetPath)
+  console.log(`Copied (binary): ${name}`)
+  binaryCopiedCount++
+}
+if (binaryCopiedCount !== binaryTemplates.length) {
+  console.error(
+    `Error: Expected to copy ${binaryTemplates.length} binary template(s), but copied ${binaryCopiedCount}`
+  )
+  process.exit(1)
+}
+for (const name of binaryTemplates) {
+  const targetPath = path.join(targetDir, name)
+  if (!fs.existsSync(targetPath)) {
+    console.error(`Error: Binary target file was not created: ${targetPath}`)
+    process.exit(1)
+  }
+}
+
+// PlaceholderAPI plugin-shaped subtree: YAML stripped; other files (e.g. .jar) copied byte-for-byte
+const placeholderApiSrc = path.join(sourceDir, 'PlaceholderAPI')
+const placeholderApiDst = path.join(targetDir, 'PlaceholderAPI')
+if (!fs.existsSync(placeholderApiSrc)) {
+  console.error(`Error: PlaceholderAPI bundle folder not found: ${placeholderApiSrc}`)
+  process.exit(1)
+}
+let placeholderApiFileCount = 0
+function copyPlaceholderApiTree(srcDir, relPrefix) {
+  for (const ent of fs.readdirSync(srcDir, { withFileTypes: true })) {
+    const srcPath = path.join(srcDir, ent.name)
+    const rel = relPrefix ? path.join(relPrefix, ent.name) : ent.name
+    if (ent.isDirectory()) {
+      copyPlaceholderApiTree(srcPath, rel)
+    } else {
+      const destPath = path.join(placeholderApiDst, rel)
+      fs.mkdirSync(path.dirname(destPath), { recursive: true })
+      const lower = ent.name.toLowerCase()
+      if (lower.endsWith('.yml') || lower.endsWith('.yaml')) {
+        const content = fs.readFileSync(srcPath, 'utf-8')
+        fs.writeFileSync(destPath, stripVersionHeaders(content), 'utf-8')
+      } else {
+        fs.copyFileSync(srcPath, destPath)
+      }
+      console.log(`Copied PlaceholderAPI: ${rel}`)
+      placeholderApiFileCount++
+    }
+  }
+}
+copyPlaceholderApiTree(placeholderApiSrc, '')
+if (placeholderApiFileCount === 0) {
+  console.error('Error: PlaceholderAPI bundle folder contained no files')
+  process.exit(1)
+}
+
 // Copy guide books (BookGUI) to dist-electron/assets/templates/guide-books
 const guideBooksSourceDir = path.join(__dirname, '..', 'reference', 'plugin config files', 'guide books')
 const guideBooksTargetDir = path.join(targetDir, 'guide-books')
@@ -147,4 +215,6 @@ if (!fs.existsSync(itemIndexSrc)) {
 fs.copyFileSync(itemIndexSrc, itemIndexDest)
 console.log(`Copied data file: ${ITEM_INDEX_JSON}`)
 
-console.log(`Successfully copied ${copiedCount} template files to ${targetDir}`)
+console.log(
+  `Successfully copied ${copiedCount} text template(s) and ${binaryCopiedCount} binary file(s) to ${targetDir}`
+)
