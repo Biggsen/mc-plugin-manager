@@ -21,6 +21,7 @@ import {
   IconBook,
   IconUserCircle,
   IconListCheck,
+  IconPackage,
 } from '@tabler/icons-react'
 import type { ServerProfile } from '../types'
 import { computeRegionDisplayStats } from '../utils/regionStats'
@@ -31,8 +32,17 @@ import { BuildScreen } from './BuildScreen'
 import { RegionsScreen } from './RegionsScreen'
 import { LoreBooksScreen } from './LoreBooksScreen'
 import { DropTablesScreen } from './DropTablesScreen'
+import { CratesScreen } from './CratesScreen'
 
-type SectionValue = 'profile' | 'import' | 'regions' | 'dropTables' | 'onboarding' | 'build' | 'loreBooks'
+type SectionValue =
+  | 'profile'
+  | 'import'
+  | 'regions'
+  | 'dropTables'
+  | 'crates'
+  | 'onboarding'
+  | 'build'
+  | 'loreBooks'
 
 type ImportStatRow = { key: string; label: string; value: number; nested?: boolean }
 
@@ -41,6 +51,7 @@ interface ServerDetailScreenProps {
   onBack: () => void
   onServerProfileChange?: (server: ServerProfile) => void
   onOpenDropTableLibrary?: () => void
+  onOpenCrateLibrary?: () => void
 }
 
 export function ServerDetailScreen({
@@ -48,6 +59,7 @@ export function ServerDetailScreen({
   onBack,
   onServerProfileChange,
   onOpenDropTableLibrary,
+  onOpenCrateLibrary,
 }: ServerDetailScreenProps) {
   const [server, setServer] = useState<ServerProfile>(initialServer)
   const [activeSection, setActiveSection] = useState<SectionValue>('import')
@@ -187,6 +199,7 @@ export function ServerDetailScreen({
     { value: 'import', label: 'Import Regions', icon: <IconFileImport size={18} /> },
     { value: 'regions', label: 'Regions', icon: <IconMap2 size={18} /> },
     { value: 'dropTables', label: 'Drop Tables', icon: <IconListCheck size={18} /> },
+    { value: 'crates', label: 'Crates', icon: <IconPackage size={18} /> },
     { value: 'onboarding', label: 'Onboarding', icon: <IconUser size={18} /> },
     { value: 'build', label: 'Build', icon: <IconHammer size={18} /> },
     { value: 'loreBooks', label: 'Lore Books', icon: <IconBook size={18} /> },
@@ -248,6 +261,7 @@ export function ServerDetailScreen({
             {activeSection === 'import' && 'Import stats'}
             {activeSection === 'regions' && 'Regions'}
             {activeSection === 'dropTables' && 'Drop Tables'}
+            {activeSection === 'crates' && 'Crates'}
             {activeSection === 'onboarding' && 'Onboarding Config'}
             {activeSection === 'build' && 'Build Config'}
             {activeSection === 'loreBooks' && 'Export Lore Books'}
@@ -310,15 +324,22 @@ export function ServerDetailScreen({
         {activeSection === 'regions' && (
           <RegionsScreen server={server} />
         )}
-        {activeSection === 'onboarding' && (
-          <OnboardingScreen server={server} onServerUpdate={handleServerUpdate} />
-        )}
         {activeSection === 'dropTables' && (
           <DropTablesScreen
             server={server}
             onServerUpdate={handleServerUpdate}
             onOpenDropTableLibrary={onOpenDropTableLibrary}
           />
+        )}
+        {activeSection === 'crates' && (
+          <CratesScreen
+            server={server}
+            onServerUpdate={handleServerUpdate}
+            onOpenCrateLibrary={onOpenCrateLibrary}
+          />
+        )}
+        {activeSection === 'onboarding' && (
+          <OnboardingScreen server={server} onServerUpdate={handleServerUpdate} />
         )}
         {activeSection === 'build' && (
           <BuildScreen server={server} onServerUpdate={handleServerUpdate} />

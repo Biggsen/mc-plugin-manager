@@ -8,10 +8,12 @@ const { registerLoreBookHandlers } = require('./handlers/loreBookHandlers')
 const { registerDialogHandlers } = require('./handlers/dialogHandlers')
 const { registerPluginCompareHandlers } = require('./handlers/pluginCompareHandlers')
 const { registerDropTableLibraryHandlers } = require('./handlers/dropTableLibraryHandlers')
+const { registerCrateLibraryHandlers } = require('./handlers/crateLibraryHandlers')
 
 function registerAllHandlers(): void {
   registerServerHandlers()
   registerDropTableLibraryHandlers()
+  registerCrateLibraryHandlers()
   registerImportHandlers()
   registerBuildHandlers()
   registerLoreBookHandlers()

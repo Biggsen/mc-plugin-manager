@@ -26,6 +26,7 @@ const templates = [
   'crazycrates-crates-HeartCrate.yml',
   'crazycrates-crates-RegionCrate.yml',
   'crazycrates-crates-VillageCrate.yml',
+  'crazycrates-crate-base-template.yml',
   'discordsrv-config.yml',
   'discordsrv-messages.yml',
   'essentials-config.yml',

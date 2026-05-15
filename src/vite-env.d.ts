@@ -55,6 +55,37 @@ interface ElectronAPI {
     serverId: string,
     payload: { libraryTableIds: string[] }
   ) => Promise<ServerProfile | null>
+  listCrateLibrary: () => Promise<import('./types').CrateLibraryEntry[]>
+  createCrateLibraryEntry: (input?: {
+    name?: string
+    description?: string
+    outputStem?: string
+    accentTag?: string
+    crateSlot?: number
+    guiItem?: string
+    loreLine1?: string
+    loreLine2?: string
+    animationTitle?: string
+    selectedPrizeEntries?: import('./types').CratePrizeEntry[]
+  }) => Promise<import('./types').CrateLibraryEntry>
+  updateCrateLibraryEntry: (input: {
+    id: string
+    name?: string
+    description?: string
+    outputStem?: string
+    accentTag?: string
+    crateSlot?: number
+    guiItem?: string
+    loreLine1?: string
+    loreLine2?: string
+    animationTitle?: string
+    selectedPrizeEntries?: import('./types').CratePrizeEntry[]
+  }) => Promise<import('./types').CrateLibraryEntry>
+  deleteCrateLibraryEntry: (id: string) => Promise<import('./types').CrateLibraryDeleteResult>
+  updateServerCrazyCrates: (
+    serverId: string,
+    payload: { libraryCrateIds: string[] }
+  ) => Promise<ServerProfile | null>
   buildConfigs: (
     serverId: string,
     inputs: {

@@ -38,11 +38,11 @@ import { resolveConfigServerName } from '../../shared/resolveConfigServerName'
 import { getGuideBooksSourceDir } from '../../utils/guideBooksDir'
 import { getGriefPreventionBundledConfigPath } from '../../utils/griefPreventionBundledConfig'
 import {
-  CRAZY_CRATES_CRATE_TEMPLATES,
   CRAZY_CRATES_MAIN_TEMPLATE,
-  crazyCratesPropagatedCrateFilename,
   getCrazyCratesBundledTemplatePath,
 } from '../../utils/crazyCratesBundledConfig'
+import { resolveCrazyCratesForServer } from '../../crateResolve'
+import { buildCrateYamlFromTemplate } from '../../crateYamlFromTemplate'
 import {
   getLuckPermsBundledExportPath,
   LUCKPERMS_BUNDLED_EXPORT_FILENAME,
@@ -570,13 +570,18 @@ export function registerBuildHandlers(): void {
             }
             fs.writeFileSync(path.join(buildDir, configFlatName), mainContent, 'utf-8')
 
-            for (const tmpl of CRAZY_CRATES_CRATE_TEMPLATES) {
-              const bundledPath = getCrazyCratesBundledTemplatePath(tmpl)
-              const rawBody = fs.readFileSync(bundledPath, 'utf-8')
-              const content = prependGeneratorVersionHeader(rawBody, crazyCratesHeaderArgs)
-              const propagatedName = crazyCratesPropagatedCrateFilename(tmpl)
-              const stem = path.basename(propagatedName, '.yml')
-              const crateFlatName = `${serverNameSanitized}-crazycrates-crate-${stem}.yml`
+            const { crates: resolvedCrates, warnings: crateResolveWarnings } = resolveCrazyCratesForServer(profile)
+            warnings.push(...crateResolveWarnings)
+
+            for (const row of resolvedCrates) {
+              const { yaml: crateYaml, warnings: crateTplWarnings } = buildCrateYamlFromTemplate({
+                libraryEntry: row.libraryEntry ?? null,
+                legacyStem: row.legacyStem,
+              })
+              warnings.push(...crateTplWarnings)
+              const content = prependGeneratorVersionHeader(crateYaml, crazyCratesHeaderArgs)
+              const propagatedName = `${row.outputStem}.yml`
+              const crateFlatName = `${serverNameSanitized}-crazycrates-crate-${row.outputStem}.yml`
               if (propagate) {
                 const cratesDir = path.join(inputs.outDir, 'CrazyCrates', 'crates')
                 fs.mkdirSync(cratesDir, { recursive: true })

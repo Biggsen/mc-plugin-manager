@@ -11,6 +11,8 @@ import { getWorldGuardRegionsPropagatedRelativePath } from './worldGuardRegionsP
 import { CE_EVENT_FRAGMENT_BASENAMES } from '../ceGenerator'
 import { getGuideBooksSourceDir } from './guideBooksDir'
 import { listPlaceholderApiBundledRelativePaths } from './placeholderApiBundledDir'
+import { loadCrateLibrary } from '../crateLibrary'
+import { CRAZY_CRATES_BUNDLED_CRATE_STEMS } from './crazyCratesBundledConfig'
 
 export interface PmGeneratedEntry {
   id: string
@@ -77,21 +79,25 @@ export function getPmGeneratedEntries(): {
       label: 'CrazyCrates (config.yml)',
       relativePath: path.join('CrazyCrates', 'config.yml'),
     },
-    {
-      id: 'crazycrates-crate-heart',
-      label: 'CrazyCrates (crates/HeartCrate.yml)',
-      relativePath: path.join('CrazyCrates', 'crates', 'HeartCrate.yml'),
-    },
-    {
-      id: 'crazycrates-crate-region',
-      label: 'CrazyCrates (crates/RegionCrate.yml)',
-      relativePath: path.join('CrazyCrates', 'crates', 'RegionCrate.yml'),
-    },
-    {
-      id: 'crazycrates-crate-village',
-      label: 'CrazyCrates (crates/VillageCrate.yml)',
-      relativePath: path.join('CrazyCrates', 'crates', 'VillageCrate.yml'),
-    },
+    ...(() => {
+      const crateStems = new Set<string>()
+      for (const stem of CRAZY_CRATES_BUNDLED_CRATE_STEMS) {
+        crateStems.add(stem)
+      }
+      try {
+        for (const e of loadCrateLibrary()) {
+          const s = e.outputStem.trim()
+          if (s.length > 0) crateStems.add(s)
+        }
+      } catch {
+        /* Electron app unavailable (e.g. vitest) — bundled stems only */
+      }
+      return [...crateStems].sort((a, b) => a.localeCompare(b)).map((stem) => ({
+        id: `crazycrates-crate-${stem}`,
+        label: `CrazyCrates (crates/${stem}.yml)`,
+        relativePath: path.join('CrazyCrates', 'crates', `${stem}.yml`),
+      }))
+    })(),
     {
       id: 'luckperms-exploration-gz',
       label: 'LuckPerms (perms-exploration.json.gz)',

@@ -1,0 +1,118 @@
+# CrazyCrates crate base template (MC Plugin Manager)
+#
+# Placeholders are replaced at emit time. Convention:
+#   {{ACCENT_TAG}}  MiniMessage colour token WITHOUT angle brackets (e.g. dark_purple, red, yellow).
+#                   Emitted as <{{ACCENT_TAG}}>… so it becomes valid MiniMessage.
+#   {{CRATE_NAME}}  Plain title (use the same string as the crate library display name).
+#
+# Placeholder list:
+#   {{CRATE_SLOT}}       Integer — /crates GUI slot (0–53 style per CrazyCrates).
+#   {{GUI_ITEM}}         Material id for the crate icon in the GUI (e.g. compass, lodestone).
+#   {{ACCENT_TAG}}       See above.
+#   {{CRATE_NAME}}       See above.
+#   {{LORE_LINE_1}}      First theme lore line (include MiniMessage tags if you want, e.g. <gray>…).
+#   {{LORE_LINE_2}}      Second theme lore line.
+#   {{ANIMATION_TITLE}}  Animation.Name (plain text shown during CSGO open).
+#
+# Fixed in this file: RequiredKeys 0, StartingKeys 0, Preview.ChestLines 3, BroadCast pattern,
+# generic PhysicalKey + Hologram (unused / neutral). Prizes: merge or append separately at build.
+
+Crate:
+  # https://docs.crazycrew.us/docs/plugins/crazycrates/misc/crate-types
+  # https://docs.crazycrew.us/docs/category/crazycrates
+  CrateType: CSGO
+  StartingKeys: 0
+  RequiredKeys: 0
+  Max-Mass-Open: 10
+  InGUI: true
+  Slot: "{{CRATE_SLOT}}"
+  OpeningBroadCast: true
+  Permission: false
+  # Inferred pattern: prefix + player + accent-wrapped crate name (period before closing bold).
+  BroadCast: '%prefix%<bold><gold>%player%</bold><reset> <gray>is opening a <bold><{{ACCENT_TAG}}>{{CRATE_NAME}}.</bold>'
+  opening-command:
+    toggle: false
+    commands:
+      - "put your command here."
+  sound:
+    cycle-sound:
+      toggle: true
+      value: "block.note_block.xylophone"
+      volume: 1.0
+      pitch: 1.0
+    click-sound:
+      toggle: true
+      value: "ui.button.click"
+      volume: 1.0
+      pitch: 1.0
+    stop-sound:
+      toggle: true
+      value: "entity.player.levelup"
+      volume: 1.0
+      pitch: 1.0
+  Prize-Message:
+    - "<gray>You have won <red>%reward% <gray>from <red>%crate%."
+  Prize-Commands: []
+  Settings:
+    Tracking-Crate-Opening: false
+    Border:
+      Glass-Border:
+        Toggle: true
+    Broadcast:
+      Toggle: false
+      Messages:
+        - "<red>%player% won the prize <yellow>%reward%."
+      Permission: ""
+    Rewards:
+      Re-Roll-Spin: false
+      Permission:
+        Toggle: false
+        Persist: false
+        Max-Cap: 20
+  Item: "{{GUI_ITEM}}"
+  Custom-Model-Data: -1
+  Model:
+    Namespace: ""
+    Id: ""
+  Glowing: false
+  Name: '<bold><{{ACCENT_TAG}}>{{CRATE_NAME}}</bold>'
+  Lore:
+    - "{{LORE_LINE_1}}"
+    - "{{LORE_LINE_2}}"
+    - ""
+    - "<gray>Available keys: <yellow>%keys%"
+    - "<gray>(<yellow>!<gray>) Right click to inspect."
+  Preview:
+    Name: '<{{ACCENT_TAG}}>{{CRATE_NAME}} Preview'
+    Toggle: true
+    ChestLines: 3
+    Glass:
+      Toggle: true
+      Name: " "
+      Item: "gray_stained_glass_pane"
+      Custom-Model-Data: -1
+      Model:
+        Namespace: ""
+        Id: ""
+  Animation:
+    Name: "{{ANIMATION_TITLE}}"
+  PhysicalKey:
+    Name: "<gray>Crate Key</gray>"
+    Lore:
+      - "<gray>Key for this crate.</gray>"
+    Item: "tripwire_hook"
+    Custom-Model-Data: -1
+    Model:
+      Namespace: ""
+      Id: ""
+    Glowing: false
+  Hologram:
+    Toggle: true
+    Height: 1.5
+    Range: 8
+    Update-Interval: -1
+    Color: "transparent"
+    Message:
+      - "<gray>Crate</gray>"
+  # Prizes are merged or spliced at build — do not deploy this stub without a real Prizes map.
+  Prizes: {}

@@ -1,27 +1,39 @@
 import { useState } from 'react'
 import { AppShell, Button, Group, Text } from '@mantine/core'
-import { IconGitCompare, IconPlug, IconBooks } from '@tabler/icons-react'
+import { IconGitCompare, IconPlug, IconBooks, IconPackage } from '@tabler/icons-react'
 import { ServerProfilesScreen } from './screens/ServerProfilesScreen'
 import { ServerDetailScreen } from './screens/ServerDetailScreen'
 import { PluginFolderCompareScreen } from './screens/PluginFolderCompareScreen'
 import { DropTableLibraryScreen } from './screens/DropTableLibraryScreen'
 import { DropTableEditorScreen } from './screens/DropTableEditorScreen'
+import { CrateLibraryScreen } from './screens/CrateLibraryScreen'
+import { CrateEditorScreen } from './screens/CrateEditorScreen'
 import type { ServerProfile } from './types'
 
-type ShellView = 'servers' | 'comparePlugins' | 'dropTableLibrary' | 'dropTableEditor'
+type ShellView = 'servers' | 'comparePlugins' | 'dropTableLibrary' | 'dropTableEditor' | 'crateLibrary' | 'crateEditor'
 
 function App() {
   const [currentServer, setCurrentServer] = useState<ServerProfile | null>(null)
   const [shellView, setShellView] = useState<ShellView>('servers')
   const [editorTableId, setEditorTableId] = useState<string | undefined>(undefined)
+  const [editorCrateId, setEditorCrateId] = useState<string | undefined>(undefined)
 
   function openDropTableEditor(tableId?: string) {
     setEditorTableId(tableId)
     setShellView('dropTableEditor')
   }
 
-  function backToLibrary() {
+  function openCrateEditor(crateId?: string) {
+    setEditorCrateId(crateId)
+    setShellView('crateEditor')
+  }
+
+  function backToDropTableLibrary() {
     setShellView('dropTableLibrary')
+  }
+
+  function backToCrateLibrary() {
+    setShellView('crateLibrary')
   }
 
   return (
@@ -36,15 +48,27 @@ function App() {
           </Group>
           <Group gap="xs">
             {shellView === 'servers' && (
-              <Button
-                variant="light"
-                leftSection={<IconBooks size={18} />}
-                onClick={() => setShellView('dropTableLibrary')}
-              >
-                Drop table library
-              </Button>
+              <>
+                <Button
+                  variant="light"
+                  leftSection={<IconBooks size={18} />}
+                  onClick={() => setShellView('dropTableLibrary')}
+                >
+                  Drop table library
+                </Button>
+                <Button
+                  variant="light"
+                  leftSection={<IconPackage size={18} />}
+                  onClick={() => setShellView('crateLibrary')}
+                >
+                  Crate library
+                </Button>
+              </>
             )}
-            {(shellView === 'dropTableLibrary' || shellView === 'dropTableEditor') && (
+            {(shellView === 'dropTableLibrary' ||
+              shellView === 'dropTableEditor' ||
+              shellView === 'crateLibrary' ||
+              shellView === 'crateEditor') && (
               <Button variant="light" onClick={() => setShellView('servers')}>
                 Back to servers
               </Button>
@@ -74,11 +98,22 @@ function App() {
             onCreateTable={() => openDropTableEditor(undefined)}
             onEditTable={(tableId) => openDropTableEditor(tableId)}
           />
+        ) : shellView === 'crateLibrary' ? (
+          <CrateLibraryScreen
+            onCreateCrate={() => openCrateEditor(undefined)}
+            onEditCrate={(id) => openCrateEditor(id)}
+          />
+        ) : shellView === 'crateEditor' ? (
+          <CrateEditorScreen
+            crateId={editorCrateId}
+            onBack={backToCrateLibrary}
+            onSaved={() => backToCrateLibrary()}
+          />
         ) : shellView === 'dropTableEditor' ? (
           <DropTableEditorScreen
             tableId={editorTableId}
-            onBack={backToLibrary}
-            onSaved={() => backToLibrary()}
+            onBack={backToDropTableLibrary}
+            onSaved={() => backToDropTableLibrary()}
           />
         ) : currentServer ? (
           <ServerDetailScreen
@@ -86,6 +121,7 @@ function App() {
             onBack={() => setCurrentServer(null)}
             onServerProfileChange={setCurrentServer}
             onOpenDropTableLibrary={() => setShellView('dropTableLibrary')}
+            onOpenCrateLibrary={() => setShellView('crateLibrary')}
           />
         ) : (
           <ServerProfilesScreen onSelectServer={setCurrentServer} />

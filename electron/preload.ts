@@ -19,6 +19,9 @@ import type {
   DropTableLibraryDeleteResult,
   DropTableItemOverride,
   DropTableSelectedEntry,
+  CrateLibraryEntry,
+  CrateLibraryDeleteResult,
+  CratePrizeEntry,
 } from './types'
 
 // Define the IPC API interface
@@ -77,7 +80,38 @@ export interface ElectronAPI {
     serverId: string,
     payload: { libraryTableIds: string[] }
   ) => Promise<ServerProfile | null>
-  
+  listCrateLibrary: () => Promise<CrateLibraryEntry[]>
+  createCrateLibraryEntry: (input?: {
+    name?: string
+    description?: string
+    outputStem?: string
+    accentTag?: string
+    crateSlot?: number
+    guiItem?: string
+    loreLine1?: string
+    loreLine2?: string
+    animationTitle?: string
+    selectedPrizeEntries?: CratePrizeEntry[]
+  }) => Promise<CrateLibraryEntry>
+  updateCrateLibraryEntry: (input: {
+    id: string
+    name?: string
+    description?: string
+    outputStem?: string
+    accentTag?: string
+    crateSlot?: number
+    guiItem?: string
+    loreLine1?: string
+    loreLine2?: string
+    animationTitle?: string
+    selectedPrizeEntries?: CratePrizeEntry[]
+  }) => Promise<CrateLibraryEntry>
+  deleteCrateLibraryEntry: (id: string) => Promise<CrateLibraryDeleteResult>
+  updateServerCrazyCrates: (
+    serverId: string,
+    payload: { libraryCrateIds: string[] }
+  ) => Promise<ServerProfile | null>
+
   // Build
   buildConfigs: (
     serverId: string,
@@ -180,6 +214,35 @@ contextBridge.exposeInMainWorld('electronAPI', {
   deleteDropTable: (id: string) => ipcRenderer.invoke('delete-drop-table', id),
   updateServerDropTables: (serverId: string, payload: { libraryTableIds: string[] }) =>
     ipcRenderer.invoke('update-server-drop-tables', serverId, payload),
+  listCrateLibrary: () => ipcRenderer.invoke('list-crate-library'),
+  createCrateLibraryEntry: (input?: {
+    name?: string
+    description?: string
+    outputStem?: string
+    accentTag?: string
+    crateSlot?: number
+    guiItem?: string
+    loreLine1?: string
+    loreLine2?: string
+    animationTitle?: string
+    selectedPrizeEntries?: CratePrizeEntry[]
+  }) => ipcRenderer.invoke('create-crate-library-entry', input),
+  updateCrateLibraryEntry: (input: {
+    id: string
+    name?: string
+    description?: string
+    outputStem?: string
+    accentTag?: string
+    crateSlot?: number
+    guiItem?: string
+    loreLine1?: string
+    loreLine2?: string
+    animationTitle?: string
+    selectedPrizeEntries?: CratePrizeEntry[]
+  }) => ipcRenderer.invoke('update-crate-library-entry', input),
+  deleteCrateLibraryEntry: (id: string) => ipcRenderer.invoke('delete-crate-library-entry', id),
+  updateServerCrazyCrates: (serverId: string, payload: { libraryCrateIds: string[] }) =>
+    ipcRenderer.invoke('update-server-crazy-crates', serverId, payload),
   buildConfigs: (
     serverId: string,
     inputs: {

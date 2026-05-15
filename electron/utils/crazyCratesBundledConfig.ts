@@ -6,12 +6,24 @@ const { existsSync } = require('fs')
 
 export const CRAZY_CRATES_MAIN_TEMPLATE = 'crazycrates-config.yml'
 
+/** Unified crate body with `{{…}}` placeholders; merged with Prizes at emit. */
+export const CRAZY_CRATES_CRATE_BASE_TEMPLATE = 'crazycrates-crate-base-template.yml'
+
+/** Crate body source stems (maps to `crazycrates-crates-${stem}.yml` in assets/templates). */
+export const CRAZY_CRATES_BUNDLED_CRATE_STEMS = ['HeartCrate', 'RegionCrate', 'VillageCrate'] as const
+
+export type CrazyCratesBundledCrateStem = (typeof CRAZY_CRATES_BUNDLED_CRATE_STEMS)[number]
+
 /** Source filenames under assets/templates; written to CrazyCrates/crates/<basename>.yml when propagating. */
 export const CRAZY_CRATES_CRATE_TEMPLATES = [
   'crazycrates-crates-HeartCrate.yml',
   'crazycrates-crates-RegionCrate.yml',
   'crazycrates-crates-VillageCrate.yml',
 ] as const
+
+export function crazycratesBundledTemplateFilename(stem: CrazyCratesBundledCrateStem): string {
+  return `crazycrates-crates-${stem}.yml`
+}
 
 const PREFIX = 'crazycrates-crates-'
 

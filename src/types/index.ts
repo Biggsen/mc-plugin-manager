@@ -88,6 +88,8 @@ export interface ServerProfile {
   }
   /** Which global drop-table library entries apply to this server (by library entry id). */
   dropTables?: DropTablesServerAssignment
+  /** Which global CrazyCrates library entries to emit for this server (by library entry id). Empty = all default bundled crates. */
+  crazyCrates?: CrazyCratesServerAssignment
   /** Per-plugin successful emit serial (1-based), keyed by plugin id. */
   generatorVersions?: Partial<Record<GeneratorVersionKey, number>>
   /** DiscordSRV build inputs (legacy single-target shape). */
@@ -338,6 +340,65 @@ export interface DropTableLibraryDeleteResult {
   error?: string
   /** Servers that had this table id removed from their assignment lists. */
   removedFromServers?: { id: string; name: string }[]
+}
+
+/** Bundled crate YAML body source (clone from `crazycrates-crates-${stem}.yml`). */
+export type CrazyCratesBundledCrateStem = 'HeartCrate' | 'RegionCrate' | 'VillageCrate'
+
+/** Per-server: references into the global CrazyCrates crate library. */
+export interface CrazyCratesServerAssignment {
+  libraryCrateIds: string[]
+}
+
+export interface CratePrizeOverride {
+  weight?: number
+  amount?: string
+  displayName?: string
+}
+
+export interface CratePrizeEntry {
+  entryId: string
+  itemId: string
+  override?: CratePrizeOverride
+}
+
+/** One row in the global CrazyCrates crate library. */
+export interface CrateLibraryEntry {
+  id: string
+  /** Display name in generated YAML (GUI title, broadcast, etc.). */
+  name: string
+  description?: string
+  /** Output file basename without `.yml` under `CrazyCrates/crates/` (unique in library). */
+  outputStem: string
+  /** MiniMessage colour token without angle brackets, e.g. dark_purple. */
+  accentTag?: string
+  /** /crates GUI slot index. */
+  crateSlot?: number
+  /** Material id for the crate icon in the GUI. */
+  guiItem?: string
+  loreLine1?: string
+  loreLine2?: string
+  animationTitle?: string
+  selectedPrizeEntries: CratePrizeEntry[]
+  createdAt: string
+  updatedAt: string
+}
+
+export interface CrateLibraryDeleteResult {
+  ok: boolean
+  error?: string
+  removedFromServers?: { id: string; name: string }[]
+}
+
+/** Resolved crate row for build emit (main process). */
+export interface ResolvedCrazyCratesCrate {
+  /** Present when emit came from a library assignment. */
+  libraryEntryId?: string
+  /** Denormalized for build (theme + overrides). */
+  libraryEntry?: CrateLibraryEntry
+  outputStem: string
+  /** Legacy default trio only (no library row). */
+  legacyStem?: CrazyCratesBundledCrateStem
 }
 
 /** Row for build history list (from saved report.json). */
