@@ -78,6 +78,14 @@ export function registerDropTableLibraryHandlers(): void {
     return { items, warnings, sourcePath }
   })
 
+  ipcMain.handle('scan-enchant-data', async () => {
+    const { loadBundledEnchantCatalog, listEnchantDefinitions } = require('../../enchantIndex')
+    const { catalog, warnings, sourcePath } = loadBundledEnchantCatalog()
+    const enchants = catalog ? listEnchantDefinitions(catalog) : []
+    const items = catalog?.items ?? {}
+    return { enchants, items, warnings, sourcePath }
+  })
+
   ipcMain.handle('list-drop-table-library', async () => {
     return loadDropTableLibrary()
   })

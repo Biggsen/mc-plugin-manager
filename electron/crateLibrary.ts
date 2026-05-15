@@ -25,6 +25,12 @@ function isValidPrizeEntry(row: unknown): row is CratePrizeEntry {
     if (o.weight !== undefined && (typeof o.weight !== 'number' || !Number.isFinite(o.weight))) return false
     if (o.amount !== undefined && typeof o.amount !== 'string') return false
     if (o.displayName !== undefined && typeof o.displayName !== 'string') return false
+    if (o.enchantments !== undefined) {
+      if (typeof o.enchantments !== 'object' || o.enchantments === null || Array.isArray(o.enchantments)) return false
+      for (const v of Object.values(o.enchantments as Record<string, unknown>)) {
+        if (typeof v !== 'number' || !Number.isFinite(v)) return false
+      }
+    }
   }
   return true
 }

@@ -4,6 +4,7 @@ const { randomUUID } = require('crypto')
 import type { CrateLibraryEntry, CrateLibraryDeleteResult, CratePrizeEntry } from '../../types'
 import { loadCrateLibrary, saveCrateLibrary } from '../../crateLibrary'
 import { findServersReferencingLibraryCrate, removeLibraryCrateIdFromAllServers } from '../../crateResolve'
+import { loadBundledEnchantCatalog, sanitizeEnchantmentsForItem } from '../../enchantIndex'
 
 function sanitizeCrateOutputStem(raw: string): string {
   const s = raw
@@ -20,6 +21,7 @@ function stemTaken(crates: CrateLibraryEntry[], outputStem: string, exceptId?: s
 }
 
 function sanitizePrizeEntries(entries: CratePrizeEntry[]): CratePrizeEntry[] {
+  const { catalog } = loadBundledEnchantCatalog()
   const out: CratePrizeEntry[] = []
   for (const raw of entries) {
     const itemId = String(raw?.itemId ?? '')
@@ -44,6 +46,20 @@ function sanitizePrizeEntries(entries: CratePrizeEntry[]): CratePrizeEntry[] {
       if (o.displayName !== undefined) {
         const displayName = String(o.displayName).trim()
         if (displayName.length > 0) override.displayName = displayName
+      }
+      if (o.enchantments && typeof o.enchantments === 'object' && catalog) {
+        const materialId = itemId.toLowerCase()
+        const cleaned = sanitizeEnchantmentsForItem(catalog, materialId, o.enchantments as Record<string, number>)
+        if (cleaned) override.enchantments = cleaned
+      } else if (o.enchantments && typeof o.enchantments === 'object' && !catalog) {
+        const cleaned: Record<string, number> = {}
+        for (const [k, v] of Object.entries(o.enchantments as Record<string, number>)) {
+          const id = String(k).trim().toLowerCase()
+          if (!id) continue
+          const level = typeof v === 'number' && Number.isFinite(v) ? Math.max(1, Math.round(v)) : 1
+          cleaned[id] = level
+        }
+        if (Object.keys(cleaned).length > 0) override.enchantments = cleaned
       }
       if (Object.keys(override).length > 0) row.override = override
     }

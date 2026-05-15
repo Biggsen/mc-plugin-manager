@@ -65,6 +65,12 @@ export interface ElectronAPI {
     updates: { anchors?: string[]; description?: string }
   ) => Promise<ServerProfile | null>
   scanItemIndex: () => Promise<{ items: ItemIndexEntry[]; warnings: string[]; sourcePath: string }>
+  scanEnchantData: () => Promise<{
+    enchants: import('@shared/types').EnchantIndexEntry[]
+    items: Record<string, import('@shared/types').ItemEnchantMeta>
+    warnings: string[]
+    sourcePath: string
+  }>
   listDropTableLibrary: () => Promise<DropTableLibraryEntry[]>
   createDropTable: (input?: { name?: string; description?: string }) => Promise<DropTableLibraryEntry>
   updateDropTable: (input: {
@@ -200,6 +206,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   updateRegionLoreBook: (serverId: string, regionId: string, updates: { anchors?: string[]; description?: string }) =>
     ipcRenderer.invoke('update-region-lore-book', serverId, regionId, updates),
   scanItemIndex: () => ipcRenderer.invoke('scan-item-index'),
+  scanEnchantData: () => ipcRenderer.invoke('scan-enchant-data'),
   listDropTableLibrary: () => ipcRenderer.invoke('list-drop-table-library'),
   createDropTable: (input?: { name?: string; description?: string }) =>
     ipcRenderer.invoke('create-drop-table', input),

@@ -354,6 +354,21 @@ export interface CratePrizeOverride {
   weight?: number
   amount?: string
   displayName?: string
+  /** Enchant id (snake_case) → level for CrazyCrates item string. */
+  enchantments?: Record<string, number>
+}
+
+export interface EnchantIndexEntry {
+  id: string
+  name: string
+  maxLevel: number
+  category: string
+  exclude: string[]
+}
+
+export interface ItemEnchantMeta {
+  enchantable: boolean
+  categories: string[]
 }
 
 export interface CratePrizeEntry {

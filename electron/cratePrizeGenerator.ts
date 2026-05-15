@@ -24,9 +24,28 @@ function parseDisplayAmount(amount: string | undefined): number {
   return 1
 }
 
-function formatDisplayName(itemName: string, displayAmount: number): string {
+function formatDisplayName(itemName: string, displayAmount: number, hasEnchants: boolean): string {
   const label = itemName.trim() || 'Item'
-  return `<white>${displayAmount}x ${label}`
+  const prefix = hasEnchants ? 'enchanted ' : ''
+  return `<white>${displayAmount}x ${prefix}${label}`
+}
+
+export function buildCratePrizeItemLine(
+  material: string,
+  amount: string,
+  enchantments?: Record<string, number>
+): string {
+  let line = `item:${material}, amount:${amount}`
+  if (enchantments && typeof enchantments === 'object') {
+    const ids = Object.keys(enchantments).sort()
+    for (const id of ids) {
+      const level = enchantments[id]
+      if (typeof level === 'number' && Number.isFinite(level) && level > 0) {
+        line += `, ${id}:${Math.round(level)}`
+      }
+    }
+  }
+  return line
 }
 
 export function buildCratePrizesYamlMap(
@@ -42,13 +61,15 @@ export function buildCratePrizesYamlMap(
     const material = materialIdForCrazyCrates(itemId)
     const amount = row.override?.amount?.trim() || '1'
     const displayAmount = parseDisplayAmount(amount)
+    const enchantments = row.override?.enchantments
+    const hasEnchants = enchantments != null && Object.keys(enchantments).length > 0
     const weight =
       typeof row.override?.weight === 'number' && Number.isFinite(row.override.weight)
         ? Math.max(1, Math.round(row.override.weight))
         : DEFAULT_CRATE_PRIZE_WEIGHT
     const displayName =
       row.override?.displayName?.trim() ||
-      formatDisplayName(catalog?.name ?? material.replace(/_/g, ' '), displayAmount)
+      formatDisplayName(catalog?.name ?? material.replace(/_/g, ' '), displayAmount, hasEnchants)
 
     prizes[String(index)] = {
       DisplayName: displayName,
@@ -56,7 +77,7 @@ export function buildCratePrizesYamlMap(
       Settings: PRIZE_SETTINGS,
       DisplayAmount: displayAmount,
       Weight: weight,
-      Items: [`item:${material}, amount:${amount}`],
+      Items: [buildCratePrizeItemLine(material, amount, enchantments)],
     }
     index += 1
   }

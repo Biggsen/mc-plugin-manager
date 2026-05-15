@@ -1,0 +1,1101 @@
+{
+  "schemaVersion": 1,
+  "enchants": {
+    "aqua_affinity": {
+      "name": "Aqua Affinity",
+      "maxLevel": 1,
+      "category": "head_armor"
+    },
+    "bane_of_arthropods": {
+      "name": "Bane Of Arthropods",
+      "maxLevel": 5,
+      "category": "weapon",
+      "exclude": [
+        "breach",
+        "density",
+        "impaling",
+        "sharpness",
+        "smite"
+      ]
+    },
+    "blast_protection": {
+      "name": "Blast Protection",
+      "maxLevel": 4,
+      "category": "armor",
+      "exclude": [
+        "fire_protection",
+        "projectile_protection",
+        "protection"
+      ]
+    },
+    "breach": {
+      "name": "Breach",
+      "maxLevel": 4,
+      "category": "mace",
+      "exclude": [
+        "bane_of_arthropods",
+        "density",
+        "impaling",
+        "sharpness",
+        "smite"
+      ]
+    },
+    "channeling": {
+      "name": "Channeling",
+      "maxLevel": 1,
+      "category": "trident",
+      "exclude": [
+        "riptide"
+      ]
+    },
+    "curse_of_binding": {
+      "name": "Curse Of Binding",
+      "maxLevel": 1,
+      "category": "armor"
+    },
+    "curse_of_vanishing": {
+      "name": "Curse Of Vanishing",
+      "maxLevel": 1,
+      "category": "vanishing"
+    },
+    "density": {
+      "name": "Density",
+      "maxLevel": 5,
+      "category": "mace",
+      "exclude": [
+        "bane_of_arthropods",
+        "breach",
+        "impaling",
+        "sharpness",
+        "smite"
+      ]
+    },
+    "depth_strider": {
+      "name": "Depth Strider",
+      "maxLevel": 3,
+      "category": "foot_armor",
+      "exclude": [
+        "frost_walker"
+      ]
+    },
+    "efficiency": {
+      "name": "Efficiency",
+      "maxLevel": 5,
+      "category": "mining"
+    },
+    "feather_falling": {
+      "name": "Feather Falling",
+      "maxLevel": 4,
+      "category": "foot_armor"
+    },
+    "fire_aspect": {
+      "name": "Fire Aspect",
+      "maxLevel": 2,
+      "category": "fire_aspect"
+    },
+    "fire_protection": {
+      "name": "Fire Protection",
+      "maxLevel": 4,
+      "category": "armor",
+      "exclude": [
+        "blast_protection",
+        "projectile_protection",
+        "protection"
+      ]
+    },
+    "flame": {
+      "name": "Flame",
+      "maxLevel": 1,
+      "category": "bow"
+    },
+    "fortune": {
+      "name": "Fortune",
+      "maxLevel": 3,
+      "category": "mining_loot",
+      "exclude": [
+        "silk_touch"
+      ]
+    },
+    "frost_walker": {
+      "name": "Frost Walker",
+      "maxLevel": 2,
+      "category": "foot_armor",
+      "exclude": [
+        "depth_strider"
+      ]
+    },
+    "impaling": {
+      "name": "Impaling",
+      "maxLevel": 5,
+      "category": "trident",
+      "exclude": [
+        "bane_of_arthropods",
+        "breach",
+        "density",
+        "sharpness",
+        "smite"
+      ]
+    },
+    "infinity": {
+      "name": "Infinity",
+      "maxLevel": 1,
+      "category": "bow",
+      "exclude": [
+        "mending"
+      ]
+    },
+    "knockback": {
+      "name": "Knockback",
+      "maxLevel": 2,
+      "category": "melee_weapon"
+    },
+    "looting": {
+      "name": "Looting",
+      "maxLevel": 3,
+      "category": "melee_weapon"
+    },
+    "loyalty": {
+      "name": "Loyalty",
+      "maxLevel": 3,
+      "category": "trident",
+      "exclude": [
+        "riptide"
+      ]
+    },
+    "luck_of_the_sea": {
+      "name": "Luck Of The Sea",
+      "maxLevel": 3,
+      "category": "fishing"
+    },
+    "lure": {
+      "name": "Lure",
+      "maxLevel": 3,
+      "category": "fishing"
+    },
+    "mending": {
+      "name": "Mending",
+      "maxLevel": 1,
+      "category": "durability",
+      "exclude": [
+        "infinity"
+      ]
+    },
+    "multishot": {
+      "name": "Multishot",
+      "maxLevel": 1,
+      "category": "crossbow",
+      "exclude": [
+        "piercing"
+      ]
+    },
+    "piercing": {
+      "name": "Piercing",
+      "maxLevel": 4,
+      "category": "crossbow",
+      "exclude": [
+        "multishot"
+      ]
+    },
+    "power": {
+      "name": "Power",
+      "maxLevel": 5,
+      "category": "bow"
+    },
+    "projectile_protection": {
+      "name": "Projectile Protection",
+      "maxLevel": 4,
+      "category": "armor",
+      "exclude": [
+        "blast_protection",
+        "fire_protection",
+        "protection"
+      ]
+    },
+    "protection": {
+      "name": "Protection",
+      "maxLevel": 4,
+      "category": "armor",
+      "exclude": [
+        "blast_protection",
+        "fire_protection",
+        "projectile_protection"
+      ]
+    },
+    "punch": {
+      "name": "Punch",
+      "maxLevel": 2,
+      "category": "bow"
+    },
+    "quick_charge": {
+      "name": "Quick Charge",
+      "maxLevel": 3,
+      "category": "crossbow"
+    },
+    "respiration": {
+      "name": "Respiration",
+      "maxLevel": 3,
+      "category": "head_armor"
+    },
+    "riptide": {
+      "name": "Riptide",
+      "maxLevel": 3,
+      "category": "trident",
+      "exclude": [
+        "channeling",
+        "loyalty"
+      ]
+    },
+    "sharpness": {
+      "name": "Sharpness",
+      "maxLevel": 5,
+      "category": "sharp_weapon",
+      "exclude": [
+        "bane_of_arthropods",
+        "breach",
+        "density",
+        "impaling",
+        "smite"
+      ]
+    },
+    "silk_touch": {
+      "name": "Silk Touch",
+      "maxLevel": 1,
+      "category": "mining_loot",
+      "exclude": [
+        "fortune"
+      ]
+    },
+    "smite": {
+      "name": "Smite",
+      "maxLevel": 5,
+      "category": "weapon",
+      "exclude": [
+        "bane_of_arthropods",
+        "breach",
+        "density",
+        "impaling",
+        "sharpness"
+      ]
+    },
+    "soul_speed": {
+      "name": "Soul Speed",
+      "maxLevel": 3,
+      "category": "foot_armor"
+    },
+    "sweeping_edge": {
+      "name": "Sweeping Edge",
+      "maxLevel": 3,
+      "category": "sweeping"
+    },
+    "swift_sneak": {
+      "name": "Swift Sneak",
+      "maxLevel": 3,
+      "category": "leg_armor"
+    },
+    "thorns": {
+      "name": "Thorns",
+      "maxLevel": 3,
+      "category": "armor"
+    },
+    "unbreaking": {
+      "name": "Unbreaking",
+      "maxLevel": 3,
+      "category": "durability"
+    }
+  },
+  "items": {
+    "bow": {
+      "enchantable": true,
+      "categories": [
+        "bow",
+        "durability",
+        "vanishing"
+      ]
+    },
+    "chainmail_boots": {
+      "enchantable": true,
+      "categories": [
+        "armor",
+        "durability",
+        "equippable",
+        "foot_armor",
+        "vanishing"
+      ]
+    },
+    "chainmail_chestplate": {
+      "enchantable": true,
+      "categories": [
+        "armor",
+        "durability",
+        "equippable",
+        "vanishing"
+      ]
+    },
+    "chainmail_helmet": {
+      "enchantable": true,
+      "categories": [
+        "armor",
+        "durability",
+        "equippable",
+        "head_armor",
+        "vanishing"
+      ]
+    },
+    "chainmail_leggings": {
+      "enchantable": true,
+      "categories": [
+        "armor",
+        "durability",
+        "equippable",
+        "leg_armor",
+        "vanishing"
+      ]
+    },
+    "copper_axe": {
+      "enchantable": true,
+      "categories": [
+        "durability",
+        "mining",
+        "mining_loot",
+        "sharp_weapon",
+        "vanishing",
+        "weapon"
+      ]
+    },
+    "copper_boots": {
+      "enchantable": true,
+      "categories": [
+        "armor",
+        "durability",
+        "equippable",
+        "foot_armor",
+        "vanishing"
+      ]
+    },
+    "copper_chestplate": {
+      "enchantable": true,
+      "categories": [
+        "armor",
+        "durability",
+        "equippable",
+        "vanishing"
+      ]
+    },
+    "copper_helmet": {
+      "enchantable": true,
+      "categories": [
+        "armor",
+        "durability",
+        "equippable",
+        "head_armor",
+        "vanishing"
+      ]
+    },
+    "copper_hoe": {
+      "enchantable": true,
+      "categories": [
+        "durability",
+        "mining",
+        "mining_loot",
+        "vanishing"
+      ]
+    },
+    "copper_leggings": {
+      "enchantable": true,
+      "categories": [
+        "armor",
+        "durability",
+        "equippable",
+        "leg_armor",
+        "vanishing"
+      ]
+    },
+    "copper_pickaxe": {
+      "enchantable": true,
+      "categories": [
+        "durability",
+        "mining",
+        "mining_loot",
+        "vanishing"
+      ]
+    },
+    "copper_shovel": {
+      "enchantable": true,
+      "categories": [
+        "durability",
+        "mining",
+        "mining_loot",
+        "vanishing"
+      ]
+    },
+    "copper_spear": {
+      "enchantable": true,
+      "categories": [
+        "durability",
+        "fire_aspect",
+        "lunge",
+        "melee_weapon",
+        "sharp_weapon",
+        "vanishing",
+        "weapon"
+      ]
+    },
+    "copper_sword": {
+      "enchantable": true,
+      "categories": [
+        "durability",
+        "fire_aspect",
+        "melee_weapon",
+        "sharp_weapon",
+        "sweeping",
+        "vanishing",
+        "weapon"
+      ]
+    },
+    "crossbow": {
+      "enchantable": true,
+      "categories": [
+        "crossbow",
+        "durability",
+        "vanishing"
+      ]
+    },
+    "diamond_axe": {
+      "enchantable": true,
+      "categories": [
+        "durability",
+        "mining",
+        "mining_loot",
+        "sharp_weapon",
+        "vanishing",
+        "weapon"
+      ]
+    },
+    "diamond_boots": {
+      "enchantable": true,
+      "categories": [
+        "armor",
+        "durability",
+        "equippable",
+        "foot_armor",
+        "vanishing"
+      ]
+    },
+    "diamond_chestplate": {
+      "enchantable": true,
+      "categories": [
+        "armor",
+        "durability",
+        "equippable",
+        "vanishing"
+      ]
+    },
+    "diamond_helmet": {
+      "enchantable": true,
+      "categories": [
+        "armor",
+        "durability",
+        "equippable",
+        "head_armor",
+        "vanishing"
+      ]
+    },
+    "diamond_hoe": {
+      "enchantable": true,
+      "categories": [
+        "durability",
+        "mining",
+        "mining_loot",
+        "vanishing"
+      ]
+    },
+    "diamond_leggings": {
+      "enchantable": true,
+      "categories": [
+        "armor",
+        "durability",
+        "equippable",
+        "leg_armor",
+        "vanishing"
+      ]
+    },
+    "diamond_pickaxe": {
+      "enchantable": true,
+      "categories": [
+        "durability",
+        "mining",
+        "mining_loot",
+        "vanishing"
+      ]
+    },
+    "diamond_shovel": {
+      "enchantable": true,
+      "categories": [
+        "durability",
+        "mining",
+        "mining_loot",
+        "vanishing"
+      ]
+    },
+    "diamond_spear": {
+      "enchantable": true,
+      "categories": [
+        "durability",
+        "fire_aspect",
+        "lunge",
+        "melee_weapon",
+        "sharp_weapon",
+        "vanishing",
+        "weapon"
+      ]
+    },
+    "diamond_sword": {
+      "enchantable": true,
+      "categories": [
+        "durability",
+        "fire_aspect",
+        "melee_weapon",
+        "sharp_weapon",
+        "sweeping",
+        "vanishing",
+        "weapon"
+      ]
+    },
+    "elytra": {
+      "enchantable": true,
+      "categories": [
+        "durability",
+        "equippable",
+        "vanishing"
+      ]
+    },
+    "fishing_rod": {
+      "enchantable": true,
+      "categories": [
+        "durability",
+        "fishing",
+        "vanishing"
+      ]
+    },
+    "flint_and_steel": {
+      "enchantable": true,
+      "categories": [
+        "durability",
+        "vanishing"
+      ]
+    },
+    "golden_axe": {
+      "enchantable": true,
+      "categories": [
+        "durability",
+        "mining",
+        "mining_loot",
+        "sharp_weapon",
+        "vanishing",
+        "weapon"
+      ]
+    },
+    "golden_boots": {
+      "enchantable": true,
+      "categories": [
+        "armor",
+        "durability",
+        "equippable",
+        "foot_armor",
+        "vanishing"
+      ]
+    },
+    "golden_chestplate": {
+      "enchantable": true,
+      "categories": [
+        "armor",
+        "durability",
+        "equippable",
+        "vanishing"
+      ]
+    },
+    "golden_helmet": {
+      "enchantable": true,
+      "categories": [
+        "armor",
+        "durability",
+        "equippable",
+        "head_armor",
+        "vanishing"
+      ]
+    },
+    "golden_hoe": {
+      "enchantable": true,
+      "categories": [
+        "durability",
+        "mining",
+        "mining_loot",
+        "vanishing"
+      ]
+    },
+    "golden_leggings": {
+      "enchantable": true,
+      "categories": [
+        "armor",
+        "durability",
+        "equippable",
+        "leg_armor",
+        "vanishing"
+      ]
+    },
+    "golden_pickaxe": {
+      "enchantable": true,
+      "categories": [
+        "durability",
+        "mining",
+        "mining_loot",
+        "vanishing"
+      ]
+    },
+    "golden_shovel": {
+      "enchantable": true,
+      "categories": [
+        "durability",
+        "mining",
+        "mining_loot",
+        "vanishing"
+      ]
+    },
+    "golden_spear": {
+      "enchantable": true,
+      "categories": [
+        "durability",
+        "fire_aspect",
+        "lunge",
+        "melee_weapon",
+        "sharp_weapon",
+        "vanishing",
+        "weapon"
+      ]
+    },
+    "golden_sword": {
+      "enchantable": true,
+      "categories": [
+        "durability",
+        "fire_aspect",
+        "melee_weapon",
+        "sharp_weapon",
+        "sweeping",
+        "vanishing",
+        "weapon"
+      ]
+    },
+    "iron_axe": {
+      "enchantable": true,
+      "categories": [
+        "durability",
+        "mining",
+        "mining_loot",
+        "sharp_weapon",
+        "vanishing",
+        "weapon"
+      ]
+    },
+    "iron_boots": {
+      "enchantable": true,
+      "categories": [
+        "armor",
+        "durability",
+        "equippable",
+        "foot_armor",
+        "vanishing"
+      ]
+    },
+    "iron_chestplate": {
+      "enchantable": true,
+      "categories": [
+        "armor",
+        "durability",
+        "equippable",
+        "vanishing"
+      ]
+    },
+    "iron_helmet": {
+      "enchantable": true,
+      "categories": [
+        "armor",
+        "durability",
+        "equippable",
+        "head_armor",
+        "vanishing"
+      ]
+    },
+    "iron_hoe": {
+      "enchantable": true,
+      "categories": [
+        "durability",
+        "mining",
+        "mining_loot",
+        "vanishing"
+      ]
+    },
+    "iron_leggings": {
+      "enchantable": true,
+      "categories": [
+        "armor",
+        "durability",
+        "equippable",
+        "leg_armor",
+        "vanishing"
+      ]
+    },
+    "iron_pickaxe": {
+      "enchantable": true,
+      "categories": [
+        "durability",
+        "mining",
+        "mining_loot",
+        "vanishing"
+      ]
+    },
+    "iron_shovel": {
+      "enchantable": true,
+      "categories": [
+        "durability",
+        "mining",
+        "mining_loot",
+        "vanishing"
+      ]
+    },
+    "iron_spear": {
+      "enchantable": true,
+      "categories": [
+        "durability",
+        "fire_aspect",
+        "lunge",
+        "melee_weapon",
+        "sharp_weapon",
+        "vanishing",
+        "weapon"
+      ]
+    },
+    "iron_sword": {
+      "enchantable": true,
+      "categories": [
+        "durability",
+        "fire_aspect",
+        "melee_weapon",
+        "sharp_weapon",
+        "sweeping",
+        "vanishing",
+        "weapon"
+      ]
+    },
+    "jack_o_lantern": {
+      "enchantable": true,
+      "categories": []
+    },
+    "leather_boots": {
+      "enchantable": true,
+      "categories": [
+        "armor",
+        "durability",
+        "equippable",
+        "foot_armor",
+        "vanishing"
+      ]
+    },
+    "leather_chestplate": {
+      "enchantable": true,
+      "categories": [
+        "armor",
+        "durability",
+        "equippable",
+        "vanishing"
+      ]
+    },
+    "leather_helmet": {
+      "enchantable": true,
+      "categories": [
+        "armor",
+        "durability",
+        "equippable",
+        "head_armor",
+        "vanishing"
+      ]
+    },
+    "leather_leggings": {
+      "enchantable": true,
+      "categories": [
+        "armor",
+        "durability",
+        "equippable",
+        "leg_armor",
+        "vanishing"
+      ]
+    },
+    "mace": {
+      "enchantable": true,
+      "categories": [
+        "durability",
+        "fire_aspect",
+        "mace",
+        "vanishing",
+        "weapon"
+      ]
+    },
+    "netherite_axe": {
+      "enchantable": true,
+      "categories": [
+        "durability",
+        "mining",
+        "mining_loot",
+        "sharp_weapon",
+        "vanishing",
+        "weapon"
+      ]
+    },
+    "netherite_boots": {
+      "enchantable": true,
+      "categories": [
+        "armor",
+        "durability",
+        "equippable",
+        "foot_armor",
+        "vanishing"
+      ]
+    },
+    "netherite_chestplate": {
+      "enchantable": true,
+      "categories": [
+        "armor",
+        "durability",
+        "equippable",
+        "vanishing"
+      ]
+    },
+    "netherite_helmet": {
+      "enchantable": true,
+      "categories": [
+        "armor",
+        "durability",
+        "equippable",
+        "head_armor",
+        "vanishing"
+      ]
+    },
+    "netherite_hoe": {
+      "enchantable": true,
+      "categories": [
+        "durability",
+        "mining",
+        "mining_loot",
+        "vanishing"
+      ]
+    },
+    "netherite_leggings": {
+      "enchantable": true,
+      "categories": [
+        "armor",
+        "durability",
+        "equippable",
+        "leg_armor",
+        "vanishing"
+      ]
+    },
+    "netherite_pickaxe": {
+      "enchantable": true,
+      "categories": [
+        "durability",
+        "mining",
+        "mining_loot",
+        "vanishing"
+      ]
+    },
+    "netherite_shovel": {
+      "enchantable": true,
+      "categories": [
+        "durability",
+        "mining",
+        "mining_loot",
+        "vanishing"
+      ]
+    },
+    "netherite_spear": {
+      "enchantable": true,
+      "categories": [
+        "durability",
+        "fire_aspect",
+        "lunge",
+        "melee_weapon",
+        "sharp_weapon",
+        "vanishing",
+        "weapon"
+      ]
+    },
+    "netherite_sword": {
+      "enchantable": true,
+      "categories": [
+        "durability",
+        "fire_aspect",
+        "melee_weapon",
+        "sharp_weapon",
+        "sweeping",
+        "vanishing",
+        "weapon"
+      ]
+    },
+    "shears": {
+      "enchantable": true,
+      "categories": [
+        "durability",
+        "mining",
+        "vanishing"
+      ]
+    },
+    "shield": {
+      "enchantable": true,
+      "categories": [
+        "durability",
+        "vanishing"
+      ]
+    },
+    "stone_axe": {
+      "enchantable": true,
+      "categories": [
+        "durability",
+        "mining",
+        "mining_loot",
+        "sharp_weapon",
+        "vanishing",
+        "weapon"
+      ]
+    },
+    "stone_hoe": {
+      "enchantable": true,
+      "categories": [
+        "durability",
+        "mining",
+        "mining_loot",
+        "vanishing"
+      ]
+    },
+    "stone_pickaxe": {
+      "enchantable": true,
+      "categories": [
+        "durability",
+        "mining",
+        "mining_loot",
+        "vanishing"
+      ]
+    },
+    "stone_shovel": {
+      "enchantable": true,
+      "categories": [
+        "durability",
+        "mining",
+        "mining_loot",
+        "vanishing"
+      ]
+    },
+    "stone_spear": {
+      "enchantable": true,
+      "categories": [
+        "durability",
+        "fire_aspect",
+        "lunge",
+        "melee_weapon",
+        "sharp_weapon",
+        "vanishing",
+        "weapon"
+      ]
+    },
+    "stone_sword": {
+      "enchantable": true,
+      "categories": [
+        "durability",
+        "fire_aspect",
+        "melee_weapon",
+        "sharp_weapon",
+        "sweeping",
+        "vanishing",
+        "weapon"
+      ]
+    },
+    "trident": {
+      "enchantable": true,
+      "categories": [
+        "durability",
+        "trident",
+        "vanishing"
+      ]
+    },
+    "turtle_helmet": {
+      "enchantable": true,
+      "categories": [
+        "armor",
+        "durability",
+        "equippable",
+        "head_armor",
+        "vanishing"
+      ]
+    },
+    "wooden_axe": {
+      "enchantable": true,
+      "categories": [
+        "durability",
+        "mining",
+        "mining_loot",
+        "sharp_weapon",
+        "vanishing",
+        "weapon"
+      ]
+    },
+    "wooden_hoe": {
+      "enchantable": true,
+      "categories": [
+        "durability",
+        "mining",
+        "mining_loot",
+        "vanishing"
+      ]
+    },
+    "wooden_pickaxe": {
+      "enchantable": true,
+      "categories": [
+        "durability",
+        "mining",
+        "mining_loot",
+        "vanishing"
+      ]
+    },
+    "wooden_shovel": {
+      "enchantable": true,
+      "categories": [
+        "durability",
+        "mining",
+        "mining_loot",
+        "vanishing"
+      ]
+    },
+    "wooden_spear": {
+      "enchantable": true,
+      "categories": [
+        "durability",
+        "fire_aspect",
+        "lunge",
+        "melee_weapon",
+        "sharp_weapon",
+        "vanishing",
+        "weapon"
+      ]
+    },
+    "wooden_sword": {
+      "enchantable": true,
+      "categories": [
+        "durability",
+        "fire_aspect",
+        "melee_weapon",
+        "sharp_weapon",
+        "sweeping",
+        "vanishing",
+        "weapon"
+      ]
+    }
+  }
+}

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { buildCratePrizesYamlMap, DEFAULT_CRATE_PRIZE_WEIGHT } from './cratePrizeGenerator'
+import { buildCratePrizeItemLine, buildCratePrizesYamlMap, DEFAULT_CRATE_PRIZE_WEIGHT } from './cratePrizeGenerator'
 import type { CratePrizeEntry, ItemIndexEntry } from './types'
 
 describe('buildCratePrizesYamlMap', () => {
@@ -15,6 +15,30 @@ describe('buildCratePrizesYamlMap', () => {
     expect(prizes['1'].Weight).toBe(40)
     expect(prizes['1'].DisplayAmount).toBe(8)
     expect(prizes['1'].Items).toEqual(['item:torch, amount:8'])
+  })
+
+  it('appends enchantments to item line and display name', () => {
+    const itemsById = new Map<string, ItemIndexEntry>([
+      ['DIAMOND_SWORD', { id: 'DIAMOND_SWORD', rawKey: 'diamond_sword', name: 'diamond sword' }],
+    ])
+    const prizes = buildCratePrizesYamlMap(
+      [
+        {
+          entryId: 'a',
+          itemId: 'DIAMOND_SWORD',
+          override: { enchantments: { sharpness: 5, unbreaking: 3 } },
+        },
+      ],
+      itemsById
+    ) as Record<string, Record<string, unknown>>
+    expect(prizes['1'].Items).toEqual(['item:diamond_sword, amount:1, sharpness:5, unbreaking:3'])
+    expect(String(prizes['1'].DisplayName)).toContain('enchanted')
+  })
+
+  it('buildCratePrizeItemLine sorts enchant keys', () => {
+    expect(buildCratePrizeItemLine('bow', '1', { power: 3, unbreaking: 2 })).toBe(
+      'item:bow, amount:1, power:3, unbreaking:2'
+    )
   })
 
   it('uses default weight when override omitted', () => {

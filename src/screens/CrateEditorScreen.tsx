@@ -3,6 +3,7 @@ import {
   ActionIcon,
   Alert,
   Anchor,
+  Badge,
   Box,
   Button,
   Group,
@@ -19,13 +20,22 @@ import {
 } from '@mantine/core'
 import { IconPencil, IconTrash } from '@tabler/icons-react'
 import styles from './DropTableEditorScreen.module.css'
-import type { CrateLibraryDeleteResult, CratePrizeEntry, CratePrizeOverride, ItemIndexEntry } from '../types'
+import type {
+  CrateLibraryDeleteResult,
+  CratePrizeEntry,
+  CratePrizeOverride,
+  EnchantIndexEntry,
+  ItemEnchantMeta,
+  ItemIndexEntry,
+} from '../types'
 
 const DEFAULT_WEIGHT = 50
 const WEIGHT_STEP = 5
 const DEFAULT_STACK_SIZE = 64
 const LIST_ROW_HEIGHT = 34
 const LIST_OVERSCAN_ROWS = 12
+
+type PrizeSortColumn = 'value' | 'weight' | 'chance' | 'none'
 
 function normalizeItemId(raw: string): string {
   return raw.trim().replace(/[^a-zA-Z0-9_]/g, '_').replace(/_+/g, '_').toUpperCase()
@@ -39,6 +49,96 @@ function prizeAmountDisplay(amount: string): string {
   return amount.trim() || '1'
 }
 
+function parseAverageAmount(rawAmount: string | undefined): number | undefined {
+  if (rawAmount === undefined) return 1
+  const s = String(rawAmount).trim()
+  if (!s) return 1
+  if (/^\d+(\.\d+)?$/.test(s)) {
+    const n = Number(s)
+    return Number.isFinite(n) && n > 0 ? n : undefined
+  }
+  const m = /^(\d+(?:\.\d+)?)\s*-\s*(\d+(?:\.\d+)?)$/.exec(s)
+  if (!m) return undefined
+  const a = Number(m[1])
+  const b = Number(m[2])
+  if (!Number.isFinite(a) || !Number.isFinite(b) || a <= 0 || b <= 0) return undefined
+  return (a + b) / 2
+}
+
+function getEntryWeight(row: CratePrizeEntry): number {
+  const w = row.override?.weight
+  return typeof w === 'number' && Number.isFinite(w) ? Math.max(1, Math.round(w)) : DEFAULT_WEIGHT
+}
+
+function formatWeightPercent(weight: number, totalWeight: number): string {
+  if (totalWeight <= 0) return '—'
+  return `${((weight / totalWeight) * 100).toFixed(1)}%`
+}
+
+function enchantBookCatalogId(enchantId: string, level: number): string {
+  return normalizeItemId(`enchanted_book_${enchantId}_${level}`)
+}
+
+function getEnchantBookUnitBuy(
+  enchantId: string,
+  level: number,
+  itemById: Map<string, ItemIndexEntry>
+): number | undefined {
+  const book = itemById.get(enchantBookCatalogId(enchantId, level))
+  if (typeof book?.unitBuy !== 'number' || !Number.isFinite(book.unitBuy)) return undefined
+  return book.unitBuy
+}
+
+function sumAppliedEnchantmentValue(
+  enchantments: Record<string, number> | undefined,
+  itemById: Map<string, ItemIndexEntry>,
+  amountMultiplier: number
+): number {
+  if (!enchantments) return 0
+  let sum = 0
+  for (const [enchantId, level] of Object.entries(enchantments)) {
+    const bookBuy = getEnchantBookUnitBuy(enchantId, level, itemById)
+    if (bookBuy !== undefined) sum += bookBuy * amountMultiplier
+  }
+  return sum
+}
+
+function getPrizeValueNumber(
+  row: CratePrizeEntry,
+  itemById: Map<string, ItemIndexEntry>
+): number | undefined {
+  const meta = itemById.get(row.itemId)
+  const amount = row.override?.amount !== undefined ? row.override.amount : '1'
+  const avgAmount = parseAverageAmount(amount)
+  if (avgAmount === undefined) return undefined
+
+  if (isEnchantedBookCatalogId(row.itemId)) {
+    if (typeof meta?.unitBuy !== 'number' || !Number.isFinite(meta.unitBuy)) return undefined
+    const value = meta.unitBuy * avgAmount
+    return Number.isFinite(value) ? value : undefined
+  }
+
+  let total = 0
+  let hasComponent = false
+  if (typeof meta?.unitBuy === 'number' && Number.isFinite(meta.unitBuy)) {
+    total += meta.unitBuy * avgAmount
+    hasComponent = true
+  }
+  const enchantValue = sumAppliedEnchantmentValue(row.override?.enchantments, itemById, avgAmount)
+  if (enchantValue > 0) {
+    total += enchantValue
+    hasComponent = true
+  }
+  if (!hasComponent) return undefined
+  return Number.isFinite(total) ? total : undefined
+}
+
+function formatPrizeValue(row: CratePrizeEntry, itemById: Map<string, ItemIndexEntry>): string | null {
+  const value = getPrizeValueNumber(row, itemById)
+  if (value === undefined) return null
+  return Number.isInteger(value) ? String(value) : value.toFixed(2)
+}
+
 function catalogStackSize(item: ItemIndexEntry | undefined): number {
   const raw = item?.stack
   if (raw === undefined) return DEFAULT_STACK_SIZE
@@ -46,11 +146,56 @@ function catalogStackSize(item: ItemIndexEntry | undefined): number {
   return Number.isFinite(n) && n > 0 ? n : DEFAULT_STACK_SIZE
 }
 
-/** e.g. "64x paper" when amount is not 1; otherwise just the catalog name. */
-function formatPrizeItemLabel(amount: string, itemName: string): string {
+function materialIdFromItemId(itemId: string): string {
+  return itemId.trim().toLowerCase().replace(/[^a-z0-9_]/g, '_')
+}
+
+function isEnchantedBookCatalogId(itemId: string): boolean {
+  const m = materialIdFromItemId(itemId)
+  return m === 'enchanted_book' || m.startsWith('enchanted_book_')
+}
+
+function enchantConflictsWithSet(
+  enchantId: string,
+  selected: Record<string, number>,
+  enchantsById: Map<string, EnchantIndexEntry>
+): string | null {
+  const def = enchantsById.get(enchantId)
+  if (!def) return 'Unknown enchantment'
+  for (const otherId of Object.keys(selected)) {
+    if (otherId === enchantId) continue
+    const other = enchantsById.get(otherId)
+    if (!other) continue
+    if (def.exclude.includes(otherId)) return `Conflicts with ${other.name}`
+    if (other.exclude.includes(enchantId)) return `Conflicts with ${other.name}`
+  }
+  return null
+}
+
+function formatEnchantTagLabel(
+  enchantId: string,
+  level: number,
+  enchantsById: Map<string, EnchantIndexEntry>
+): string {
+  const def = enchantsById.get(enchantId)
+  const name = (def?.name ?? enchantId.replace(/_/g, ' ')).toUpperCase()
+  return `${name} ${level}`
+}
+
+function sortedEnchantmentEntries(
+  enchantments: Record<string, number> | undefined
+): [string, number][] {
+  if (!enchantments) return []
+  return Object.entries(enchantments).sort(([a], [b]) => a.localeCompare(b))
+}
+
+/** e.g. "64x enchanted diamond sword" when enchants or amount ≠ 1. */
+function formatPrizeItemLabel(amount: string, itemName: string, enchantments?: Record<string, number>): string {
   const display = prizeAmountDisplay(amount)
-  if (display === '1') return itemName
-  return `${display}x ${itemName}`
+  const hasEnchants = enchantments != null && Object.keys(enchantments).length > 0
+  const prefix = hasEnchants ? 'enchanted ' : ''
+  if (display === '1') return `${prefix}${itemName}`
+  return `${display}x ${prefix}${itemName}`
 }
 
 function sanitizeOutputStem(raw: string): string {
@@ -95,16 +240,22 @@ export function CrateEditorScreen({ crateId, onBack, onSaved }: CrateEditorScree
   const [modalLore2, setModalLore2] = useState('')
   const [modalAnimation, setModalAnimation] = useState('Opening...')
 
-  const [amountModalOpen, setAmountModalOpen] = useState(false)
-  const [amountModalEntryId, setAmountModalEntryId] = useState<string | null>(null)
-  const [amountModalDraft, setAmountModalDraft] = useState('1')
-  const [amountModalError, setAmountModalError] = useState<string | null>(null)
+  const [enchantCatalog, setEnchantCatalog] = useState<EnchantIndexEntry[]>([])
+  const [enchantItemsByMaterial, setEnchantItemsByMaterial] = useState<Record<string, ItemEnchantMeta>>({})
+
+  const [prizeModalOpen, setPrizeModalOpen] = useState(false)
+  const [prizeModalEntryId, setPrizeModalEntryId] = useState<string | null>(null)
+  const [prizeModalAmountDraft, setPrizeModalAmountDraft] = useState('1')
+  const [prizeModalEnchantsDraft, setPrizeModalEnchantsDraft] = useState<Record<string, number>>({})
+  const [prizeModalError, setPrizeModalError] = useState<string | null>(null)
 
   const [loadError, setLoadError] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [listScrollTop, setListScrollTop] = useState(0)
   const [listViewportHeight, setListViewportHeight] = useState(420)
+  const [prizeSortColumn, setPrizeSortColumn] = useState<PrizeSortColumn>('none')
+  const [prizeSortDirection, setPrizeSortDirection] = useState<'asc' | 'desc'>('asc')
 
   const crateIdRef = useRef<string | undefined>(crateId)
   const listViewportRef = useRef<HTMLDivElement | null>(null)
@@ -117,6 +268,34 @@ export function CrateEditorScreen({ crateId, onBack, onSaved }: CrateEditorScree
     for (const it of itemsIndex) m.set(it.id, it)
     return m
   }, [itemsIndex])
+
+  const enchantsById = useMemo(() => {
+    const m = new Map<string, EnchantIndexEntry>()
+    for (const e of enchantCatalog) m.set(e.id, e)
+    return m
+  }, [enchantCatalog])
+
+  const prizeModalRow = useMemo(
+    () => selectedEntriesDraft.find((r) => r.entryId === prizeModalEntryId) ?? null,
+    [selectedEntriesDraft, prizeModalEntryId]
+  )
+
+  const prizeModalMaterialId = prizeModalRow ? materialIdFromItemId(prizeModalRow.itemId) : ''
+
+  const prizeModalCanEnchant = useMemo(() => {
+    if (!prizeModalRow) return false
+    if (isEnchantedBookCatalogId(prizeModalRow.itemId)) return false
+    return Boolean(enchantItemsByMaterial[prizeModalMaterialId])
+  }, [prizeModalRow, prizeModalMaterialId, enchantItemsByMaterial])
+
+  const compatibleEnchants = useMemo(() => {
+    if (!prizeModalCanEnchant || !prizeModalMaterialId) return []
+    const meta = enchantItemsByMaterial[prizeModalMaterialId]
+    if (!meta) return []
+    return enchantCatalog
+      .filter((e) => meta.categories.includes(e.category))
+      .sort((a, b) => a.name.localeCompare(b.name))
+  }, [prizeModalCanEnchant, prizeModalMaterialId, enchantItemsByMaterial, enchantCatalog])
 
   const categoryOptions = useMemo(() => {
     const categories = new Set<string>()
@@ -162,6 +341,56 @@ export function CrateEditorScreen({ crateId, onBack, onSaved }: CrateEditorScree
 
   const selectedIds = useMemo(() => new Set(selectedEntriesDraft.map((e) => e.itemId)), [selectedEntriesDraft])
 
+  const totalPrizeWeight = useMemo(
+    () => selectedEntriesDraft.reduce((sum, row) => sum + getEntryWeight(row), 0),
+    [selectedEntriesDraft]
+  )
+
+  const sortedSelectedEntries = useMemo(() => {
+    if (prizeSortColumn === 'none') return selectedEntriesDraft
+    const next = [...selectedEntriesDraft]
+    next.sort((a, b) => {
+      let base = 0
+      if (prizeSortColumn === 'value') {
+        const av = getPrizeValueNumber(a, itemById) ?? -1
+        const bv = getPrizeValueNumber(b, itemById) ?? -1
+        base = av - bv
+      } else if (prizeSortColumn === 'weight') {
+        base = getEntryWeight(a) - getEntryWeight(b)
+      } else if (prizeSortColumn === 'chance') {
+        const total = totalPrizeWeight
+        const ap = total > 0 ? getEntryWeight(a) / total : 0
+        const bp = total > 0 ? getEntryWeight(b) / total : 0
+        base = ap - bp
+      }
+      return prizeSortDirection === 'asc' ? base : -base
+    })
+    return next
+  }, [selectedEntriesDraft, prizeSortColumn, prizeSortDirection, totalPrizeWeight, itemById])
+
+  function togglePrizeSort(column: PrizeSortColumn) {
+    if (column === 'none') {
+      setPrizeSortColumn('none')
+      return
+    }
+    if (prizeSortColumn === column) {
+      setPrizeSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'))
+    } else {
+      setPrizeSortColumn(column)
+      setPrizeSortDirection('asc')
+    }
+  }
+
+  function prizeSortButtonLabel(column: Exclude<PrizeSortColumn, 'none'>): string {
+    const labels: Record<Exclude<PrizeSortColumn, 'none'>, string> = {
+      value: 'Value',
+      weight: 'Weight',
+      chance: 'Chance',
+    }
+    if (prizeSortColumn !== column) return labels[column]
+    return `${labels[column]} ${prizeSortDirection === 'asc' ? '↑' : '↓'}`
+  }
+
   function buildSavePayload() {
     const slotNum = typeof slotDraft === 'number' ? slotDraft : Number(slotDraft)
     const outputStem = outputStemDraft.trim() || sanitizeOutputStem(nameDraft)
@@ -186,8 +415,13 @@ export function CrateEditorScreen({ crateId, onBack, onSaved }: CrateEditorScree
   const load = useCallback(async () => {
     setLoadError(null)
     try {
-      const idx = await window.electronAPI.scanItemIndex()
+      const [idx, enchantData] = await Promise.all([
+        window.electronAPI.scanItemIndex(),
+        window.electronAPI.scanEnchantData(),
+      ])
       setItemsIndex(idx.items)
+      setEnchantCatalog(enchantData.enchants)
+      setEnchantItemsByMaterial(enchantData.items)
 
       if (crateId) {
         const lib = await window.electronAPI.listCrateLibrary()
@@ -271,13 +505,30 @@ export function CrateEditorScreen({ crateId, onBack, onSaved }: CrateEditorScree
     setSelectedEntriesDraft((prev) => prev.filter((x) => x.entryId !== entryId))
   }
 
-  function setEntryAmount(entryId: string, amount: string) {
+  function setEntryPrizeOverride(
+    entryId: string,
+    patch: { amount?: string; enchantments?: Record<string, number> | null }
+  ) {
     setSelectedEntriesDraft((prev) =>
       prev.map((row) => {
         if (row.entryId !== entryId) return row
         const nextOverride: CratePrizeOverride = { ...(row.override ?? {}) }
-        nextOverride.amount = amount
-        return { ...row, override: nextOverride }
+        if (patch.amount !== undefined) nextOverride.amount = patch.amount
+        if (patch.enchantments === null) {
+          delete nextOverride.enchantments
+        } else if (patch.enchantments !== undefined) {
+          if (Object.keys(patch.enchantments).length > 0) {
+            nextOverride.enchantments = patch.enchantments
+          } else {
+            delete nextOverride.enchantments
+          }
+        }
+        const hasOverride =
+          nextOverride.weight !== undefined ||
+          nextOverride.amount !== undefined ||
+          nextOverride.displayName !== undefined ||
+          (nextOverride.enchantments && Object.keys(nextOverride.enchantments).length > 0)
+        return { ...row, override: hasOverride ? nextOverride : undefined }
       })
     )
   }
@@ -373,35 +624,76 @@ export function CrateEditorScreen({ crateId, onBack, onSaved }: CrateEditorScree
     setSettingsModalOpen(true)
   }
 
-  function openAmountModal(entryId: string) {
+  function openPrizeModal(entryId: string) {
     const row = selectedEntriesDraft.find((r) => r.entryId === entryId)
     if (!row) return
-    setAmountModalEntryId(entryId)
-    setAmountModalDraft(row.override?.amount !== undefined ? row.override.amount : '1')
-    setAmountModalError(null)
-    setAmountModalOpen(true)
+    setPrizeModalEntryId(entryId)
+    setPrizeModalAmountDraft(row.override?.amount !== undefined ? row.override.amount : '1')
+    setPrizeModalEnchantsDraft(
+      row.override?.enchantments ? { ...row.override.enchantments } : {}
+    )
+    setPrizeModalError(null)
+    setPrizeModalOpen(true)
   }
 
-  function applyAmountModal() {
-    if (!amountModalEntryId) return
-    setAmountModalError(null)
-    const trimmed = amountModalDraft.trim()
+  function applyPrizeModal() {
+    if (!prizeModalEntryId) return
+    setPrizeModalError(null)
+    const trimmed = prizeModalAmountDraft.trim()
     if (!trimmed) {
-      setAmountModalError('Amount is required')
+      setPrizeModalError('Amount is required')
       return
     }
-    setEntryAmount(amountModalEntryId, trimmed)
-    setAmountModalOpen(false)
-    setAmountModalEntryId(null)
+    const enchantments = { ...prizeModalEnchantsDraft }
+    for (const id of Object.keys(enchantments)) {
+      const conflict = enchantConflictsWithSet(id, enchantments, enchantsById)
+      if (conflict) {
+        setPrizeModalError(conflict)
+        return
+      }
+    }
+    setEntryPrizeOverride(prizeModalEntryId, {
+      amount: trimmed,
+      enchantments: Object.keys(enchantments).length > 0 ? enchantments : null,
+    })
+    setPrizeModalOpen(false)
+    setPrizeModalEntryId(null)
   }
 
-  function setAmountModalToStack() {
-    if (!amountModalEntryId) return
-    const row = selectedEntriesDraft.find((r) => r.entryId === amountModalEntryId)
-    if (!row) return
-    const stack = catalogStackSize(itemById.get(row.itemId))
-    setAmountModalDraft(String(stack))
-    setAmountModalError(null)
+  function setPrizeModalToStack() {
+    if (!prizeModalRow) return
+    const stack = catalogStackSize(itemById.get(prizeModalRow.itemId))
+    setPrizeModalAmountDraft(String(stack))
+    setPrizeModalError(null)
+  }
+
+  function selectEnchantLevelInModal(enchantId: string, level: number) {
+    const def = enchantsById.get(enchantId)
+    if (!def) return
+    const clamped = clamp(Math.round(level), 1, def.maxLevel)
+    if (prizeModalEnchantsDraft[enchantId] === clamped) {
+      setPrizeModalEnchantsDraft((prev) => {
+        const next = { ...prev }
+        delete next[enchantId]
+        return next
+      })
+      setPrizeModalError(null)
+      return
+    }
+    const next = { ...prizeModalEnchantsDraft, [enchantId]: clamped }
+    const conflict = enchantConflictsWithSet(enchantId, next, enchantsById)
+    if (conflict) {
+      setPrizeModalError(conflict)
+      return
+    }
+    setPrizeModalError(null)
+    setPrizeModalEnchantsDraft(next)
+  }
+
+  function isEnchantLevelDisabled(enchantId: string, level: number): boolean {
+    if (prizeModalEnchantsDraft[enchantId] === level) return false
+    const next = { ...prizeModalEnchantsDraft, [enchantId]: level }
+    return enchantConflictsWithSet(enchantId, next, enchantsById) != null
   }
 
   function applySettingsModal() {
@@ -544,19 +836,22 @@ export function CrateEditorScreen({ crateId, onBack, onSaved }: CrateEditorScree
       </Modal>
 
       <Modal
-        opened={amountModalOpen}
-        onClose={() => setAmountModalOpen(false)}
-        title="Edit amount"
-        size="sm"
+        opened={prizeModalOpen}
+        onClose={() => setPrizeModalOpen(false)}
+        title="Edit prize"
+        size="md"
+        styles={{
+          body: { maxHeight: 'none', overflow: 'visible' },
+          content: { overflow: 'visible' },
+        }}
       >
         <Stack gap="sm">
-          {amountModalEntryId && (
+          {prizeModalRow && (
             <Text size="sm" c="dimmed">
               {formatPrizeItemLabel(
-                amountModalDraft,
-                itemById.get(selectedEntriesDraft.find((r) => r.entryId === amountModalEntryId)?.itemId ?? '')?.name ??
-                  selectedEntriesDraft.find((r) => r.entryId === amountModalEntryId)?.itemId ??
-                  ''
+                prizeModalAmountDraft,
+                itemById.get(prizeModalRow.itemId)?.name ?? prizeModalRow.itemId,
+                prizeModalEnchantsDraft
               )}
             </Text>
           )}
@@ -570,24 +865,87 @@ export function CrateEditorScreen({ crateId, onBack, onSaved }: CrateEditorScree
             <Group gap="sm" align="center" wrap="nowrap">
               <TextInput
                 w={96}
-                value={amountModalDraft}
-                onChange={(e) => setAmountModalDraft(e.currentTarget.value)}
+                value={prizeModalAmountDraft}
+                onChange={(e) => setPrizeModalAmountDraft(e.currentTarget.value)}
               />
-              <Anchor size="sm" onClick={setAmountModalToStack}>
+              <Anchor size="sm" onClick={setPrizeModalToStack}>
                 Set as stack
               </Anchor>
             </Group>
           </Stack>
-          {amountModalError && (
+
+          {prizeModalRow && isEnchantedBookCatalogId(prizeModalRow.itemId) && (
+            <Text size="xs" c="dimmed">
+              Enchantments are defined by this enchanted book item — edit amount only.
+            </Text>
+          )}
+
+          {prizeModalRow && !isEnchantedBookCatalogId(prizeModalRow.itemId) && !prizeModalCanEnchant && (
+            <Text size="xs" c="dimmed">
+              This item cannot receive enchantments.
+            </Text>
+          )}
+
+          {prizeModalCanEnchant && (
+            <Stack gap="sm">
+              <Text size="sm" fw={500}>
+                Enchantments
+              </Text>
+              <Text size="xs" c="dimmed">
+                Choose a level to apply; tap the same level again to remove.
+              </Text>
+              {compatibleEnchants.length === 0 ? (
+                <Text size="xs" c="dimmed">
+                  No compatible enchantments for this item.
+                </Text>
+              ) : (
+                <Stack gap={2}>
+                  {compatibleEnchants.map((e) => {
+                    const selectedLevel = prizeModalEnchantsDraft[e.id]
+                    return (
+                      <Group key={e.id} gap="sm" wrap="nowrap" justify="space-between" align="center">
+                        <Text size="sm" lineClamp={1} style={{ flex: 1, minWidth: 0 }}>
+                          {e.name}
+                        </Text>
+                        <Group gap={4} wrap="nowrap" justify="flex-end" style={{ flexShrink: 0 }}>
+                          {Array.from({ length: e.maxLevel }, (_, i) => i + 1).map((lvl) => {
+                            const selected = selectedLevel === lvl
+                            const disabled = isEnchantLevelDisabled(e.id, lvl)
+                            return (
+                              <Button
+                                key={lvl}
+                                size="compact-xs"
+                                variant={selected ? 'filled' : 'default'}
+                                px={6}
+                                miw={24}
+                                disabled={disabled}
+                                aria-label={`${e.name} level ${lvl}`}
+                                aria-pressed={selected}
+                                onClick={() => selectEnchantLevelInModal(e.id, lvl)}
+                              >
+                                {lvl}
+                              </Button>
+                            )
+                          })}
+                        </Group>
+                      </Group>
+                    )
+                  })}
+                </Stack>
+              )}
+            </Stack>
+          )}
+
+          {prizeModalError && (
             <Text size="sm" c="red">
-              {amountModalError}
+              {prizeModalError}
             </Text>
           )}
           <Group justify="flex-end">
-            <Button variant="default" onClick={() => setAmountModalOpen(false)}>
+            <Button variant="default" onClick={() => setPrizeModalOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={applyAmountModal}>Save</Button>
+            <Button onClick={applyPrizeModal}>Save</Button>
           </Group>
         </Stack>
       </Modal>
@@ -673,24 +1031,85 @@ export function CrateEditorScreen({ crateId, onBack, onSaved }: CrateEditorScree
           <Text fw={600} size="sm" mb="xs">
             Prizes ({selectedEntriesDraft.length})
           </Text>
-          <Text size="xs" c="dimmed" mb="sm">
-            Click items on the left to add. Use weight and edit amount per row; defaults are used for everything else at build
+          <Text size="xs" c="dimmed" mb="xs">
+            Click items on the left to add. Use weight and edit prize per row; defaults are used for everything else at build
             time.
           </Text>
+          <Group gap="xs" mb="sm" wrap="wrap" align="center">
+            <Text size="sm" c="dimmed">
+              Sort by:
+            </Text>
+            <Button.Group>
+              <Button
+                size="compact-sm"
+                variant={prizeSortColumn === 'value' ? 'filled' : 'default'}
+                onClick={() => togglePrizeSort('value')}
+              >
+                {prizeSortButtonLabel('value')}
+              </Button>
+              <Button
+                size="compact-sm"
+                variant={prizeSortColumn === 'weight' ? 'filled' : 'default'}
+                onClick={() => togglePrizeSort('weight')}
+              >
+                {prizeSortButtonLabel('weight')}
+              </Button>
+              <Button
+                size="compact-sm"
+                variant={prizeSortColumn === 'chance' ? 'filled' : 'default'}
+                onClick={() => togglePrizeSort('chance')}
+              >
+                {prizeSortButtonLabel('chance')}
+              </Button>
+              <Button
+                size="compact-sm"
+                variant={prizeSortColumn === 'none' ? 'filled' : 'default'}
+                onClick={() => togglePrizeSort('none')}
+              >
+                None
+              </Button>
+            </Button.Group>
+          </Group>
           <ScrollArea style={{ flex: 1, minHeight: 0 }}>
             <Stack gap={6}>
-              {selectedEntriesDraft.map((row) => {
-                const weight = row.override?.weight ?? DEFAULT_WEIGHT
+              {sortedSelectedEntries.map((row) => {
+                const weight = getEntryWeight(row)
+                const weightPercent = formatWeightPercent(weight, totalPrizeWeight)
                 const amount = row.override?.amount !== undefined ? row.override.amount : '1'
-                const catalogName = itemById.get(row.itemId)?.name ?? row.itemId
-                const label = formatPrizeItemLabel(amount, catalogName)
+                const meta = itemById.get(row.itemId)
+                const catalogName = meta?.name ?? row.itemId
+                const label = formatPrizeItemLabel(amount, catalogName, row.override?.enchantments)
+                const valueLabel = formatPrizeValue(row, itemById)
+                const enchantTags = sortedEnchantmentEntries(row.override?.enchantments)
                 return (
                   <Paper key={row.entryId} withBorder p="xs">
-                    <Group wrap="nowrap" gap="sm" justify="space-between">
-                      <Text size="sm" fw={600} lineClamp={1} style={{ flex: 1, minWidth: 0 }}>
-                        {label}
-                      </Text>
-                      <Group gap={6} wrap="nowrap">
+                    <Group wrap="nowrap" gap="sm" justify="space-between" align="flex-start">
+                      <Stack gap={4} style={{ flex: 1, minWidth: 0 }}>
+                        <Text size="sm" fw={600} lineClamp={1}>
+                          {label}
+                        </Text>
+                        {valueLabel != null && (
+                          <Text size="xs" c="dimmed">
+                            Value: {valueLabel}
+                          </Text>
+                        )}
+                        {enchantTags.length > 0 && (
+                          <Group gap={6}>
+                            {enchantTags.map(([enchantId, level]) => (
+                              <Badge
+                                key={enchantId}
+                                size="sm"
+                                variant="outline"
+                                radius="sm"
+                                styles={{ label: { textTransform: 'none', fontWeight: 600 } }}
+                              >
+                                {formatEnchantTagLabel(enchantId, level, enchantsById)}
+                              </Badge>
+                            ))}
+                          </Group>
+                        )}
+                      </Stack>
+                      <Group gap={6} wrap="nowrap" style={{ flexShrink: 0 }}>
                         <Group gap={4} wrap="nowrap">
                           <ActionIcon
                             size="sm"
@@ -712,11 +1131,14 @@ export function CrateEditorScreen({ crateId, onBack, onSaved }: CrateEditorScree
                             +
                           </ActionIcon>
                         </Group>
+                        <Text size="sm" c="dimmed" w={44} ta="right">
+                          {weightPercent}
+                        </Text>
                         <ActionIcon
                           size="sm"
                           variant="default"
-                          aria-label="Edit amount"
-                          onClick={() => openAmountModal(row.entryId)}
+                          aria-label="Edit prize"
+                          onClick={() => openPrizeModal(row.entryId)}
                         >
                           <IconPencil size={16} />
                         </ActionIcon>

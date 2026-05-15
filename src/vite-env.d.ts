@@ -40,6 +40,12 @@ interface ElectronAPI {
     warnings: string[]
     sourcePath: string
   }>
+  scanEnchantData: () => Promise<{
+    enchants: import('./types').EnchantIndexEntry[]
+    items: Record<string, import('./types').ItemEnchantMeta>
+    warnings: string[]
+    sourcePath: string
+  }>
   listDropTableLibrary: () => Promise<import('./types').DropTableLibraryEntry[]>
   createDropTable: (input?: { name?: string; description?: string }) => Promise<import('./types').DropTableLibraryEntry>
   updateDropTable: (input: {
