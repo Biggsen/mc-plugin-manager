@@ -342,7 +342,7 @@ export interface DropTableLibraryDeleteResult {
   removedFromServers?: { id: string; name: string }[]
 }
 
-/** Bundled crate YAML body source (clone from `crazycrates-crates-${stem}.yml`). */
+/** Legacy fallback crate stems when a server has no library crate assignments. */
 export type CrazyCratesBundledCrateStem = 'HeartCrate' | 'RegionCrate' | 'VillageCrate'
 
 /** Per-server: references into the global CrazyCrates crate library. */
