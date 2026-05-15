@@ -9,7 +9,7 @@ import {
 } from './utils/crazyCratesBundledConfig'
 import { loadBundledItemIndex } from './itemIndex'
 import { buildCratePrizesYamlMap } from './cratePrizeGenerator'
-import { YAML_STRINGIFY_OPTIONS } from './utils/yamlOptions'
+import { stringifyCrateDocument } from './utils/crateYamlEmit'
 
 const DISPLAY_NAME_BY_STEM: Record<CrazyCratesBundledCrateStem, string> = {
   HeartCrate: 'Heart Crate',
@@ -167,5 +167,5 @@ export function buildCrateYamlFromTemplate(params: {
     throw new Error('buildCrateYamlFromTemplate requires libraryEntry or legacyStem')
   }
 
-  return { yaml: yaml.stringify(doc, YAML_STRINGIFY_OPTIONS), warnings }
+  return { yaml: stringifyCrateDocument(doc), warnings }
 }

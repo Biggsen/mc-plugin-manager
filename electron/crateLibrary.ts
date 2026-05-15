@@ -19,6 +19,8 @@ function isValidPrizeEntry(row: unknown): row is CratePrizeEntry {
   if (!row || typeof row !== 'object') return false
   const r = row as Record<string, unknown>
   if (typeof r.entryId !== 'string' || typeof r.itemId !== 'string') return false
+  if (r.prizeKind !== undefined && r.prizeKind !== 'item' && r.prizeKind !== 'virtual_key') return false
+  if (r.keyId !== undefined && typeof r.keyId !== 'string') return false
   if (r.override !== undefined) {
     if (typeof r.override !== 'object' || r.override === null) return false
     const o = r.override as Record<string, unknown>

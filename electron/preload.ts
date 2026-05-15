@@ -248,6 +248,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
     selectedPrizeEntries?: CratePrizeEntry[]
   }) => ipcRenderer.invoke('update-crate-library-entry', input),
   deleteCrateLibraryEntry: (id: string) => ipcRenderer.invoke('delete-crate-library-entry', id),
+  getVirtualCrateKeyValues: () => ipcRenderer.invoke('get-virtual-crate-key-values'),
+  setVirtualCrateKeyValues: (values: import('./types').VirtualCrateKeyValues) =>
+    ipcRenderer.invoke('set-virtual-crate-key-values', values),
   updateServerCrazyCrates: (serverId: string, payload: { libraryCrateIds: string[] }) =>
     ipcRenderer.invoke('update-server-crazy-crates', serverId, payload),
   buildConfigs: (

@@ -2,6 +2,7 @@ const yaml = require('yaml')
 const { readFileSync } = require('fs')
 
 import type { ResolvedDropTable } from './types'
+import { parseEnchantedBookMaterial } from './shared/enchantedBook'
 
 interface GeneratedCustomDrops {
   dropTables: Record<string, unknown[]>
@@ -23,15 +24,6 @@ function sortedObject<T>(obj: Record<string, T>): Record<string, T> {
     }, {} as Record<string, T>)
 }
 
-function parseEnchantedBookEntry(itemId: string): { enchantment: string; level: number } | null {
-  const match = /^ENCHANTED_BOOK_(.+)_(\d+)$/.exec(itemId)
-  if (!match) return null
-  const enchantment = match[1].toLowerCase()
-  const level = Number(match[2])
-  if (!Number.isFinite(level) || level < 1) return null
-  return { enchantment, level }
-}
-
 function toItemNode(
   itemId: string,
   override?: { chance?: number; amount?: string; minLevel?: number; maxLevel?: number },
@@ -39,7 +31,7 @@ function toItemNode(
   includeGroupLimit?: boolean
 ): Record<string, Record<string, unknown>> {
   const normalized = normalizeItemId(itemId)
-  const enchantedBook = parseEnchantedBookEntry(normalized)
+  const enchantedBook = parseEnchantedBookMaterial(normalized)
   const outputItemId = enchantedBook ? 'ENCHANTED_BOOK' : normalized
   const entry: Record<string, unknown> = {}
   if (typeof override?.chance === 'number') {

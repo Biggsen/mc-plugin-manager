@@ -5,6 +5,9 @@ import type { CrateLibraryEntry, CrateLibraryDeleteResult, CratePrizeEntry } fro
 import { loadCrateLibrary, saveCrateLibrary } from '../../crateLibrary'
 import { findServersReferencingLibraryCrate, removeLibraryCrateIdFromAllServers } from '../../crateResolve'
 import { loadBundledEnchantCatalog, sanitizeEnchantmentsForItem } from '../../enchantIndex'
+import { isVirtualKeyPrize, normalizeVirtualKeyPrizeEntry } from '../../shared/crateKeyPresets'
+import { loadVirtualCrateKeyValues, saveVirtualCrateKeyValues } from '../../virtualCrateKeyValues'
+import type { VirtualCrateKeyValues } from '../../types'
 
 function sanitizeCrateOutputStem(raw: string): string {
   const s = raw
@@ -24,15 +27,35 @@ function sanitizePrizeEntries(entries: CratePrizeEntry[]): CratePrizeEntry[] {
   const { catalog } = loadBundledEnchantCatalog()
   const out: CratePrizeEntry[] = []
   for (const raw of entries) {
+    const entryId =
+      typeof raw?.entryId === 'string' && raw.entryId.trim().length > 0 ? raw.entryId.trim() : randomUUID()
+    const draft: CratePrizeEntry = { ...raw, entryId }
+
+    if (isVirtualKeyPrize(draft)) {
+      const row = normalizeVirtualKeyPrizeEntry(draft)
+      if (raw.override && typeof raw.override === 'object') {
+        const o = raw.override
+        const override: CratePrizeEntry['override'] = {}
+        if (typeof o.weight === 'number' && Number.isFinite(o.weight)) {
+          override.weight = Math.max(1, Math.round(o.weight))
+        }
+        if (o.amount !== undefined) {
+          const amount = String(o.amount).trim()
+          if (amount.length > 0) override.amount = amount
+        }
+        if (Object.keys(override).length > 0) row.override = override
+      }
+      out.push(row)
+      continue
+    }
+
     const itemId = String(raw?.itemId ?? '')
       .trim()
       .replace(/[^a-zA-Z0-9_]/g, '_')
       .replace(/_+/g, '_')
       .toUpperCase()
     if (!itemId) continue
-    const entryId =
-      typeof raw?.entryId === 'string' && raw.entryId.trim().length > 0 ? raw.entryId.trim() : randomUUID()
-    const row: CratePrizeEntry = { entryId, itemId }
+    const row: CratePrizeEntry = { entryId, itemId, prizeKind: 'item' }
     if (raw.override && typeof raw.override === 'object') {
       const o = raw.override
       const override: CratePrizeEntry['override'] = {}
@@ -71,6 +94,14 @@ function sanitizePrizeEntries(entries: CratePrizeEntry[]): CratePrizeEntry[] {
 export function registerCrateLibraryHandlers(): void {
   ipcMain.handle('list-crate-library', async () => {
     return loadCrateLibrary()
+  })
+
+  ipcMain.handle('get-virtual-crate-key-values', async () => {
+    return loadVirtualCrateKeyValues()
+  })
+
+  ipcMain.handle('set-virtual-crate-key-values', async (_e: unknown, values: VirtualCrateKeyValues) => {
+    return saveVirtualCrateKeyValues(values ?? {})
   })
 
   ipcMain.handle(

@@ -6,6 +6,7 @@ import {
   Badge,
   Box,
   Button,
+  Collapse,
   Group,
   Modal,
   NumberInput,
@@ -20,10 +21,21 @@ import {
 } from '@mantine/core'
 import { IconPencil, IconTrash } from '@tabler/icons-react'
 import styles from './DropTableEditorScreen.module.css'
+import {
+  CRATE_VIRTUAL_KEY_PRESETS,
+  createVirtualKeyPrizeEntry,
+  getVirtualKeyPreset,
+  getVirtualKeyPrizeValue,
+  isVirtualKeyPrize,
+  normalizeVirtualKeyPrizeEntry,
+  resolveVirtualKeyId,
+} from '@shared/crateKeyPresets'
 import type {
   CrateLibraryDeleteResult,
   CratePrizeEntry,
   CratePrizeOverride,
+  CrateVirtualKeyId,
+  VirtualCrateKeyValues,
   EnchantIndexEntry,
   ItemEnchantMeta,
   ItemIndexEntry,
@@ -103,15 +115,39 @@ function sumAppliedEnchantmentValue(
   return sum
 }
 
+function formatPrizeListLabel(
+  row: CratePrizeEntry,
+  amount: string,
+  itemById: Map<string, ItemIndexEntry>,
+  enchantments?: Record<string, number>
+): string {
+  if (isVirtualKeyPrize(row)) {
+    const keyId = resolveVirtualKeyId(row)
+    const preset = keyId ? getVirtualKeyPreset(keyId) : undefined
+    const name = preset?.listLabel ?? 'Crate Key'
+    const display = prizeAmountDisplay(amount)
+    if (display === '1') return name
+    return `${display}x ${name}`
+  }
+  const meta = itemById.get(row.itemId)
+  const catalogName = meta?.name ?? row.itemId
+  return formatPrizeItemLabel(amount, catalogName, enchantments)
+}
+
 function getPrizeValueNumber(
   row: CratePrizeEntry,
-  itemById: Map<string, ItemIndexEntry>
+  itemById: Map<string, ItemIndexEntry>,
+  virtualKeyValues: VirtualCrateKeyValues
 ): number | undefined {
-  const meta = itemById.get(row.itemId)
   const amount = row.override?.amount !== undefined ? row.override.amount : '1'
   const avgAmount = parseAverageAmount(amount)
   if (avgAmount === undefined) return undefined
 
+  if (isVirtualKeyPrize(row)) {
+    return getVirtualKeyPrizeValue(row, virtualKeyValues)
+  }
+
+  const meta = itemById.get(row.itemId)
   if (isEnchantedBookCatalogId(row.itemId)) {
     if (typeof meta?.unitBuy !== 'number' || !Number.isFinite(meta.unitBuy)) return undefined
     const value = meta.unitBuy * avgAmount
@@ -133,10 +169,112 @@ function getPrizeValueNumber(
   return Number.isFinite(total) ? total : undefined
 }
 
-function formatPrizeValue(row: CratePrizeEntry, itemById: Map<string, ItemIndexEntry>): string | null {
-  const value = getPrizeValueNumber(row, itemById)
+function formatPrizeValue(
+  row: CratePrizeEntry,
+  itemById: Map<string, ItemIndexEntry>,
+  virtualKeyValues: VirtualCrateKeyValues
+): string | null {
+  const value = getPrizeValueNumber(row, itemById, virtualKeyValues)
   if (value === undefined) return null
+  return formatMoneyAmount(value)
+}
+
+function formatPrizeCategoryLabel(row: CratePrizeEntry, itemById: Map<string, ItemIndexEntry>): string | null {
+  if (isVirtualKeyPrize(row)) return 'Keys'
+  const cat = itemById.get(row.itemId)?.category?.trim()
+  return cat && cat.length > 0 ? cat : null
+}
+
+function formatPrizeCopyValueLabel(
+  row: CratePrizeEntry,
+  itemById: Map<string, ItemIndexEntry>,
+  virtualKeyValues: VirtualCrateKeyValues
+): string {
+  const value = getPrizeValueNumber(row, itemById, virtualKeyValues)
+  if (value !== undefined) return `Value: ${formatMoneyAmount(value)}`
+  if (isVirtualKeyPrize(row)) return 'Value: Unknown (No items)'
+  return 'Value: Unknown'
+}
+
+function formatPrizeCopyLine(
+  row: CratePrizeEntry,
+  itemById: Map<string, ItemIndexEntry>,
+  virtualKeyValues: VirtualCrateKeyValues,
+  totalWeight: number
+): string {
+  const amount = row.override?.amount !== undefined ? row.override.amount : '1'
+  const label = formatPrizeListLabel(row, amount, itemById, row.override?.enchantments)
+  const weight = getEntryWeight(row)
+  const chance =
+    totalWeight > 0 ? formatWeightPercent(weight, totalWeight) : '0.0%'
+  return `${label} - ${formatPrizeCopyValueLabel(row, itemById, virtualKeyValues)} - Weight: ${weight} - Chance: ${chance}`
+}
+
+function buildPrizesCopyListText(
+  entries: CratePrizeEntry[],
+  itemById: Map<string, ItemIndexEntry>,
+  virtualKeyValues: VirtualCrateKeyValues
+): string {
+  const totalWeight = entries.reduce((sum, row) => sum + getEntryWeight(row), 0)
+  return entries
+    .map((row) => formatPrizeCopyLine(row, itemById, virtualKeyValues, totalWeight))
+    .join('\n')
+}
+
+function formatMoneyAmount(value: number): string {
   return Number.isInteger(value) ? String(value) : value.toFixed(2)
+}
+
+function computePrizePoolStats(
+  entries: CratePrizeEntry[],
+  itemById: Map<string, ItemIndexEntry>,
+  virtualKeyValues: VirtualCrateKeyValues
+): {
+  totalWeight: number
+  totalValue: number | null
+  averageValueByWeight: number | null
+  missingValueCount: number
+} {
+  let totalWeight = 0
+  let totalValue = 0
+  let weightedValueSum = 0
+  let valuedWeight = 0
+  let missingValueCount = 0
+  let hasAnyValue = false
+
+  for (const row of entries) {
+    const weight = getEntryWeight(row)
+    totalWeight += weight
+    const value = getPrizeValueNumber(row, itemById, virtualKeyValues)
+    if (value === undefined) {
+      missingValueCount += 1
+      continue
+    }
+    hasAnyValue = true
+    totalValue += value
+    weightedValueSum += value * weight
+    valuedWeight += weight
+  }
+
+  return {
+    totalWeight,
+    totalValue: hasAnyValue ? totalValue : null,
+    averageValueByWeight: valuedWeight > 0 ? weightedValueSum / valuedWeight : null,
+    missingValueCount,
+  }
+}
+
+function emptyKeyValuesDraft(): Record<CrateVirtualKeyId, string> {
+  return { heart: '', region: '', village: '', nerve: '' }
+}
+
+function keyValuesDraftFromStored(values: VirtualCrateKeyValues): Record<CrateVirtualKeyId, string> {
+  const draft = emptyKeyValuesDraft()
+  for (const preset of CRATE_VIRTUAL_KEY_PRESETS) {
+    const v = values[preset.id]
+    if (typeof v === 'number' && Number.isFinite(v)) draft[preset.id] = String(v)
+  }
+  return draft
 }
 
 function catalogStackSize(item: ItemIndexEntry | undefined): number {
@@ -248,6 +386,15 @@ export function CrateEditorScreen({ crateId, onBack, onSaved }: CrateEditorScree
   const [prizeModalAmountDraft, setPrizeModalAmountDraft] = useState('1')
   const [prizeModalEnchantsDraft, setPrizeModalEnchantsDraft] = useState<Record<string, number>>({})
   const [prizeModalError, setPrizeModalError] = useState<string | null>(null)
+  const [virtualKeyValues, setVirtualKeyValues] = useState<VirtualCrateKeyValues>({})
+  const [keyValuesModalOpen, setKeyValuesModalOpen] = useState(false)
+  const [keyValuesDraft, setKeyValuesDraft] = useState<Record<CrateVirtualKeyId, string>>(emptyKeyValuesDraft)
+  const [keyValuesModalError, setKeyValuesModalError] = useState<string | null>(null)
+  const [keyValuesSaving, setKeyValuesSaving] = useState(false)
+  const [copyListError, setCopyListError] = useState<string | null>(null)
+  const [deletePrizeEntryId, setDeletePrizeEntryId] = useState<string | null>(null)
+  const [editingWeightEntryId, setEditingWeightEntryId] = useState<string | null>(null)
+  const [editingWeightDraft, setEditingWeightDraft] = useState('')
 
   const [loadError, setLoadError] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
@@ -256,6 +403,7 @@ export function CrateEditorScreen({ crateId, onBack, onSaved }: CrateEditorScree
   const [listViewportHeight, setListViewportHeight] = useState(420)
   const [prizeSortColumn, setPrizeSortColumn] = useState<PrizeSortColumn>('none')
   const [prizeSortDirection, setPrizeSortDirection] = useState<'asc' | 'desc'>('asc')
+  const [keysSectionOpen, setKeysSectionOpen] = useState(true)
 
   const crateIdRef = useRef<string | undefined>(crateId)
   const listViewportRef = useRef<HTMLDivElement | null>(null)
@@ -280,13 +428,21 @@ export function CrateEditorScreen({ crateId, onBack, onSaved }: CrateEditorScree
     [selectedEntriesDraft, prizeModalEntryId]
   )
 
+  const deletePrizeRow = useMemo(
+    () => selectedEntriesDraft.find((r) => r.entryId === deletePrizeEntryId) ?? null,
+    [selectedEntriesDraft, deletePrizeEntryId]
+  )
+
   const prizeModalMaterialId = prizeModalRow ? materialIdFromItemId(prizeModalRow.itemId) : ''
 
   const prizeModalCanEnchant = useMemo(() => {
     if (!prizeModalRow) return false
+    if (isVirtualKeyPrize(prizeModalRow)) return false
     if (isEnchantedBookCatalogId(prizeModalRow.itemId)) return false
     return Boolean(enchantItemsByMaterial[prizeModalMaterialId])
   }, [prizeModalRow, prizeModalMaterialId, enchantItemsByMaterial])
+
+  const prizeModalIsVirtualKey = prizeModalRow != null && isVirtualKeyPrize(prizeModalRow)
 
   const compatibleEnchants = useMemo(() => {
     if (!prizeModalCanEnchant || !prizeModalMaterialId) return []
@@ -341,9 +497,23 @@ export function CrateEditorScreen({ crateId, onBack, onSaved }: CrateEditorScree
 
   const selectedIds = useMemo(() => new Set(selectedEntriesDraft.map((e) => e.itemId)), [selectedEntriesDraft])
 
+  const addedVirtualKeyIds = useMemo(() => {
+    const ids = new Set<CrateVirtualKeyId>()
+    for (const row of selectedEntriesDraft) {
+      const keyId = resolveVirtualKeyId(row)
+      if (keyId) ids.add(keyId)
+    }
+    return ids
+  }, [selectedEntriesDraft])
+
   const totalPrizeWeight = useMemo(
     () => selectedEntriesDraft.reduce((sum, row) => sum + getEntryWeight(row), 0),
     [selectedEntriesDraft]
+  )
+
+  const prizePoolStats = useMemo(
+    () => computePrizePoolStats(selectedEntriesDraft, itemById, virtualKeyValues),
+    [selectedEntriesDraft, itemById, virtualKeyValues]
   )
 
   const sortedSelectedEntries = useMemo(() => {
@@ -352,8 +522,8 @@ export function CrateEditorScreen({ crateId, onBack, onSaved }: CrateEditorScree
     next.sort((a, b) => {
       let base = 0
       if (prizeSortColumn === 'value') {
-        const av = getPrizeValueNumber(a, itemById) ?? -1
-        const bv = getPrizeValueNumber(b, itemById) ?? -1
+        const av = getPrizeValueNumber(a, itemById, virtualKeyValues) ?? -1
+        const bv = getPrizeValueNumber(b, itemById, virtualKeyValues) ?? -1
         base = av - bv
       } else if (prizeSortColumn === 'weight') {
         base = getEntryWeight(a) - getEntryWeight(b)
@@ -366,7 +536,7 @@ export function CrateEditorScreen({ crateId, onBack, onSaved }: CrateEditorScree
       return prizeSortDirection === 'asc' ? base : -base
     })
     return next
-  }, [selectedEntriesDraft, prizeSortColumn, prizeSortDirection, totalPrizeWeight, itemById])
+  }, [selectedEntriesDraft, prizeSortColumn, prizeSortDirection, totalPrizeWeight, itemById, virtualKeyValues])
 
   function togglePrizeSort(column: PrizeSortColumn) {
     if (column === 'none') {
@@ -415,13 +585,15 @@ export function CrateEditorScreen({ crateId, onBack, onSaved }: CrateEditorScree
   const load = useCallback(async () => {
     setLoadError(null)
     try {
-      const [idx, enchantData] = await Promise.all([
+      const [idx, enchantData, keyValues] = await Promise.all([
         window.electronAPI.scanItemIndex(),
         window.electronAPI.scanEnchantData(),
+        window.electronAPI.getVirtualCrateKeyValues(),
       ])
       setItemsIndex(idx.items)
       setEnchantCatalog(enchantData.enchants)
       setEnchantItemsByMaterial(enchantData.items)
+      setVirtualKeyValues(keyValues)
 
       if (crateId) {
         const lib = await window.electronAPI.listCrateLibrary()
@@ -439,7 +611,8 @@ export function CrateEditorScreen({ crateId, onBack, onSaved }: CrateEditorScree
         setLore1Draft(row.loreLine1 ?? '<gray>A reward crate.')
         setLore2Draft(row.loreLine2 ?? '<gray>Open to see what you find.')
         setAnimationDraft(row.animationTitle ?? 'Opening...')
-        setSelectedEntriesDraft(row.selectedPrizeEntries ?? [])
+        const loadedPrizes = (row.selectedPrizeEntries ?? []).map((e) => normalizeVirtualKeyPrizeEntry(e))
+        setSelectedEntriesDraft(loadedPrizes)
         lastSavedSnapshotRef.current = snapshotPayload({
           name: row.name,
           description: row.description ?? '',
@@ -450,7 +623,7 @@ export function CrateEditorScreen({ crateId, onBack, onSaved }: CrateEditorScree
           loreLine1: row.loreLine1 ?? '',
           loreLine2: row.loreLine2 ?? '',
           animationTitle: row.animationTitle ?? '',
-          selectedPrizeEntries: row.selectedPrizeEntries ?? [],
+          selectedPrizeEntries: loadedPrizes,
         })
       } else {
         lastSavedSnapshotRef.current = snapshotPayload(buildSavePayload())
@@ -501,13 +674,34 @@ export function CrateEditorScreen({ crateId, onBack, onSaved }: CrateEditorScree
     for (const it of searchResults) addItem(it.id)
   }
 
+  function addKeyPrize(keyId: CrateVirtualKeyId) {
+    setSelectedEntriesDraft((prev) => [...prev, createVirtualKeyPrizeEntry(keyId)])
+  }
+
   function removeEntry(entryId: string) {
     setSelectedEntriesDraft((prev) => prev.filter((x) => x.entryId !== entryId))
   }
 
+  function openDeletePrizeConfirm(entryId: string) {
+    setDeletePrizeEntryId(entryId)
+  }
+
+  function confirmRemovePrize() {
+    if (!deletePrizeEntryId) return
+    if (prizeModalEntryId === deletePrizeEntryId) {
+      setPrizeModalOpen(false)
+      setPrizeModalEntryId(null)
+    }
+    removeEntry(deletePrizeEntryId)
+    setDeletePrizeEntryId(null)
+  }
+
   function setEntryPrizeOverride(
     entryId: string,
-    patch: { amount?: string; enchantments?: Record<string, number> | null }
+    patch: {
+      amount?: string
+      enchantments?: Record<string, number> | null
+    }
   ) {
     setSelectedEntriesDraft((prev) =>
       prev.map((row) => {
@@ -533,21 +727,41 @@ export function CrateEditorScreen({ crateId, onBack, onSaved }: CrateEditorScree
     )
   }
 
-  function nudgeWeight(entryId: string, delta: number) {
+  function setEntryWeight(entryId: string, weight: number) {
+    const next = clamp(Math.round(weight), 1, 10_000)
     setSelectedEntriesDraft((prev) =>
       prev.map((row) => {
         if (row.entryId !== entryId) return row
-        const base =
-          typeof row.override?.weight === 'number' && Number.isFinite(row.override.weight)
-            ? row.override.weight
-            : DEFAULT_WEIGHT
-        const next = clamp(base + delta, 1, 10_000)
-        return {
-          ...row,
-          override: { ...(row.override ?? {}), weight: next },
-        }
+        return { ...row, override: { ...(row.override ?? {}), weight: next } }
       })
     )
+  }
+
+  function nudgeWeight(entryId: string, delta: number) {
+    const row = selectedEntriesDraft.find((r) => r.entryId === entryId)
+    const base = row ? getEntryWeight(row) : DEFAULT_WEIGHT
+    setEntryWeight(entryId, base + delta)
+  }
+
+  function startEditWeight(entryId: string, current: number) {
+    setEditingWeightEntryId(entryId)
+    setEditingWeightDraft(String(current))
+  }
+
+  function cancelWeightEdit() {
+    setEditingWeightEntryId(null)
+    setEditingWeightDraft('')
+  }
+
+  function commitWeightEdit(entryId: string) {
+    const trimmed = editingWeightDraft.trim()
+    const parsed = Number(trimmed)
+    if (!trimmed || !Number.isFinite(parsed) || parsed < 1) {
+      cancelWeightEdit()
+      return
+    }
+    setEntryWeight(entryId, parsed)
+    cancelWeightEdit()
   }
 
   async function handleSave(options?: { closeAfterSave?: boolean }) {
@@ -636,12 +850,65 @@ export function CrateEditorScreen({ crateId, onBack, onSaved }: CrateEditorScree
     setPrizeModalOpen(true)
   }
 
+  function openKeyValuesModal() {
+    setKeyValuesDraft(keyValuesDraftFromStored(virtualKeyValues))
+    setKeyValuesModalError(null)
+    setKeyValuesModalOpen(true)
+  }
+
+  async function copyPrizesList() {
+    setCopyListError(null)
+    if (sortedSelectedEntries.length === 0) return
+    const text = buildPrizesCopyListText(sortedSelectedEntries, itemById, virtualKeyValues)
+    try {
+      await navigator.clipboard.writeText(text)
+    } catch (e: unknown) {
+      setCopyListError(e instanceof Error ? e.message : String(e))
+    }
+  }
+
+  async function applyKeyValuesModal() {
+    setKeyValuesModalError(null)
+    const parsed: VirtualCrateKeyValues = {}
+    for (const preset of CRATE_VIRTUAL_KEY_PRESETS) {
+      const trimmed = keyValuesDraft[preset.id].trim()
+      if (!trimmed) continue
+      const n = Number(trimmed)
+      if (!Number.isFinite(n) || n < 0) {
+        setKeyValuesModalError(`${preset.listLabel}: enter a number ≥ 0, or leave blank`)
+        return
+      }
+      parsed[preset.id] = n
+    }
+    setKeyValuesSaving(true)
+    try {
+      const saved = await window.electronAPI.setVirtualCrateKeyValues(parsed)
+      setVirtualKeyValues(saved)
+      setKeyValuesModalOpen(false)
+    } catch (e: unknown) {
+      setKeyValuesModalError(e instanceof Error ? e.message : String(e))
+    } finally {
+      setKeyValuesSaving(false)
+    }
+  }
+
   function applyPrizeModal() {
     if (!prizeModalEntryId) return
+    const row = selectedEntriesDraft.find((r) => r.entryId === prizeModalEntryId)
     setPrizeModalError(null)
     const trimmed = prizeModalAmountDraft.trim()
     if (!trimmed) {
       setPrizeModalError('Amount is required')
+      return
+    }
+    if (row && isVirtualKeyPrize(row)) {
+      if (!/^\d+$/.test(trimmed)) {
+        setPrizeModalError('Virtual keys use a whole number amount (keys granted per win)')
+        return
+      }
+      setEntryPrizeOverride(prizeModalEntryId, { amount: trimmed, enchantments: null })
+      setPrizeModalOpen(false)
+      setPrizeModalEntryId(null)
       return
     }
     const enchantments = { ...prizeModalEnchantsDraft }
@@ -848,11 +1115,7 @@ export function CrateEditorScreen({ crateId, onBack, onSaved }: CrateEditorScree
         <Stack gap="sm">
           {prizeModalRow && (
             <Text size="sm" c="dimmed">
-              {formatPrizeItemLabel(
-                prizeModalAmountDraft,
-                itemById.get(prizeModalRow.itemId)?.name ?? prizeModalRow.itemId,
-                prizeModalEnchantsDraft
-              )}
+              {formatPrizeListLabel(prizeModalRow, prizeModalAmountDraft, itemById, prizeModalEnchantsDraft)}
             </Text>
           )}
           <Stack gap={4}>
@@ -860,7 +1123,9 @@ export function CrateEditorScreen({ crateId, onBack, onSaved }: CrateEditorScree
               Amount
             </Text>
             <Text size="xs" c="dimmed">
-              Use a number (e.g. 64) or range (e.g. 3-6)
+              {prizeModalIsVirtualKey
+                ? 'Whole number — virtual keys granted per win (cc give virtual …)'
+                : 'Use a number (e.g. 64) or range (e.g. 3-6)'}
             </Text>
             <Group gap="sm" align="center" wrap="nowrap">
               <TextInput
@@ -868,11 +1133,20 @@ export function CrateEditorScreen({ crateId, onBack, onSaved }: CrateEditorScree
                 value={prizeModalAmountDraft}
                 onChange={(e) => setPrizeModalAmountDraft(e.currentTarget.value)}
               />
-              <Anchor size="sm" onClick={setPrizeModalToStack}>
-                Set as stack
-              </Anchor>
+              {!prizeModalIsVirtualKey && (
+                <Anchor size="sm" onClick={setPrizeModalToStack}>
+                  Set as stack
+                </Anchor>
+              )}
             </Group>
           </Stack>
+
+          {prizeModalIsVirtualKey && (
+            <Text size="xs" c="dimmed">
+              Virtual crate key — reward is granted via command, not an inventory item stack. Set dollar
+              values under Keys → Set values (shared across all crates).
+            </Text>
+          )}
 
           {prizeModalRow && isEnchantedBookCatalogId(prizeModalRow.itemId) && (
             <Text size="xs" c="dimmed">
@@ -950,6 +1224,80 @@ export function CrateEditorScreen({ crateId, onBack, onSaved }: CrateEditorScree
         </Stack>
       </Modal>
 
+      <Modal
+        title="Remove prize"
+        opened={deletePrizeEntryId !== null}
+        onClose={() => setDeletePrizeEntryId(null)}
+      >
+        {deletePrizeRow && (
+          <Stack gap="md">
+            <Text size="sm">
+              Remove{' '}
+              <Text span fw={600}>
+                {formatPrizeListLabel(
+                  deletePrizeRow,
+                  deletePrizeRow.override?.amount ?? '1',
+                  itemById,
+                  deletePrizeRow.override?.enchantments
+                )}
+              </Text>{' '}
+              from this crate?
+            </Text>
+            <Group justify="flex-end" gap="sm">
+              <Button variant="default" onClick={() => setDeletePrizeEntryId(null)}>
+                Cancel
+              </Button>
+              <Button color="red" leftSection={<IconTrash size={16} />} onClick={confirmRemovePrize}>
+                Remove
+              </Button>
+            </Group>
+          </Stack>
+        )}
+      </Modal>
+
+      <Modal
+        title="Virtual key values"
+        opened={keyValuesModalOpen}
+        onClose={() => !keyValuesSaving && setKeyValuesModalOpen(false)}
+        size="sm"
+      >
+        <Stack gap="sm">
+          <Text size="sm" c="dimmed">
+            Editor-only dollar values per key type. Used for prize Value, sorting, and pool totals on every crate.
+            Row value = unit value × keys granted (amount).
+          </Text>
+          {CRATE_VIRTUAL_KEY_PRESETS.map((preset) => (
+            <NumberInput
+              key={preset.id}
+              label={preset.listLabel}
+              min={0}
+              decimalScale={2}
+              allowNegative={false}
+              value={keyValuesDraft[preset.id] === '' ? '' : Number(keyValuesDraft[preset.id])}
+              onChange={(v) =>
+                setKeyValuesDraft((prev) => ({
+                  ...prev,
+                  [preset.id]: v === '' || v === undefined ? '' : String(v),
+                }))
+              }
+            />
+          ))}
+          {keyValuesModalError && (
+            <Text size="sm" c="red">
+              {keyValuesModalError}
+            </Text>
+          )}
+          <Group justify="flex-end">
+            <Button variant="default" onClick={() => setKeyValuesModalOpen(false)} disabled={keyValuesSaving}>
+              Cancel
+            </Button>
+            <Button onClick={applyKeyValuesModal} loading={keyValuesSaving}>
+              Save
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
+
       <Box
         style={{
           display: 'grid',
@@ -986,6 +1334,34 @@ export function CrateEditorScreen({ crateId, onBack, onSaved }: CrateEditorScree
               Add all
             </Button>
           </Group>
+          <Group justify="space-between" align="center" mb="xs" wrap="nowrap">
+            <UnstyledButton type="button" onClick={() => setKeysSectionOpen((open) => !open)}>
+              <Text size="sm" fw={600}>
+                Keys {keysSectionOpen ? '▾' : '▸'}
+              </Text>
+            </UnstyledButton>
+            <Anchor size="sm" onClick={openKeyValuesModal}>
+              Set values
+            </Anchor>
+          </Group>
+          <Collapse in={keysSectionOpen}>
+            <Group gap="xs" mb="xs">
+              {CRATE_VIRTUAL_KEY_PRESETS.map((preset) => {
+                const added = addedVirtualKeyIds.has(preset.id)
+                return (
+                  <Button
+                    key={preset.id}
+                    variant={added ? 'filled' : 'light'}
+                    size="compact-sm"
+                    onClick={() => addKeyPrize(preset.id)}
+                    aria-pressed={added}
+                  >
+                    {preset.buttonLabel}
+                  </Button>
+                )
+              })}
+            </Group>
+          </Collapse>
           <TextInput
             placeholder="Search by name or ID..."
             value={search}
@@ -1028,13 +1404,51 @@ export function CrateEditorScreen({ crateId, onBack, onSaved }: CrateEditorScree
         </Paper>
 
         <Paper withBorder p="sm" style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }}>
-          <Text fw={600} size="sm" mb="xs">
-            Prizes ({selectedEntriesDraft.length})
-          </Text>
+          <Group justify="space-between" align="flex-start" wrap="wrap" gap="xs" mb="xs">
+            <Text fw={600} size="sm">
+              Prizes ({selectedEntriesDraft.length})
+            </Text>
+            {selectedEntriesDraft.length > 0 && (
+              <Group gap="md" wrap="wrap" justify="flex-end">
+                <Text size="sm" c="dimmed">
+                  Total weight:{' '}
+                  <Text span fw={600} c="inherit">
+                    {prizePoolStats.totalWeight}
+                  </Text>
+                </Text>
+                <Text size="sm" c="dimmed">
+                  Total value:{' '}
+                  <Text span fw={600} c="grape.4">
+                    {prizePoolStats.totalValue != null
+                      ? `$${formatMoneyAmount(prizePoolStats.totalValue)}`
+                      : '—'}
+                  </Text>
+                </Text>
+                <Text size="sm" c="dimmed">
+                  Avg value (by weight):{' '}
+                  <Text span fw={600} c="grape.4">
+                    {prizePoolStats.averageValueByWeight != null
+                      ? `$${formatMoneyAmount(prizePoolStats.averageValueByWeight)}`
+                      : '—'}
+                  </Text>
+                </Text>
+                {prizePoolStats.missingValueCount > 0 && (
+                  <Text size="xs" c="dimmed">
+                    {prizePoolStats.missingValueCount} without catalog value
+                  </Text>
+                )}
+              </Group>
+            )}
+          </Group>
           <Text size="xs" c="dimmed" mb="xs">
-            Click items on the left to add. Use weight and edit prize per row; defaults are used for everything else at build
-            time.
+            Add items from the catalog or virtual keys under Keys. Use weight and edit prize per row; defaults apply at
+            build time.
           </Text>
+          {copyListError && (
+            <Text size="xs" c="red" mb="xs">
+              {copyListError}
+            </Text>
+          )}
           <Group gap="xs" mb="sm" wrap="wrap" align="center">
             <Text size="sm" c="dimmed">
               Sort by:
@@ -1069,6 +1483,14 @@ export function CrateEditorScreen({ crateId, onBack, onSaved }: CrateEditorScree
                 None
               </Button>
             </Button.Group>
+            <Button
+              size="compact-sm"
+              variant="default"
+              disabled={selectedEntriesDraft.length === 0}
+              onClick={() => void copyPrizesList()}
+            >
+              Copy list
+            </Button>
           </Group>
           <ScrollArea style={{ flex: 1, minHeight: 0 }}>
             <Stack gap={6}>
@@ -1076,11 +1498,12 @@ export function CrateEditorScreen({ crateId, onBack, onSaved }: CrateEditorScree
                 const weight = getEntryWeight(row)
                 const weightPercent = formatWeightPercent(weight, totalPrizeWeight)
                 const amount = row.override?.amount !== undefined ? row.override.amount : '1'
-                const meta = itemById.get(row.itemId)
-                const catalogName = meta?.name ?? row.itemId
-                const label = formatPrizeItemLabel(amount, catalogName, row.override?.enchantments)
-                const valueLabel = formatPrizeValue(row, itemById)
-                const enchantTags = sortedEnchantmentEntries(row.override?.enchantments)
+                const label = formatPrizeListLabel(row, amount, itemById, row.override?.enchantments)
+                const valueLabel = formatPrizeValue(row, itemById, virtualKeyValues)
+                const categoryLabel = formatPrizeCategoryLabel(row, itemById)
+                const enchantTags = isVirtualKeyPrize(row)
+                  ? []
+                  : sortedEnchantmentEntries(row.override?.enchantments)
                 return (
                   <Paper key={row.entryId} withBorder p="xs">
                     <Group wrap="nowrap" gap="sm" justify="space-between" align="flex-start">
@@ -1088,9 +1511,11 @@ export function CrateEditorScreen({ crateId, onBack, onSaved }: CrateEditorScree
                         <Text size="sm" fw={600} lineClamp={1}>
                           {label}
                         </Text>
-                        {valueLabel != null && (
+                        {(categoryLabel != null || valueLabel != null) && (
                           <Text size="xs" c="dimmed">
-                            Value: {valueLabel}
+                            {categoryLabel != null && <>Category: {categoryLabel}</>}
+                            {categoryLabel != null && valueLabel != null && ' · '}
+                            {valueLabel != null && <>Value: {valueLabel}</>}
                           </Text>
                         )}
                         {enchantTags.length > 0 && (
@@ -1119,9 +1544,37 @@ export function CrateEditorScreen({ crateId, onBack, onSaved }: CrateEditorScree
                           >
                             −
                           </ActionIcon>
-                          <Text size="sm" fw={600} w={32} ta="center">
-                            {weight}
-                          </Text>
+                          {editingWeightEntryId === row.entryId ? (
+                            <TextInput
+                              size="xs"
+                              w={44}
+                              value={editingWeightDraft}
+                              onChange={(e) =>
+                                setEditingWeightDraft(e.currentTarget.value.replace(/[^\d]/g, ''))
+                              }
+                              onBlur={() => commitWeightEdit(row.entryId)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault()
+                                  commitWeightEdit(row.entryId)
+                                }
+                                if (e.key === 'Escape') cancelWeightEdit()
+                              }}
+                              styles={{ input: { textAlign: 'center', fontWeight: 600 } }}
+                              autoFocus
+                              aria-label="Weight"
+                            />
+                          ) : (
+                            <UnstyledButton
+                              onClick={() => startEditWeight(row.entryId, weight)}
+                              aria-label="Edit weight"
+                              style={{ width: 32 }}
+                            >
+                              <Text size="sm" fw={600} ta="center" style={{ cursor: 'text' }}>
+                                {weight}
+                              </Text>
+                            </UnstyledButton>
+                          )}
                           <ActionIcon
                             size="sm"
                             variant="default"
@@ -1134,23 +1587,25 @@ export function CrateEditorScreen({ crateId, onBack, onSaved }: CrateEditorScree
                         <Text size="sm" c="dimmed" w={44} ta="right">
                           {weightPercent}
                         </Text>
-                        <ActionIcon
-                          size="sm"
-                          variant="default"
-                          aria-label="Edit prize"
-                          onClick={() => openPrizeModal(row.entryId)}
-                        >
-                          <IconPencil size={16} />
-                        </ActionIcon>
-                        <ActionIcon
-                          size="sm"
-                          variant="default"
-                          color="red"
-                          aria-label="Remove prize"
-                          onClick={() => removeEntry(row.entryId)}
-                        >
-                          <IconTrash size={16} />
-                        </ActionIcon>
+                        <Group gap={6} wrap="nowrap" ml={48}>
+                          <ActionIcon
+                            size="sm"
+                            variant="default"
+                            aria-label="Edit prize"
+                            onClick={() => openPrizeModal(row.entryId)}
+                          >
+                            <IconPencil size={16} />
+                          </ActionIcon>
+                          <ActionIcon
+                            size="sm"
+                            variant="default"
+                            color="red"
+                            aria-label="Remove prize"
+                            onClick={() => openDeletePrizeConfirm(row.entryId)}
+                          >
+                            <IconTrash size={16} />
+                          </ActionIcon>
+                        </Group>
                       </Group>
                     </Group>
                   </Paper>

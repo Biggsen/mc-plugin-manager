@@ -36,8 +36,11 @@ export type {
   CrazyCratesServerAssignment,
   CrateLibraryEntry,
   CrateLibraryDeleteResult,
+  CratePrizeKind,
   CratePrizeEntry,
   CratePrizeOverride,
+  CrateVirtualKeyId,
+  VirtualCrateKeyValues,
   ResolvedCrazyCratesCrate,
 } from '@shared/types'
 

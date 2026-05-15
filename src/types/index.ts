@@ -350,6 +350,13 @@ export interface CrazyCratesServerAssignment {
   libraryCrateIds: string[]
 }
 
+export type CratePrizeKind = 'item' | 'virtual_key'
+
+export type CrateVirtualKeyId = 'heart' | 'region' | 'village' | 'nerve'
+
+/** Global editor-only $ values per virtual key type (all crates). */
+export type VirtualCrateKeyValues = Partial<Record<CrateVirtualKeyId, number>>
+
 export interface CratePrizeOverride {
   weight?: number
   amount?: string
@@ -373,7 +380,10 @@ export interface ItemEnchantMeta {
 
 export interface CratePrizeEntry {
   entryId: string
+  /** Catalog item id, or sentinel id for virtual keys. */
   itemId: string
+  prizeKind?: CratePrizeKind
+  keyId?: CrateVirtualKeyId
   override?: CratePrizeOverride
 }
 

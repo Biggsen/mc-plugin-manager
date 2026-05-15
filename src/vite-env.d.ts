@@ -88,6 +88,10 @@ interface ElectronAPI {
     selectedPrizeEntries?: import('./types').CratePrizeEntry[]
   }) => Promise<import('./types').CrateLibraryEntry>
   deleteCrateLibraryEntry: (id: string) => Promise<import('./types').CrateLibraryDeleteResult>
+  getVirtualCrateKeyValues: () => Promise<import('./types').VirtualCrateKeyValues>
+  setVirtualCrateKeyValues: (
+    values: import('./types').VirtualCrateKeyValues
+  ) => Promise<import('./types').VirtualCrateKeyValues>
   updateServerCrazyCrates: (
     serverId: string,
     payload: { libraryCrateIds: string[] }
