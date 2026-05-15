@@ -7,8 +7,10 @@ const sourceDir = path.join(__dirname, '..', 'reference', 'plugin config files',
 const targetDir = path.join(__dirname, '..', 'dist-electron', 'assets', 'templates')
 const dataSourceDir = path.join(__dirname, '..', 'reference', 'data')
 const dataTargetDir = path.join(__dirname, '..', 'dist-electron', 'assets', 'data')
-/** Single merged item catalog used by drop-table editor / builds (see electron/itemIndex.ts). */
+/** Bundled data files (see electron/itemIndex.ts, electron/enchantIndex.ts). */
 const ITEM_INDEX_JSON = 'all.json'
+const ENCHANT_DATA_JSON = 'enchantments-data.json'
+const BUNDLED_DATA_JSON = [ITEM_INDEX_JSON, ENCHANT_DATA_JSON]
 
 // Old monolithic ipc.js in dist-electron shadows ipc/index.js when main uses require('./ipc').
 const staleIpcJs = path.join(__dirname, '..', 'dist-electron', 'ipc.js')
@@ -23,9 +25,7 @@ const templates = [
   'commandwhitelist-config.yml',
   'conditionalevents-config.yml',
   'crazycrates-config.yml',
-  'crazycrates-crates-HeartCrate.yml',
-  'crazycrates-crates-RegionCrate.yml',
-  'crazycrates-crates-VillageCrate.yml',
+  'crazycrates-crate-base-template.yml',
   'discordsrv-config.yml',
   'discordsrv-messages.yml',
   'essentials-config.yml',
@@ -201,19 +201,21 @@ if (!fs.existsSync(dataTargetDir)) {
   fs.mkdirSync(dataTargetDir, { recursive: true })
 } else {
   for (const f of fs.readdirSync(dataTargetDir)) {
-    if (f.endsWith('.json') && f !== ITEM_INDEX_JSON) {
+    if (f.endsWith('.json') && !BUNDLED_DATA_JSON.includes(f)) {
       fs.unlinkSync(path.join(dataTargetDir, f))
     }
   }
 }
-const itemIndexSrc = path.join(dataSourceDir, ITEM_INDEX_JSON)
-const itemIndexDest = path.join(dataTargetDir, ITEM_INDEX_JSON)
-if (!fs.existsSync(itemIndexSrc)) {
-  console.error(`Error: Item index not found: ${itemIndexSrc}`)
-  process.exit(1)
+for (const dataFile of BUNDLED_DATA_JSON) {
+  const src = path.join(dataSourceDir, dataFile)
+  const dest = path.join(dataTargetDir, dataFile)
+  if (!fs.existsSync(src)) {
+    console.error(`Error: Data file not found: ${src}`)
+    process.exit(1)
+  }
+  fs.copyFileSync(src, dest)
+  console.log(`Copied data file: ${dataFile}`)
 }
-fs.copyFileSync(itemIndexSrc, itemIndexDest)
-console.log(`Copied data file: ${ITEM_INDEX_JSON}`)
 
 console.log(
   `Successfully copied ${copiedCount} text template(s) and ${binaryCopiedCount} binary file(s) to ${targetDir}`

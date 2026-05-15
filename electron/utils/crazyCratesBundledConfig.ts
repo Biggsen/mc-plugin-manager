@@ -6,21 +6,13 @@ const { existsSync } = require('fs')
 
 export const CRAZY_CRATES_MAIN_TEMPLATE = 'crazycrates-config.yml'
 
-/** Source filenames under assets/templates; written to CrazyCrates/crates/<basename>.yml when propagating. */
-export const CRAZY_CRATES_CRATE_TEMPLATES = [
-  'crazycrates-crates-HeartCrate.yml',
-  'crazycrates-crates-RegionCrate.yml',
-  'crazycrates-crates-VillageCrate.yml',
-] as const
+/** Crate body shell; library entries supply theme fields and Prizes at emit. */
+export const CRAZY_CRATES_CRATE_BASE_TEMPLATE = 'crazycrates-crate-base-template.yml'
 
-const PREFIX = 'crazycrates-crates-'
+/** Legacy fallback crate output stems when a server has no library assignments. */
+export const CRAZY_CRATES_BUNDLED_CRATE_STEMS = ['HeartCrate', 'RegionCrate', 'VillageCrate'] as const
 
-export function crazyCratesPropagatedCrateFilename(templateBasename: string): string {
-  if (!templateBasename.startsWith(PREFIX) || !templateBasename.endsWith('.yml')) {
-    throw new Error(`Unexpected CrazyCrates crate template name: ${templateBasename}`)
-  }
-  return templateBasename.slice(PREFIX.length)
-}
+export type CrazyCratesBundledCrateStem = (typeof CRAZY_CRATES_BUNDLED_CRATE_STEMS)[number]
 
 function bundledTemplatesDir(): string {
   const electron = require('electron')

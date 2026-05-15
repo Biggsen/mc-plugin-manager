@@ -32,6 +32,16 @@ export type {
   ItemIndexEntry,
   ResolvedDropTable,
   DropTableLibraryDeleteResult,
+  CrazyCratesBundledCrateStem,
+  CrazyCratesServerAssignment,
+  CrateLibraryEntry,
+  CrateLibraryDeleteResult,
+  CratePrizeKind,
+  CratePrizeEntry,
+  CratePrizeOverride,
+  CrateVirtualKeyId,
+  VirtualCrateKeyValues,
+  ResolvedCrazyCratesCrate,
 } from '@shared/types'
 
 export const PLUGIN_TYPES: import('@shared/types').PluginType[] = ['aa', 'ce', 'tab', 'lm', 'lmcd', 'mc', 'cw']

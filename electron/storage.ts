@@ -37,6 +37,26 @@ export async function initDataDirectory(): Promise<void> {
   }
 }
 
+function normalizeCrazyCratesOnProfile(profile: ServerProfile): void {
+  const cc = profile.crazyCrates as unknown
+  if (!cc || typeof cc !== 'object') {
+    profile.crazyCrates = { libraryCrateIds: [] }
+    return
+  }
+  if (
+    'libraryCrateIds' in cc &&
+    Array.isArray((cc as { libraryCrateIds: unknown }).libraryCrateIds)
+  ) {
+    profile.crazyCrates = {
+      libraryCrateIds: (cc as { libraryCrateIds: unknown[] }).libraryCrateIds.filter(
+        (x): x is string => typeof x === 'string'
+      ),
+    }
+    return
+  }
+  profile.crazyCrates = { libraryCrateIds: [] }
+}
+
 function normalizeDropTablesOnProfile(profile: ServerProfile): void {
   const dt = profile.dropTables as unknown
   if (!dt || typeof dt !== 'object') {
@@ -64,6 +84,7 @@ export function loadServerProfile(serverId: string): ServerProfile | null {
     const content = readFileSync(profilePath, 'utf-8')
     const profile = JSON.parse(content) as ServerProfile
     normalizeDropTablesOnProfile(profile)
+    normalizeCrazyCratesOnProfile(profile)
     return profile
   } catch (error) {
     console.error(`Failed to load server profile ${serverId}:`, error)

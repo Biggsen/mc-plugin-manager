@@ -19,6 +19,9 @@ import type {
   DropTableLibraryDeleteResult,
   DropTableItemOverride,
   DropTableSelectedEntry,
+  CrateLibraryEntry,
+  CrateLibraryDeleteResult,
+  CratePrizeEntry,
 } from './types'
 
 // Define the IPC API interface
@@ -62,6 +65,12 @@ export interface ElectronAPI {
     updates: { anchors?: string[]; description?: string }
   ) => Promise<ServerProfile | null>
   scanItemIndex: () => Promise<{ items: ItemIndexEntry[]; warnings: string[]; sourcePath: string }>
+  scanEnchantData: () => Promise<{
+    enchants: import('@shared/types').EnchantIndexEntry[]
+    items: Record<string, import('@shared/types').ItemEnchantMeta>
+    warnings: string[]
+    sourcePath: string
+  }>
   listDropTableLibrary: () => Promise<DropTableLibraryEntry[]>
   createDropTable: (input?: { name?: string; description?: string }) => Promise<DropTableLibraryEntry>
   updateDropTable: (input: {
@@ -77,7 +86,38 @@ export interface ElectronAPI {
     serverId: string,
     payload: { libraryTableIds: string[] }
   ) => Promise<ServerProfile | null>
-  
+  listCrateLibrary: () => Promise<CrateLibraryEntry[]>
+  createCrateLibraryEntry: (input?: {
+    name?: string
+    description?: string
+    outputStem?: string
+    accentTag?: string
+    crateSlot?: number
+    guiItem?: string
+    loreLine1?: string
+    loreLine2?: string
+    animationTitle?: string
+    selectedPrizeEntries?: CratePrizeEntry[]
+  }) => Promise<CrateLibraryEntry>
+  updateCrateLibraryEntry: (input: {
+    id: string
+    name?: string
+    description?: string
+    outputStem?: string
+    accentTag?: string
+    crateSlot?: number
+    guiItem?: string
+    loreLine1?: string
+    loreLine2?: string
+    animationTitle?: string
+    selectedPrizeEntries?: CratePrizeEntry[]
+  }) => Promise<CrateLibraryEntry>
+  deleteCrateLibraryEntry: (id: string) => Promise<CrateLibraryDeleteResult>
+  updateServerCrazyCrates: (
+    serverId: string,
+    payload: { libraryCrateIds: string[] }
+  ) => Promise<ServerProfile | null>
+
   // Build
   buildConfigs: (
     serverId: string,
@@ -166,6 +206,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   updateRegionLoreBook: (serverId: string, regionId: string, updates: { anchors?: string[]; description?: string }) =>
     ipcRenderer.invoke('update-region-lore-book', serverId, regionId, updates),
   scanItemIndex: () => ipcRenderer.invoke('scan-item-index'),
+  scanEnchantData: () => ipcRenderer.invoke('scan-enchant-data'),
   listDropTableLibrary: () => ipcRenderer.invoke('list-drop-table-library'),
   createDropTable: (input?: { name?: string; description?: string }) =>
     ipcRenderer.invoke('create-drop-table', input),
@@ -180,6 +221,38 @@ contextBridge.exposeInMainWorld('electronAPI', {
   deleteDropTable: (id: string) => ipcRenderer.invoke('delete-drop-table', id),
   updateServerDropTables: (serverId: string, payload: { libraryTableIds: string[] }) =>
     ipcRenderer.invoke('update-server-drop-tables', serverId, payload),
+  listCrateLibrary: () => ipcRenderer.invoke('list-crate-library'),
+  createCrateLibraryEntry: (input?: {
+    name?: string
+    description?: string
+    outputStem?: string
+    accentTag?: string
+    crateSlot?: number
+    guiItem?: string
+    loreLine1?: string
+    loreLine2?: string
+    animationTitle?: string
+    selectedPrizeEntries?: CratePrizeEntry[]
+  }) => ipcRenderer.invoke('create-crate-library-entry', input),
+  updateCrateLibraryEntry: (input: {
+    id: string
+    name?: string
+    description?: string
+    outputStem?: string
+    accentTag?: string
+    crateSlot?: number
+    guiItem?: string
+    loreLine1?: string
+    loreLine2?: string
+    animationTitle?: string
+    selectedPrizeEntries?: CratePrizeEntry[]
+  }) => ipcRenderer.invoke('update-crate-library-entry', input),
+  deleteCrateLibraryEntry: (id: string) => ipcRenderer.invoke('delete-crate-library-entry', id),
+  getVirtualCrateKeyValues: () => ipcRenderer.invoke('get-virtual-crate-key-values'),
+  setVirtualCrateKeyValues: (values: import('./types').VirtualCrateKeyValues) =>
+    ipcRenderer.invoke('set-virtual-crate-key-values', values),
+  updateServerCrazyCrates: (serverId: string, payload: { libraryCrateIds: string[] }) =>
+    ipcRenderer.invoke('update-server-crazy-crates', serverId, payload),
   buildConfigs: (
     serverId: string,
     inputs: {

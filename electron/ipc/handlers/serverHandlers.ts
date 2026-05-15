@@ -75,6 +75,7 @@ export function registerServerHandlers(): void {
         },
         build: {},
         dropTables: { libraryTableIds: [] },
+        crazyCrates: { libraryCrateIds: [] },
       }
 
       if (serverName != null) {
@@ -171,6 +172,24 @@ export function registerServerHandlers(): void {
       const ids = payload?.libraryTableIds ?? []
       profile.dropTables = {
         libraryTableIds: [...new Set(ids.filter((x) => typeof x === 'string'))],
+      }
+      saveServerProfile(profile)
+      return profile
+    }
+  )
+
+  ipcMain.handle(
+    'update-server-crazy-crates',
+    async (
+      _event: unknown,
+      serverId: string,
+      payload: { libraryCrateIds: string[] }
+    ): Promise<ServerProfile | null> => {
+      const profile = loadServerProfile(serverId)
+      if (!profile) return null
+      const ids = payload?.libraryCrateIds ?? []
+      profile.crazyCrates = {
+        libraryCrateIds: [...new Set(ids.filter((x) => typeof x === 'string'))],
       }
       saveServerProfile(profile)
       return profile
