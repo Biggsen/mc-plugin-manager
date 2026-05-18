@@ -128,6 +128,10 @@ function applyThemeToCrate(crate: Record<string, unknown>, t: ReturnType<typeof 
     preview.Name = `<${t.accentTag}>${t.crateName} Preview`
   }
   crate.Animation = { ...((crate.Animation as Record<string, unknown>) || {}), Name: t.animationTitle }
+  const physicalKey = crate.PhysicalKey as Record<string, unknown> | undefined
+  if (physicalKey && typeof physicalKey === 'object') {
+    physicalKey.Name = `<bold><${t.accentTag}>${t.crateName}</bold>`
+  }
 }
 
 /**

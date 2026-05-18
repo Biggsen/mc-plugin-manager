@@ -28,6 +28,19 @@ describe('classifyRegion', () => {
     expect(result.discover.recipeId).toBe('nether_heart')
   })
 
+  it('nerve_of_aurpeak -> nerve, on_enter, nerve (overworld)', () => {
+    const result = classifyRegion('nerve_of_aurpeak', {}, 'overworld', noOnboarding)
+    expect(result.kind).toBe('nerve')
+    expect(result.discover.method).toBe('on_enter')
+    expect(result.discover.recipeId).toBe('nerve')
+  })
+
+  it('nerve_of_x on nether is not classified as nerve', () => {
+    const result = classifyRegion('nerve_of_x', {}, 'nether', noOnboarding)
+    expect(result.kind).toBe('region')
+    expect(result.discover.recipeId).toBe('nether_region')
+  })
+
   it('first-join region cherrybrook -> region, first_join, region', () => {
     const onboarding = {
       startRegionId: 'cherrybrook',
@@ -143,6 +156,56 @@ regions:
         counter: 'ancient_cities_found',
       })
       expect(result.regions.map((r) => r.id)).toEqual(['good_poi'])
+    } finally {
+      unlinkSync(filePath)
+    }
+  })
+
+  it('imports kind nerve and derives recipeId nerve', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'regions-meta-'))
+    const filePath = join(dir, 'n.yml')
+    writeFileSync(
+      filePath,
+      `format: 1
+world: overworld
+regions:
+  - id: nerve_of_aurpeak
+    world: overworld
+    kind: nerve
+    discover:
+      method: on_enter
+`,
+      'utf-8'
+    )
+    try {
+      const result = importRegionsMeta(filePath, 'overworld')
+      const nerve = result.regions.find((r) => r.id === 'nerve_of_aurpeak')
+      expect(nerve?.kind).toBe('nerve')
+      expect(nerve?.discover.recipeId).toBe('nerve')
+    } finally {
+      unlinkSync(filePath)
+    }
+  })
+
+  it('skips nerve rows when file world is nether', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'regions-meta-'))
+    const filePath = join(dir, 'nn.yml')
+    writeFileSync(
+      filePath,
+      `format: 1
+world: nether
+regions:
+  - id: nerve_of_bad
+    world: nether
+    kind: nerve
+    discover:
+      method: on_enter
+`,
+      'utf-8'
+    )
+    try {
+      const result = importRegionsMeta(filePath, 'nether')
+      expect(result.regions.map((r) => r.id)).toEqual([])
     } finally {
       unlinkSync(filePath)
     }

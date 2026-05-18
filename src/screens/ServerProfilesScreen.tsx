@@ -21,6 +21,7 @@ import {
   IconMap2,
   IconBuildingCommunity,
   IconHeart,
+  IconBolt,
   IconHeartFilled,
   IconFlame,
   IconBuilding,
@@ -72,9 +73,10 @@ function totalRegionsStat(s: ServerSummaryWithStats): number {
   const r = s.regionCount ?? 0
   const v = s.villageCount ?? 0
   const h = s.heartCount ?? 0
+  const n = s.nerveCount ?? 0
   const nr = s.netherRegionCount ?? 0
   const nh = s.netherHeartCount ?? 0
-  return r + v + h + nr + nh
+  return r + v + h + n + nr + nh
 }
 
 function lastImportMs(s: ServerSummaryWithStats): number | null {
@@ -188,11 +190,12 @@ export function ServerProfilesScreen({
     const regions = filteredServers.reduce((a, s) => a + (s.regionCount ?? 0), 0)
     const villages = filteredServers.reduce((a, s) => a + (s.villageCount ?? 0), 0)
     const hearts = filteredServers.reduce((a, s) => a + (s.heartCount ?? 0), 0)
+    const nerves = filteredServers.reduce((a, s) => a + (s.nerveCount ?? 0), 0)
     const netherRegions = filteredServers.reduce((a, s) => a + (s.netherRegionCount ?? 0), 0)
     const netherHearts = filteredServers.reduce((a, s) => a + (s.netherHeartCount ?? 0), 0)
     const structures = filteredServers.reduce((a, s) => a + (s.structureCount ?? 0), 0)
-    const totalWorldData = regions + villages + hearts + netherRegions + netherHearts
-    return { n, regions, villages, hearts, netherRegions, netherHearts, structures, totalWorldData }
+    const totalWorldData = regions + villages + hearts + nerves + netherRegions + netherHearts
+    return { n, regions, villages, hearts, nerves, netherRegions, netherHearts, structures, totalWorldData }
   }, [filteredServers])
 
   function normalizeServer(s: Partial<ServerSummaryWithStats> & { id: string; name: string }): ServerSummaryWithStats {
@@ -202,6 +205,7 @@ export function ServerProfilesScreen({
       regionCount: typeof s.regionCount === 'number' ? s.regionCount : 0,
       villageCount: typeof s.villageCount === 'number' ? s.villageCount : 0,
       heartCount: typeof s.heartCount === 'number' ? s.heartCount : 0,
+      nerveCount: typeof s.nerveCount === 'number' ? s.nerveCount : 0,
       netherRegionCount: typeof s.netherRegionCount === 'number' ? s.netherRegionCount : 0,
       netherHeartCount: typeof s.netherHeartCount === 'number' ? s.netherHeartCount : 0,
       structureCount: typeof s.structureCount === 'number' ? s.structureCount : 0,
@@ -394,7 +398,8 @@ export function ServerProfilesScreen({
       {filteredServers.length > 0 && (
         <Text size="sm" c="dimmed">
           {summary.n} server{summary.n !== 1 ? 's' : ''} • {summary.regions} regions • {summary.villages} villages •{' '}
-          {summary.hearts} hearts • {summary.netherRegions} nether regions • {summary.netherHearts} nether hearts •{' '}
+          {summary.hearts} hearts • {summary.nerves} nerves • {summary.netherRegions} nether regions •{' '}
+          {summary.netherHearts} nether hearts •{' '}
           {summary.structures} structures • {summary.totalWorldData} total
         </Text>
       )}
@@ -427,6 +432,7 @@ const STAT_ICONS = [
   { key: 'regions', label: (n: number) => `${n} regions`, Icon: IconMap2 },
   { key: 'villages', label: (n: number) => `${n} villages`, Icon: IconBuildingCommunity },
   { key: 'hearts', label: (n: number) => `${n} hearts`, Icon: IconHeart },
+  { key: 'nerves', label: (n: number) => `${n} nerves`, Icon: IconBolt },
   { key: 'nether', label: (n: number) => `${n} nether regions`, Icon: IconFlame },
   { key: 'netherHearts', label: (n: number) => `${n} nether hearts`, Icon: IconHeartFilled },
   { key: 'structures', label: (n: number) => `${n} structures`, Icon: IconBuilding },
@@ -445,6 +451,7 @@ function ServerCard({
   const regionCount = server.regionCount ?? 0
   const villageCount = server.villageCount ?? 0
   const heartCount = server.heartCount ?? 0
+  const nerveCount = server.nerveCount ?? 0
   const netherRegionCount = server.netherRegionCount ?? 0
   const netherHeartCount = server.netherHeartCount ?? 0
   const structureCount = server.structureCount ?? 0
@@ -454,19 +461,19 @@ function ServerCard({
       })
     : 'Never'
 
-  const coreCounts = [regionCount, villageCount, heartCount, netherRegionCount, netherHeartCount]
+  const coreCounts = [regionCount, villageCount, heartCount, nerveCount, netherRegionCount, netherHeartCount]
   const totalRegions = coreCounts.reduce((a, b) => a + b, 0)
   const rowCounts = [...coreCounts, structureCount]
   const stats = [
-    ...STAT_ICONS.slice(0, 6).map((s, i) => ({
+    ...STAT_ICONS.slice(0, 7).map((s, i) => ({
       key: s.key,
       label: s.label(rowCounts[i]!),
       Icon: s.Icon,
     })),
     {
-      key: STAT_ICONS[6].key,
-      label: STAT_ICONS[6].label(totalRegions),
-      Icon: STAT_ICONS[6].Icon,
+      key: STAT_ICONS[7].key,
+      label: STAT_ICONS[7].label(totalRegions),
+      Icon: STAT_ICONS[7].Icon,
     },
   ]
 

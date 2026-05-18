@@ -53,6 +53,11 @@ const HEARTS_TEMPLATE: TierTemplate = {
   category: 'hearts_discovered',
 }
 
+const NERVES_TEMPLATE: TierTemplate = {
+  tiers: [1, 'half', 'all'],
+  category: 'nerves_discovered',
+}
+
 const NETHER_REGIONS_TEMPLATE: TierTemplate = {
   tiers: [1, 'half', 'all'],
   category: 'nether_regions_discovered',
@@ -354,9 +359,11 @@ function regionIdToSnakeCaseName(regionId: string): string {
 function getRegionName(regionId: string, kind: string): string {
   let name = regionId
   
-  // For hearts, extract the parent region name
   if (kind === 'heart' && regionId.startsWith('heart_of_')) {
     name = regionId.replace(/^heart_of_/, '')
+  }
+  if (kind === 'nerve' && regionId.startsWith('nerve_of_')) {
+    name = regionId.replace(/^nerve_of_/, '')
   }
   
   return snakeToTitleCase(name)
@@ -374,13 +381,10 @@ function getRegionName(regionId: string, kind: string): string {
 function generateCommandId(regionId: string): string {
   const parts = splitRegionIdWords(regionId)
 
-  // Check if this is a heart region (starts with "heart_of")
-  const isHeart = regionId.startsWith('heart_of_')
-  
-  // Convert each part
+  const capitalizeOfInId = regionId.startsWith('heart_of_') || regionId.startsWith('nerve_of_')
+
   const convertedParts = parts.map((part, index) => {
-    // For nether regions (not hearts), keep "of" lowercase in the middle
-    if (!isHeart && index > 0 && part.toLowerCase() === 'of') {
+    if (!capitalizeOfInId && index > 0 && part.toLowerCase() === 'of') {
       return 'of'
     }
     // Capitalize first letter, lowercase rest (this will capitalize "Of" in hearts)
@@ -457,6 +461,10 @@ export function generateAACommands(regions: RegionRecord[]): AACommandsSection {
       goal = `Discover the Heart of ${regionName}`
       message = `You discovered the Heart of ${regionName}`
       displayName = region.world === 'nether' ? 'Nether Heart Discovery' : 'Heart Discovery'
+    } else if (region.kind === 'nerve') {
+      goal = `Discover the Nerve of ${regionName}`
+      message = `You discovered the Nerve of ${regionName}`
+      displayName = 'Nerve Discovery'
     } else if (region.kind === 'village') {
       goal = `Discover ${regionName} Village`
       message = `You discovered the village of ${regionName}`
@@ -514,6 +522,7 @@ function countRegionsByKind(regions: RegionRecord[]): {
   villages: number
   regions: number
   hearts: number
+  nerves: number
   netherRegions: number
   netherHearts: number
 } {
@@ -525,6 +534,7 @@ function countRegionsByKind(regions: RegionRecord[]): {
     villages: overworldRegions.filter(r => r.kind === 'village').length,
     regions: overworldRegions.filter(r => r.kind === 'region').length,
     hearts: overworldRegions.filter(r => r.kind === 'heart').length,
+    nerves: overworldRegions.filter(r => r.kind === 'nerve').length,
     netherRegions: netherRegions.filter(r => r.kind === 'region').length,
     netherHearts: netherRegions.filter(r => r.kind === 'heart').length,
   }
@@ -595,7 +605,8 @@ function generateCustomCategory(
       entry.Message = entry.Message.replace(/\d+ villages/g, `${tierValue} villages`)
       entry.Message = entry.Message.replace(/\d+ regions/g, `${tierValue} regions`)
       entry.Message = entry.Message.replace(/\d+ Hearts/g, `${tierValue} Hearts`)
-      
+      entry.Message = entry.Message.replace(/\d+ Nerves/g, `${tierValue} Nerves`)
+
       // For 'all' tier, ensure message says "all"
       if (isAllTier && !entry.Message.includes('all')) {
         if (categoryName === 'villages_discovered') {
@@ -604,9 +615,11 @@ function generateCustomCategory(
           entry.Message = 'You discovered all the regions!'
         } else if (categoryName === 'hearts_discovered') {
           entry.Message = 'You discovered all the Hearts of regions!'
+        } else if (categoryName === 'nerves_discovered') {
+          entry.Message = 'You discovered all the Nerves of regions!'
         }
       }
-      
+
       // For 'half' tier, ensure message says "half"
       if (isHalfTier && !entry.Message.includes('half')) {
         if (categoryName === 'villages_discovered') {
@@ -615,6 +628,8 @@ function generateCustomCategory(
           entry.Message = 'You discovered half of all the regions!'
         } else if (categoryName === 'hearts_discovered') {
           entry.Message = 'You discovered half of all the Hearts of regions!'
+        } else if (categoryName === 'nerves_discovered') {
+          entry.Message = 'You discovered half of all the Nerves of regions!'
         } else if (categoryName === 'nether_regions_discovered') {
           entry.Message = oddCeilHalf
             ? 'You discovered more than half of all Nether regions!'
@@ -981,6 +996,19 @@ export function generateAACustom(
         HEARTS_TEMPLATE,
         counts.hearts,
         'hearts_discovered'
+      )
+    }
+  }
+
+  if (counts.nerves > 0 && templateCustom.nerves_discovered) {
+    const tiers = calculateTiers(NERVES_TEMPLATE, counts.nerves)
+    if (tiers.length > 0) {
+      result.nerves_discovered = generateCustomCategory(
+        templateCustom.nerves_discovered,
+        tiers,
+        NERVES_TEMPLATE,
+        counts.nerves,
+        'nerves_discovered'
       )
     }
   }

@@ -79,6 +79,34 @@ describe('generateCommandId', () => {
   it('capitalizes "Of" in heart ids', () => {
     expect(generateCommandId('heart_of_cherry-brook')).toBe('discoverHeartOfCherryBrook')
   })
+
+  it('capitalizes "Of" in nerve ids', () => {
+    expect(generateCommandId('nerve_of_aurpeak')).toBe('discoverNerveOfAurpeak')
+  })
+})
+
+describe('generateAACustom nerves_discovered', () => {
+  it('generates nerves_discovered tiers from overworld nerve count', () => {
+    const regions: RegionRecord[] = [
+      { world: 'overworld', id: 'nerve_of_a', kind: 'nerve', discover: { method: 'on_enter', recipeId: 'nerve' } },
+      { world: 'overworld', id: 'nerve_of_b', kind: 'nerve', discover: { method: 'on_enter', recipeId: 'nerve' } },
+      { world: 'overworld', id: 'nerve_of_c', kind: 'nerve', discover: { method: 'on_enter', recipeId: 'nerve' } },
+    ]
+    const template = {
+      Custom: {
+        nerves_discovered: {
+          1: { Message: 'One Nerve', Name: 'nerves_discovered_1', DisplayName: 'A', Type: 'normal' },
+          15: { Message: 'Half Nerves', Name: 'nerves_discovered_15', DisplayName: 'B', Type: 'normal' },
+          30: { Message: 'All Nerves', Name: 'nerves_discovered_30', DisplayName: 'C', Type: 'rare' },
+        },
+      },
+    }
+    const custom = generateAACustom(regions, template)
+    // half tier is floor(3/2)=1, same as first tier — deduped like hearts at low counts
+    expect(Object.keys(custom.nerves_discovered ?? {}).map(Number).sort((a, b) => a - b)).toEqual([1, 3])
+    expect(custom.nerves_discovered?.[3]?.Message).toBe('You discovered all the Nerves of regions!')
+    expect(custom.nerves_discovered?.[3]?.Name).toBe('nerves_discovered_3')
+  })
 })
 
 describe('generateAACommands hyphenated ids', () => {

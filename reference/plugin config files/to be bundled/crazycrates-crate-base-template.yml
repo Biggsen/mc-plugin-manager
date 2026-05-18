@@ -15,7 +15,7 @@
 #   {{ANIMATION_TITLE}}  Animation.Name (plain text shown during CSGO open).
 #
 # Fixed in this file: RequiredKeys 0, StartingKeys 0, Preview.ChestLines 3, BroadCast pattern,
-# generic PhysicalKey + Hologram (unused / neutral). Prizes: merge or append separately at build.
+# Hologram (unused / neutral). PhysicalKey.Name uses {{CRATE_NAME}} at emit. Prizes: merge or append at build.
 
 Crate:
   # https://docs.crazycrew.us/docs/plugins/crazycrates/misc/crate-types
@@ -97,7 +97,7 @@ Crate:
   Animation:
     Name: "{{ANIMATION_TITLE}}"
   PhysicalKey:
-    Name: "<gray>Crate Key</gray>"
+    Name: '<bold><{{ACCENT_TAG}}>{{CRATE_NAME}}</bold>'
     Lore:
       - "<gray>Key for this crate.</gray>"
     Item: "tripwire_hook"

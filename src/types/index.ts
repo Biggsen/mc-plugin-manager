@@ -6,13 +6,14 @@ export type PluginType = 'aa' | 'ce' | 'tab' | 'lm' | 'lmcd' | 'mc' | 'cw'
 
 export const PLUGIN_TYPES: PluginType[] = ['aa', 'ce', 'tab', 'lm', 'lmcd', 'mc', 'cw']
 
-export type RegionKind = 'system' | 'region' | 'village' | 'heart' | 'structure' | 'water'
+export type RegionKind = 'system' | 'region' | 'village' | 'heart' | 'nerve' | 'structure' | 'water'
 
 export type DiscoverMethod = 'disabled' | 'on_enter' | 'first_join' | 'passive'
 
 export type RewardRecipeId =
   | 'region'
   | 'heart'
+  | 'nerve'
   | 'nether_region'
   | 'nether_heart'
   | 'end_region'
@@ -170,6 +171,7 @@ export interface ServerSummaryWithStats {
   regionCount: number
   villageCount: number
   heartCount: number
+  nerveCount: number
   netherRegionCount: number
   netherHeartCount: number
   structureCount: number
@@ -223,6 +225,7 @@ export interface BuildReport {
   computedCounts?: {
     overworldRegions: number
     overworldHearts: number
+    overworldNerves: number
     netherRegions: number
     netherHearts: number
     villages: number

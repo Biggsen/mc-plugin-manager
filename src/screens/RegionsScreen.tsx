@@ -13,6 +13,7 @@ import {
   IconMapPin,
   IconBuildingCommunity,
   IconHeart,
+  IconBolt,
   IconSettings,
   IconLeaf,
   IconList,
@@ -32,6 +33,7 @@ type RegionGroupKey =
   | 'regions'
   | 'villages'
   | 'hearts'
+  | 'nerves'
   | 'structures'
   | 'water'
   | 'nether_regions'
@@ -44,6 +46,7 @@ const REGION_GROUPS: { key: RegionGroupKey; label: string; icon: React.ReactNode
   { key: 'regions', label: 'Regions', icon: <IconMapPin size={18} /> },
   { key: 'villages', label: 'Villages', icon: <IconBuildingCommunity size={18} /> },
   { key: 'hearts', label: 'Hearts', icon: <IconHeart size={18} /> },
+  { key: 'nerves', label: 'Nerves', icon: <IconBolt size={18} /> },
   { key: 'structures', label: 'Structures', icon: <IconBuilding size={18} /> },
   { key: 'water', label: 'Water', icon: <IconDroplet size={18} /> },
   { key: 'nether_regions', label: 'Nether Regions', icon: <IconMapPin size={18} /> },
@@ -66,6 +69,7 @@ function getRegionGroup(region: RegionRecord): RegionGroupKey | null {
   if (region.world === 'overworld') {
     if (region.kind === 'village') return 'villages'
     if (region.kind === 'heart') return 'hearts'
+    if (region.kind === 'nerve') return 'nerves'
     if (region.kind === 'region') return 'regions'
   }
   return null
@@ -79,6 +83,8 @@ function kindIcon(kind: RegionRecord['kind']) {
       return <IconBuildingCommunity size={16} />
     case 'heart':
       return <IconHeart size={16} />
+    case 'nerve':
+      return <IconBolt size={16} />
     case 'structure':
       return <IconBuilding size={16} />
     case 'water':
@@ -96,6 +102,8 @@ function kindColor(kind: RegionRecord['kind']): string {
       return 'teal'
     case 'heart':
       return 'red'
+    case 'nerve':
+      return 'violet'
     case 'structure':
       return 'orange'
     case 'water':

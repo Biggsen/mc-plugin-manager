@@ -13,13 +13,23 @@ import type { RegionRecord, OnboardingConfig } from './types'
 
 function region(
   id: string,
-  kind: 'system' | 'region' | 'village' | 'heart',
+  kind: 'system' | 'region' | 'village' | 'heart' | 'nerve',
   world: 'overworld' | 'nether' = 'overworld',
   method: 'disabled' | 'on_enter' | 'first_join' = 'on_enter',
   overrides: Partial<RegionRecord> = {}
 ): RegionRecord {
   const recipeId =
-    kind === 'village' ? 'region' : kind === 'heart' ? (world === 'nether' ? 'nether_heart' : 'heart') : world === 'nether' ? 'nether_region' : 'region'
+    kind === 'village'
+      ? 'region'
+      : kind === 'heart'
+        ? world === 'nether'
+          ? 'nether_heart'
+          : 'heart'
+        : kind === 'nerve'
+          ? 'nerve'
+          : world === 'nether'
+            ? 'nether_region'
+            : 'region'
   return {
     world,
     id,
@@ -68,7 +78,7 @@ describe('getStartRegionAachId', () => {
 })
 
 describe('generateOwnedCEEvents', () => {
-  it('includes first_join, join_log, leave_log, region_heart_discover_once', () => {
+  it('includes first_join, join_log, leave_log, region heart and nerve lodestone tips', () => {
     const regions: RegionRecord[] = [region('cherrybrook', 'region', 'overworld', 'first_join')]
     const events = generateOwnedCEEvents(regions, onboarding)
     expect(events.first_join).toBeDefined()
@@ -80,6 +90,17 @@ describe('generateOwnedCEEvents', () => {
     expect(events.leave_log?.type).toBe('player_leave')
     expect(events.region_heart_discover_once).toBeDefined()
     expect(events.region_heart_discover_once?.type).toBe('wgevents_region_enter')
+    expect(events.region_nerve_discover_once).toBeDefined()
+    expect(events.region_nerve_discover_once?.conditions).toEqual(['%region% startsWith nerve'])
+  })
+
+  it('discover_once for nerve uses NerveCrate and nerves_discovered counter', () => {
+    const regions: RegionRecord[] = [region('nerve_of_aurpeak', 'nerve', 'overworld', 'on_enter')]
+    const events = generateOwnedCEEvents(regions, onboarding)
+    const actions = events['nerve_of_aurpeak_discover_once']!.actions!.default as string[]
+    expect(actions.some((a) => a.includes('NerveCrate'))).toBe(true)
+    expect(actions.some((a) => a.includes('nerves_discovered'))).toBe(true)
+    expect(actions.some((a) => a.includes('entity=nerve'))).toBe(true)
   })
 
   it('adds discover_once event per on_enter region excluding start region', () => {
@@ -193,6 +214,7 @@ describe('partitionOwnedCEEventsForFragments', () => {
     expect(parts['server-core'].join_log).toBeDefined()
     expect(parts['server-core'].leave_log).toBeDefined()
     expect(parts['overworld-regions'].region_heart_discover_once).toBeDefined()
+    expect(parts['overworld-regions'].region_nerve_discover_once).toBeDefined()
   })
 
   it('splits discover_once by kind and world', () => {
@@ -201,6 +223,7 @@ describe('partitionOwnedCEEventsForFragments', () => {
       region('v1', 'village', 'overworld', 'on_enter'),
       region('h1', 'heart', 'overworld', 'on_enter'),
       region('h2', 'heart', 'nether', 'on_enter'),
+      region('n1', 'nerve', 'overworld', 'on_enter'),
       region('r1', 'region', 'overworld', 'on_enter'),
       region('r2', 'region', 'nether', 'on_enter'),
     ]
@@ -208,6 +231,7 @@ describe('partitionOwnedCEEventsForFragments', () => {
     const parts = partitionOwnedCEEventsForFragments(owned, regions)
     expect(parts['overworld-villages'].v1_discover_once).toBeDefined()
     expect(parts['overworld-hearts'].h1_discover_once).toBeDefined()
+    expect(parts['overworld-nerves'].n1_discover_once).toBeDefined()
     expect(parts['nether-hearts'].h2_discover_once).toBeDefined()
     expect(parts['overworld-regions'].r1_discover_once).toBeDefined()
     expect(parts['nether-regions'].r2_discover_once).toBeDefined()

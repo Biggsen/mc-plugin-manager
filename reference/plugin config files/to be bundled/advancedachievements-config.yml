@@ -2094,6 +2094,44 @@ Custom:
         Command:
           Execute:
             - ce call get_book_mending player:PLAYER
+  nerves_discovered:
+    1:
+      Message: You discovered a Nerve of a region!
+      Name: nerves_discovered_1
+      DisplayName: Nerve Wanderer
+      Type: normal
+      Reward:
+        Experience: 100
+        Item:
+          - diamond 4
+          - netherite_scrap 1
+          - compass 1
+    15:
+      Message: You discovered half of all the Nerves of regions!
+      Name: nerves_discovered_15
+      DisplayName: Nerve Trailblazer
+      Type: rare
+      Reward:
+        Experience: 200
+        Item:
+          - diamond 16
+          - netherite_sword 1
+          - red_shulker_box 1
+          - compass 1
+    30:
+      Message: You discovered all the Nerves of regions!
+      Name: nerves_discovered_30
+      DisplayName: Nerve Legend
+      Type: rare
+      Reward:
+        Experience: 500
+        Item:
+          - diamond 64
+          - netherite_chestplate 1
+          - red_shulker_box 2
+        Command:
+          Execute:
+            - ce call get_book_mending player:PLAYER
   total_discovered: {}
   structures_found:
     10:

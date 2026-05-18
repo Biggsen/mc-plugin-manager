@@ -3,12 +3,24 @@ import { computeRegionCounts, computeRegionStats } from './regionStats'
 import type { RegionRecord } from '../types'
 
 function region(
-  kind: 'system' | 'region' | 'village' | 'heart',
+  kind: 'system' | 'region' | 'village' | 'heart' | 'nerve',
   world: 'overworld' | 'nether' = 'overworld',
   method: 'disabled' | 'on_enter' | 'first_join' = 'on_enter'
 ): RegionRecord {
   const recipeId =
-    kind === 'village' ? 'region' : kind === 'heart' ? (world === 'nether' ? 'nether_heart' : 'heart') : kind === 'region' ? (world === 'nether' ? 'nether_region' : 'region') : 'none'
+    kind === 'village'
+      ? 'region'
+      : kind === 'heart'
+        ? world === 'nether'
+          ? 'nether_heart'
+          : 'heart'
+        : kind === 'nerve'
+          ? 'nerve'
+          : kind === 'region'
+            ? world === 'nether'
+              ? 'nether_region'
+              : 'region'
+            : 'none'
   return {
     world,
     id: 'test',
@@ -22,6 +34,7 @@ describe('computeRegionCounts', () => {
     expect(computeRegionCounts([])).toEqual({
       overworldRegions: 0,
       overworldHearts: 0,
+      overworldNerves: 0,
       netherRegions: 0,
       netherHearts: 0,
       villages: 0,
@@ -54,6 +67,16 @@ describe('computeRegionCounts', () => {
     expect(counts.total).toBe(6)
   })
 
+  it('counts overworld nerves toward total', () => {
+    const regions: RegionRecord[] = [
+      { world: 'overworld', id: 'nerve_of_a', kind: 'nerve', discover: { method: 'on_enter', recipeId: 'nerve' } },
+      region('region'),
+    ]
+    const counts = computeRegionCounts(regions)
+    expect(counts.overworldNerves).toBe(1)
+    expect(counts.total).toBe(2)
+  })
+
   it('excludes passive and water from TAB exploration total', () => {
     const water: RegionRecord = {
       world: 'overworld',
@@ -79,6 +102,7 @@ describe('computeRegionStats', () => {
       overworld: 0,
       nether: 0,
       hearts: 0,
+      nerves: 0,
       villages: 0,
       regions: 0,
       system: 0,

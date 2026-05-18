@@ -27,6 +27,7 @@ export function registerServerHandlers(): void {
       const regionCount = regions.filter((r) => r.world === 'overworld' && r.kind === 'region').length
       const villageCount = regions.filter((r) => r.world === 'overworld' && r.kind === 'village').length
       const heartCount = regions.filter((r) => r.world === 'overworld' && r.kind === 'heart').length
+      const nerveCount = regions.filter((r) => r.world === 'overworld' && r.kind === 'nerve').length
       const netherRegionCount = regions.filter((r) => r.world === 'nether' && r.kind === 'region').length
       const netherHeartCount = regions.filter((r) => r.world === 'nether' && r.kind === 'heart').length
       const structureCount = regions.filter((r) => r.kind === 'structure').length
@@ -44,6 +45,7 @@ export function registerServerHandlers(): void {
         regionCount,
         villageCount,
         heartCount,
+        nerveCount,
         netherRegionCount,
         netherHeartCount,
         structureCount,

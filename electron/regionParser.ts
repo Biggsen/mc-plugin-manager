@@ -170,8 +170,21 @@ export function classifyRegion(
       },
     }
   }
+
+  // 3. Nerves (overworld only)
+  if (canonicalId.startsWith('nerve_of_') && world === 'overworld') {
+    return {
+      world,
+      id: canonicalId,
+      kind: 'nerve',
+      discover: {
+        method: 'on_enter',
+        recipeId: 'nerve',
+      },
+    }
+  }
   
-  // 3. First-join region
+  // 4. First-join region
   const isFirstJoin = onboarding.startRegionId && canonicalId === canonicalizeId(onboarding.startRegionId)
   if (isFirstJoin) {
     return {
@@ -185,7 +198,7 @@ export function classifyRegion(
     }
   }
   
-  // 4. Regular regions (check for village)
+  // 5. Regular regions (check for village)
   const greeting = regionData.flags?.greeting || ''
   const isVillage = greeting.toLowerCase().includes('village')
   
@@ -306,6 +319,8 @@ function deriveRecipeIdFromKindWorld(kind: RegionKind, world: 'overworld' | 'net
       if (world === 'nether') return 'nether_heart'
       if (world === 'end') return 'end_heart'
       return 'heart'
+    case 'nerve':
+      return 'nerve'
     case 'region':
       if (world === 'nether') return 'nether_region'
       if (world === 'end') return 'end_region'
@@ -338,6 +353,7 @@ function validateRecipeId(
     'nether_region',
     'end_region',
     'heart',
+    'nerve',
     'nether_heart',
     'end_heart',
     'village',
@@ -411,6 +427,7 @@ export function importRegionsMeta(
     'region',
     'village',
     'heart',
+    'nerve',
     'structure',
     'water',
   ]
@@ -469,6 +486,13 @@ export function importRegionsMeta(
 
     if (discoverMethod === 'passive' && region.kind !== 'water') {
       console.warn(`Region ${region.id}: discover.method passive is intended for kind: water`)
+    }
+
+    if (region.kind === 'nerve' && mappedWorld !== 'overworld') {
+      console.warn(
+        `Skipping region ${region.id}: kind nerve is only valid when file world is overworld`
+      )
+      continue
     }
 
     // Validate region.world matches root world (warn if not)

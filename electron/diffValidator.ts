@@ -11,6 +11,7 @@ const { readFileSync } = require('fs')
  * - Custom.villages_discovered
  * - Custom.regions_discovered
  * - Custom.hearts_discovered
+ * - Custom.nerves_discovered
  * - Custom.nether_regions_discovered
  * - Custom.nether_hearts_discovered
  * - Custom.structures_found (rollup; also matched by *_found strip below)
@@ -28,6 +29,7 @@ function removeOwnedAASections(config: Record<string, unknown>): Record<string, 
     delete custom.villages_discovered
     delete custom.regions_discovered
     delete custom.hearts_discovered
+    delete custom.nerves_discovered
     delete custom.nether_regions_discovered
     delete custom.nether_hearts_discovered
     delete custom.total_discovered
@@ -51,6 +53,7 @@ function removeOwnedCESections(config: Record<string, unknown>): Record<string, 
       // Owned events:
       // - *_discover_once
       // - region_heart_discover_once
+      // - region_nerve_discover_once
       // - first_join
       // - join_log
       // - leave_log
@@ -61,6 +64,7 @@ function removeOwnedCESections(config: Record<string, unknown>): Record<string, 
       const isOwned =
         key.endsWith('_discover_once') ||
         key === 'region_heart_discover_once' ||
+        key === 'region_nerve_discover_once' ||
         key === 'first_join' ||
         key === 'join_log' ||
         key === 'leave_log'

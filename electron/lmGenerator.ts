@@ -72,7 +72,7 @@ export function generateOwnedLMRules(
   const regionBands = levelledMobs?.regionBands ?? {}
 
   const bandRegions = regions.filter(
-    (r) => r.kind === 'region' || r.kind === 'heart' || r.kind === 'water'
+    (r) => r.kind === 'region' || r.kind === 'heart' || r.kind === 'nerve' || r.kind === 'water'
   )
   for (const region of bandRegions) {
     const difficultyRaw = regionBands[region.id] ?? defaultDifficulty

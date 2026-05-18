@@ -28,6 +28,7 @@ export interface RegionDisplayStats {
   overworldRegions: number
   overworldVillages: number
   overworldHearts: number
+  overworldNerves: number
   overworldWater: number
   overworldStructures: number
   structureTypesOverworld: StructureTypeCount[]
@@ -45,6 +46,7 @@ export function computeRegionDisplayStats(regions: RegionRecord[]): RegionDispla
   const overworldRegions = regions.filter((r) => r.world === 'overworld' && r.kind === 'region').length
   const overworldVillages = regions.filter((r) => r.world === 'overworld' && r.kind === 'village').length
   const overworldHearts = regions.filter((r) => r.world === 'overworld' && r.kind === 'heart').length
+  const overworldNerves = regions.filter((r) => r.world === 'overworld' && r.kind === 'nerve').length
   const overworldWater = regions.filter((r) => r.world === 'overworld' && r.kind === 'water').length
   const overworldStructures = regions.filter((r) => r.world === 'overworld' && r.kind === 'structure').length
   const netherRegions = regions.filter((r) => r.world === 'nether' && r.kind === 'region').length
@@ -56,6 +58,7 @@ export function computeRegionDisplayStats(regions: RegionRecord[]): RegionDispla
     overworldRegions,
     overworldVillages,
     overworldHearts,
+    overworldNerves,
     overworldWater,
     overworldStructures,
     structureTypesOverworld: structureTypeBreakdown(regions, 'overworld'),
