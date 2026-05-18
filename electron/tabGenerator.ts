@@ -172,7 +172,9 @@ function generateRegionNameDifficultyConditions(
  * Placeholder line for "Current" region when difficulty conditions are used (concatenation).
  */
 const REGION_CURRENT_LINE_WITH_DIFFICULTY =
-  '&eCurrent&7:||%condition:region-name-easy%%condition:region-name-normal%%condition:region-name-hard%%condition:region-name-severe%%condition:region-name-deadly%'
+  '&eRegion&7:||%condition:region-name-easy%%condition:region-name-normal%%condition:region-name-hard%%condition:region-name-severe%%condition:region-name-deadly%'
+
+const VILLAGE_CURRENT_LINE = '&eVillage&7:||%condition:village-name%'
 
 /**
  * Generate header section with server name
@@ -217,28 +219,25 @@ function generateOverworldScoreboard(
 ): any {
   const currentRegionLine = useDifficultyColour
     ? REGION_CURRENT_LINE_WITH_DIFFICULTY
-    : '&eCurrent&7:||%condition:region-name%'
+    : '&eRegion&7:||%condition:region-name%'
   const overworldDiscoveryTotal =
-    counts.overworldRegions + counts.villages + counts.overworldHearts
+    counts.overworldRegions + counts.villages + counts.overworldHearts + counts.overworldNerves
   const overworldTotalLine =
     overworldDiscoveryTotal > 0
-      ? `&eOverworld Total&7:||%math_0_round(({aach_custom_regions_discovered}+{aach_custom_villages_discovered}+{aach_custom_hearts_discovered})/${overworldDiscoveryTotal}*100,0)%%`
+      ? `&eOverworld Total&7:||%math_0_round(({aach_custom_regions_discovered}+{aach_custom_villages_discovered}+{aach_custom_hearts_discovered}+{aach_custom_nerves_discovered})/${overworldDiscoveryTotal}*100,0)%%`
       : null
   return {
     title: `<#E0B11E>${serverName}</#FF0000>`,
     'display-condition': '%player-version-id%>=765;%bedrock%=false;%world%=world',
     lines: [
       '%animation:MyAnimation1%',
-      '&bRegions',
       currentRegionLine,
-      `&eDiscovered&7:||%aach_custom_regions_discovered%/${counts.overworldRegions}`,
+      VILLAGE_CURRENT_LINE,
       '',
-      '&bVillages',
-      '&eCurrent&7:||%condition:village-name%',
-      `&eDiscovered&7:||%aach_custom_villages_discovered%/${counts.villages}`,
-      '',
-      '&bRegion Hearts',
-      `&eDiscovered&7:||%aach_custom_hearts_discovered%/${counts.overworldHearts}`,
+      `&eRegions&7:||%aach_custom_regions_discovered%/${counts.overworldRegions}`,
+      `&eVillages&7:||%aach_custom_villages_discovered%/${counts.villages}`,
+      `&eHearts&7:||%aach_custom_hearts_discovered%/${counts.overworldHearts}`,
+      `&eNerves&7:||%aach_custom_nerves_discovered%/${counts.overworldNerves}`,
       ...(overworldTotalLine ? ['', overworldTotalLine] : []),
       '%animation:MyAnimation1%',
       '&2🧭 %player_direction%||&7%player_x% %player_y% %player_z%',

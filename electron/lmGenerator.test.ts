@@ -5,7 +5,7 @@ import type { RegionRecord } from './types'
 
 function region(
   id: string,
-  kind: 'region' | 'village' | 'heart' | 'water',
+  kind: 'region' | 'village' | 'heart' | 'nerve' | 'water',
   world: 'overworld' | 'nether' | 'end' = 'overworld'
 ): RegionRecord {
   const recipeId =
@@ -15,6 +15,8 @@ function region(
         ? world === 'nether'
           ? 'nether_heart'
           : 'heart'
+        : kind === 'nerve'
+          ? 'nerve'
         : kind === 'water'
           ? 'none'
           : world === 'nether'
@@ -56,19 +58,22 @@ describe('generateOwnedLMRules', () => {
     expect(result.villagesRule!['custom-rule']).toContain('Hard')
   })
 
-  it('region and heart create region-band rules with overworld world name', () => {
+  it('region, heart, and nerve create region-band rules with overworld world name', () => {
     const regions: RegionRecord[] = [
       region('desert_ruins', 'region'),
       region('heart_of_monkvos', 'heart'),
+      region('nerve_of_monkvos', 'nerve'),
     ]
     const result = generateOwnedLMRules(regions)
     expect(result.villagesRule).toBeUndefined()
-    expect(result.regionBandRules).toHaveLength(2)
+    expect(result.regionBandRules).toHaveLength(3)
     const desert = result.regionBandRules.find((r) => r.conditions['worldguard-regions'] === 'desert_ruins')
     const heart = result.regionBandRules.find((r) => r.conditions['worldguard-regions'] === 'heart_of_monkvos')
+    const nerve = result.regionBandRules.find((r) => r.conditions['worldguard-regions'] === 'nerve_of_monkvos')
     expect(desert?.conditions.worlds).toBe('world')
     expect(desert?.['use-preset']).toBe('lvlstrategy-normal')
     expect(heart).toBeDefined()
+    expect(nerve).toBeDefined()
   })
 
   it('nether region has world_nether', () => {

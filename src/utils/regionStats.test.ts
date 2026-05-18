@@ -6,11 +6,13 @@ function region(kind: RegionRecord['kind'], world: RegionRecord['world']): Regio
   const recipeId =
     kind === 'village'
       ? 'village'
-      : kind === 'heart'
-        ? world === 'nether'
-          ? 'nether_heart'
-          : 'heart'
-        : kind === 'region'
+        : kind === 'heart'
+          ? world === 'nether'
+            ? 'nether_heart'
+            : 'heart'
+          : kind === 'nerve'
+            ? 'nerve'
+            : kind === 'region'
           ? world === 'nether'
             ? 'nether_region'
             : 'region'
@@ -31,6 +33,7 @@ describe('computeRegionDisplayStats', () => {
       overworldRegions: 0,
       overworldVillages: 0,
       overworldHearts: 0,
+      overworldNerves: 0,
       overworldWater: 0,
       overworldStructures: 0,
       structureTypesOverworld: [],
@@ -49,6 +52,7 @@ describe('computeRegionDisplayStats', () => {
       region('region', 'overworld'),
       region('village', 'overworld'),
       region('heart', 'overworld'),
+      region('nerve', 'overworld'),
       region('region', 'nether'),
       region('heart', 'nether'),
       region('system', 'overworld'),
@@ -57,9 +61,10 @@ describe('computeRegionDisplayStats', () => {
     expect(stats.overworldRegions).toBe(1)
     expect(stats.overworldVillages).toBe(1)
     expect(stats.overworldHearts).toBe(1)
+    expect(stats.overworldNerves).toBe(1)
     expect(stats.netherRegions).toBe(1)
     expect(stats.netherHearts).toBe(1)
-    expect(stats.totalRegions).toBe(5)
+    expect(stats.totalRegions).toBe(6)
     expect(stats.overworldStructures).toBe(0)
     expect(stats.netherStructures).toBe(0)
     expect(stats.totalStructures).toBe(0)

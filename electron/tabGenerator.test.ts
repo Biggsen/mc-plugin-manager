@@ -36,6 +36,7 @@ describe('computeRegionCounts', () => {
     expect(counts).toEqual({
       overworldRegions: 0,
       overworldHearts: 0,
+      overworldNerves: 0,
       netherRegions: 0,
       netherHearts: 0,
       villages: 0,
@@ -76,16 +77,30 @@ describe('computeRegionCounts', () => {
 })
 
 describe('scoreboard discovery totals', () => {
-  it('adds Overworld Total math line with sum of region, village, and heart counts', () => {
+  it('adds Overworld Total math line with sum of region, village, heart, and nerve counts', () => {
     const regions = [
       region('region'),
       region('region'),
       region('village'),
       region('heart'),
+      {
+        world: 'overworld' as const,
+        id: 'nerve_of_a',
+        kind: 'nerve' as const,
+        discover: { method: 'on_enter' as const, recipeId: 'nerve' as const },
+      },
     ]
     const owned = generateOwnedTABSections(regions, 'Srv')
     const lines = owned.scoreboards['main-overworld'].lines as string[]
-    expect(lines.some((l) => l.includes('Overworld Total') && l.includes('/4*100'))).toBe(true)
+    expect(lines.some((l) => l.includes('Overworld Total') && l.includes('/5*100'))).toBe(true)
+    expect(lines.some((l) => l.includes('Nerves&7:') && l.includes('/1'))).toBe(true)
+    expect(lines.some((l) => l.includes('Region&7:'))).toBe(true)
+    expect(lines.some((l) => l.includes('Village&7:'))).toBe(true)
+    const villageIdx = lines.findIndex((l) => l.includes('Village&7:'))
+    const regionsIdx = lines.findIndex((l) => l.includes('Regions&7:') && l.includes('aach_custom_regions_discovered'))
+    expect(villageIdx).toBeGreaterThanOrEqual(0)
+    expect(regionsIdx).toBe(villageIdx + 2)
+    expect(lines[villageIdx + 1]).toBe('')
   })
 
   it('adds Nether Total math line with sum of nether region and heart counts', () => {

@@ -6,6 +6,7 @@ import type { RegionRecord } from '../types'
 export interface RegionCounts {
   overworldRegions: number
   overworldHearts: number
+  overworldNerves: number
   netherRegions: number
   netherHearts: number
   villages: number
@@ -16,6 +17,7 @@ export interface BuildReportRegionCounts {
   overworld: number
   nether: number
   hearts: number
+  nerves: number
   villages: number
   regions: number
   system: number
@@ -31,6 +33,7 @@ export function computeRegionCounts(regions: RegionRecord[]): RegionCounts {
   const counts: RegionCounts = {
     overworldRegions: 0,
     overworldHearts: 0,
+    overworldNerves: 0,
     netherRegions: 0,
     netherHearts: 0,
     villages: 0,
@@ -48,6 +51,8 @@ export function computeRegionCounts(regions: RegionRecord[]): RegionCounts {
     } else if (region.kind === 'heart') {
       if (region.world === 'nether') counts.netherHearts++
       else counts.overworldHearts++
+    } else if (region.kind === 'nerve') {
+      if (region.world === 'overworld') counts.overworldNerves++
     } else if (region.kind === 'region') {
       if (region.world === 'nether') counts.netherRegions++
       else counts.overworldRegions++
@@ -66,6 +71,7 @@ export function computeRegionStats(regions: RegionRecord[]): BuildReportRegionCo
     overworld: regions.filter((r) => r.world === 'overworld').length,
     nether: regions.filter((r) => r.world === 'nether').length,
     hearts: regions.filter((r) => r.kind === 'heart').length,
+    nerves: regions.filter((r) => r.kind === 'nerve').length,
     villages: regions.filter((r) => r.kind === 'village').length,
     regions: regions.filter((r) => r.kind === 'region').length,
     system: regions.filter((r) => r.kind === 'system').length,

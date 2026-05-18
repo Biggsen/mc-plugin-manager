@@ -917,6 +917,7 @@ export function BuildScreen({ server, onServerUpdate }: BuildScreenProps) {
                 {[
                   { label: 'Overworld Regions', value: buildReport.computedCounts.overworldRegions },
                   { label: 'Overworld Hearts', value: buildReport.computedCounts.overworldHearts },
+                  { label: 'Overworld Nerves', value: buildReport.computedCounts.overworldNerves },
                   { label: 'Nether Regions', value: buildReport.computedCounts.netherRegions },
                   { label: 'Nether Hearts', value: buildReport.computedCounts.netherHearts },
                   { label: 'Villages', value: buildReport.computedCounts.villages },

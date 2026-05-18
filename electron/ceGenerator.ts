@@ -68,6 +68,13 @@ function recipeForRegion(region: RegionRecord): { counters: string[]; crate?: st
     }
   }
 
+  if (region.kind === 'nerve') {
+    return {
+      counters: ['Custom.nerves_discovered', 'Custom.total_discovered'],
+      crate: 'NerveCrate',
+    }
+  }
+
   // regular regions
   if (region.world === 'nether') {
     return {
@@ -123,6 +130,19 @@ function generateDiscoverOnceEvent(
       `console_command: aach add 1 ${recipe.counters[1]} %player%`,
       'console_message: [EXPMETRIC] server={SERVER_NAME} type=state entity=region player=%player% uuid=%player_uuid% total=%aach_custom_total_discovered% regions=%aach_custom_regions_discovered%'
     )
+  } else if (region.kind === 'nerve') {
+    const parentRegionId = region.id.startsWith('nerve_of_') ? region.id.slice(9) : region.id
+    const parentDisplayName = formatRegionTitle(parentRegionId)
+    actions = [
+      `console_command: aach give ${cmd} %player%`,
+      `console_message: [EXPMETRIC] server={SERVER_NAME} type=discovery entity=nerve player=%player% uuid=%player_uuid% region=${parentDisplayName} diff=0`,
+      `console_command: cc give virtual ${recipe.crate} 1 %player%`,
+      'wait: 6',
+      `console_command: aach add 1 ${recipe.counters[0]} %player%`,
+      'wait: 6',
+      `console_command: aach add 1 ${recipe.counters[1]} %player%`,
+      'console_message: [EXPMETRIC] server={SERVER_NAME} type=state entity=nerve player=%player% uuid=%player_uuid% total=%aach_custom_total_discovered% nerves=%aach_custom_nerves_discovered%',
+    ]
   } else {
     const parentRegionId = region.id.startsWith('heart_of_') ? region.id.slice(9) : region.id
     const parentDisplayName = formatRegionTitle(parentRegionId)
@@ -204,6 +224,21 @@ function generateRegionHeartDiscoverOnce(): CEEvent {
   }
 }
 
+function generateRegionNerveDiscoverOnce(): CEEvent {
+  return {
+    type: 'wgevents_region_enter',
+    one_time: true,
+    conditions: ['%region% startsWith nerve'],
+    actions: {
+      default: [
+        'wait: 13',
+        'message: &7Region nerves have an unbreakable lodestone',
+        'message: &dBind a compass to it to be able to find it again',
+      ],
+    },
+  }
+}
+
 function generateFirstJoinEvent(
   onboarding: OnboardingConfig,
   regions: RegionRecord[],
@@ -214,7 +249,10 @@ function generateFirstJoinEvent(
     regions.find((r) => r.id === onboarding.startRegionId && r.world === 'overworld') ||
     regions.find((r) => r.id === onboarding.startRegionId)
   const hasStartRegionWithDescription =
-    startRegion?.description?.trim() && startRegion.kind !== 'village' && startRegion.kind !== 'heart'
+    startRegion?.description?.trim() &&
+    startRegion.kind !== 'village' &&
+    startRegion.kind !== 'heart' &&
+    startRegion.kind !== 'nerve'
 
   const startRegionId = startRegion?.id ?? onboarding.startRegionId
   const startDisplayName = startRegion ? formatRegionDisplayName(startRegion) : startRegionId
@@ -266,6 +304,7 @@ export const CE_OWNED_FRAGMENT_BASENAMES = [
   'overworld-regions',
   'overworld-villages',
   'overworld-hearts',
+  'overworld-nerves',
   'overworld-structures',
   'nether-regions',
   'nether-hearts',
@@ -312,7 +351,7 @@ function classifyOwnedEventFragment(key: string, regions: RegionRecord[]): CEOwn
   if (key === 'first_join' || key === 'join_log' || key === 'leave_log') {
     return 'server-core'
   }
-  if (key === 'region_heart_discover_once') {
+  if (key === 'region_heart_discover_once' || key === 'region_nerve_discover_once') {
     return 'overworld-regions'
   }
 
@@ -334,6 +373,9 @@ function classifyOwnedEventFragment(key: string, regions: RegionRecord[]): CEOwn
   }
   if (region.kind === 'heart') {
     return region.world === 'nether' ? 'nether-hearts' : 'overworld-hearts'
+  }
+  if (region.kind === 'nerve') {
+    return 'overworld-nerves'
   }
 
   return region.world === 'nether' ? 'nether-regions' : 'overworld-regions'
@@ -384,6 +426,7 @@ export function generateOwnedCEEvents(
   owned.join_log = generateJoinLogEvent()
   owned.leave_log = generateLeaveLogEvent()
   owned.region_heart_discover_once = generateRegionHeartDiscoverOnce()
+  owned.region_nerve_discover_once = generateRegionNerveDiscoverOnce()
 
   // on-enter discoveries (skip start region — it's discovered in first_join, not on enter)
   const startId = onboarding.startRegionId
@@ -434,6 +477,7 @@ export function isOwnedEventKey(key: string): boolean {
     key === 'join_log' ||
     key === 'leave_log' ||
     key === 'region_heart_discover_once' ||
+    key === 'region_nerve_discover_once' ||
     key.endsWith('_discover_once')
   )
 }
