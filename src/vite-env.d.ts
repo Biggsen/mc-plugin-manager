@@ -96,6 +96,21 @@ interface ElectronAPI {
     serverId: string,
     payload: { libraryCrateIds: string[] }
   ) => Promise<ServerProfile | null>
+  listMilestoneRewardsLibrary: () => Promise<import('./types').MilestoneRewardsLibraryEntry[]>
+  listCeRewardCatalog: () => Promise<import('./types').CeRewardCatalogEntry[]>
+  createMilestoneRewardsProfile: (input?: {
+    name?: string
+  }) => Promise<import('./types').MilestoneRewardsLibraryEntry>
+  updateMilestoneRewardsProfile: (input: {
+    id: string
+    name?: string
+    categories?: Partial<Record<import('./types').AAMilestoneCategoryKey, import('./types').AAMilestoneCategorySlots>>
+  }) => Promise<import('./types').MilestoneRewardsLibraryEntry>
+  deleteMilestoneRewardsProfile: (id: string) => Promise<import('./types').MilestoneRewardsLibraryDeleteResult>
+  updateServerMilestoneRewards: (
+    serverId: string,
+    payload: { libraryProfileId: string | null }
+  ) => Promise<ServerProfile | null>
   buildConfigs: (
     serverId: string,
     inputs: {

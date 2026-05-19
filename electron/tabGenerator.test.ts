@@ -142,5 +142,6 @@ describe('structures TAB section', () => {
     expect(sn?.conditions).toEqual(['%worldguard_region_name_1%=inner_core'])
     const vn = owned.structureConditions?.['village-name'] as Record<string, unknown>
     expect((vn?.conditions as string[]).includes('%condition:structure-name%=-')).toBe(true)
+    expect(vn?.true).toBe('%condition:nerve-region%')
   })
 })

@@ -178,8 +178,13 @@ conditions:
     - '%worldguard_region_name_1%!=%worldguard_region_name_2%'
     - '%worldguard_region_name_1%!=spawn'
     type: AND
-    true: '%condition:heart-region%'
+    true: '%condition:nerve-region%'
     false: '-'
+  nerve-region:
+    conditions:
+    - '%worldguard_region_name_1%|-nerve'
+    true: '-'
+    false: '%condition:heart-region%'
   heart-region:
     conditions:
     - '%worldguard_region_name_1%|-heart'

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { AppShell, Button, Group, Text } from '@mantine/core'
-import { IconGitCompare, IconPlug, IconBooks, IconPackage } from '@tabler/icons-react'
+import { IconGitCompare, IconPlug, IconBooks, IconPackage, IconTrophy } from '@tabler/icons-react'
 import { ServerProfilesScreen } from './screens/ServerProfilesScreen'
 import { ServerDetailScreen } from './screens/ServerDetailScreen'
 import { PluginFolderCompareScreen } from './screens/PluginFolderCompareScreen'
@@ -8,15 +8,27 @@ import { DropTableLibraryScreen } from './screens/DropTableLibraryScreen'
 import { DropTableEditorScreen } from './screens/DropTableEditorScreen'
 import { CrateLibraryScreen } from './screens/CrateLibraryScreen'
 import { CrateEditorScreen } from './screens/CrateEditorScreen'
+import { MilestoneRewardsLibraryScreen } from './screens/MilestoneRewardsLibraryScreen'
+import { MilestoneRewardsEditorScreen } from './screens/MilestoneRewardsEditorScreen'
 import type { ServerProfile } from './types'
 
-type ShellView = 'servers' | 'comparePlugins' | 'dropTableLibrary' | 'dropTableEditor' | 'crateLibrary' | 'crateEditor'
+type ShellView =
+  | 'servers'
+  | 'comparePlugins'
+  | 'dropTableLibrary'
+  | 'dropTableEditor'
+  | 'crateLibrary'
+  | 'crateEditor'
+  | 'milestoneRewardsLibrary'
+  | 'milestoneRewardsEditor'
 
 function App() {
   const [currentServer, setCurrentServer] = useState<ServerProfile | null>(null)
   const [shellView, setShellView] = useState<ShellView>('servers')
   const [editorTableId, setEditorTableId] = useState<string | undefined>(undefined)
   const [editorCrateId, setEditorCrateId] = useState<string | undefined>(undefined)
+  const [editorMilestoneProfileId, setEditorMilestoneProfileId] = useState<string | undefined>(undefined)
+  const [milestoneLibrarySelectedId, setMilestoneLibrarySelectedId] = useState<string | null>(null)
 
   function openDropTableEditor(tableId?: string) {
     setEditorTableId(tableId)
@@ -34,6 +46,16 @@ function App() {
 
   function backToCrateLibrary() {
     setShellView('crateLibrary')
+  }
+
+  function openMilestoneRewardsEditor(profileId?: string) {
+    setEditorMilestoneProfileId(profileId)
+    if (profileId) setMilestoneLibrarySelectedId(profileId)
+    setShellView('milestoneRewardsEditor')
+  }
+
+  function backToMilestoneRewardsLibrary() {
+    setShellView('milestoneRewardsLibrary')
   }
 
   return (
@@ -63,12 +85,21 @@ function App() {
                 >
                   Crate library
                 </Button>
+                <Button
+                  variant="light"
+                  leftSection={<IconTrophy size={18} />}
+                  onClick={() => setShellView('milestoneRewardsLibrary')}
+                >
+                  Milestone rewards
+                </Button>
               </>
             )}
             {(shellView === 'dropTableLibrary' ||
               shellView === 'dropTableEditor' ||
               shellView === 'crateLibrary' ||
-              shellView === 'crateEditor') && (
+              shellView === 'crateEditor' ||
+              shellView === 'milestoneRewardsLibrary' ||
+              shellView === 'milestoneRewardsEditor') && (
               <Button variant="light" onClick={() => setShellView('servers')}>
                 Back to servers
               </Button>
@@ -115,6 +146,19 @@ function App() {
             onBack={backToDropTableLibrary}
             onSaved={() => backToDropTableLibrary()}
           />
+        ) : shellView === 'milestoneRewardsLibrary' ? (
+          <MilestoneRewardsLibraryScreen
+            selectedProfileId={milestoneLibrarySelectedId}
+            onSelectProfileId={setMilestoneLibrarySelectedId}
+            onCreateProfile={() => openMilestoneRewardsEditor(undefined)}
+            onEditProfile={(id) => openMilestoneRewardsEditor(id)}
+          />
+        ) : shellView === 'milestoneRewardsEditor' ? (
+          <MilestoneRewardsEditorScreen
+            profileId={editorMilestoneProfileId}
+            onBack={backToMilestoneRewardsLibrary}
+            onSaved={() => backToMilestoneRewardsLibrary()}
+          />
         ) : currentServer ? (
           <ServerDetailScreen
             server={currentServer}
@@ -122,6 +166,7 @@ function App() {
             onServerProfileChange={setCurrentServer}
             onOpenDropTableLibrary={() => setShellView('dropTableLibrary')}
             onOpenCrateLibrary={() => setShellView('crateLibrary')}
+            onOpenMilestoneRewardsLibrary={() => setShellView('milestoneRewardsLibrary')}
           />
         ) : (
           <ServerProfilesScreen onSelectServer={setCurrentServer} />

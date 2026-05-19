@@ -42,6 +42,15 @@ export type {
   CrateVirtualKeyId,
   VirtualCrateKeyValues,
   ResolvedCrazyCratesCrate,
+  AAMilestoneReward,
+  AAMilestoneCategorySlots,
+  AAMilestoneCategoryKey,
+  MilestoneRewardsServerAssignment,
+  MilestoneRewardsLibraryEntry,
+  MilestoneRewardsLibraryDeleteResult,
+  ResolvedMilestoneRewards,
+  CeRewardKind,
+  CeRewardCatalogEntry,
 } from '@shared/types'
 
 export const PLUGIN_TYPES: import('@shared/types').PluginType[] = ['aa', 'ce', 'tab', 'lm', 'lmcd', 'mc', 'cw']

@@ -22,6 +22,11 @@ import type {
   CrateLibraryEntry,
   CrateLibraryDeleteResult,
   CratePrizeEntry,
+  MilestoneRewardsLibraryEntry,
+  MilestoneRewardsLibraryDeleteResult,
+  AAMilestoneCategoryKey,
+  AAMilestoneCategorySlots,
+  CeRewardCatalogEntry,
 } from './types'
 
 // Define the IPC API interface
@@ -116,6 +121,19 @@ export interface ElectronAPI {
   updateServerCrazyCrates: (
     serverId: string,
     payload: { libraryCrateIds: string[] }
+  ) => Promise<ServerProfile | null>
+  listMilestoneRewardsLibrary: () => Promise<MilestoneRewardsLibraryEntry[]>
+  listCeRewardCatalog: () => Promise<CeRewardCatalogEntry[]>
+  createMilestoneRewardsProfile: (input?: { name?: string }) => Promise<MilestoneRewardsLibraryEntry>
+  updateMilestoneRewardsProfile: (input: {
+    id: string
+    name?: string
+    categories?: Partial<Record<AAMilestoneCategoryKey, AAMilestoneCategorySlots>>
+  }) => Promise<MilestoneRewardsLibraryEntry>
+  deleteMilestoneRewardsProfile: (id: string) => Promise<MilestoneRewardsLibraryDeleteResult>
+  updateServerMilestoneRewards: (
+    serverId: string,
+    payload: { libraryProfileId: string | null }
   ) => Promise<ServerProfile | null>
 
   // Build
@@ -253,6 +271,19 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.invoke('set-virtual-crate-key-values', values),
   updateServerCrazyCrates: (serverId: string, payload: { libraryCrateIds: string[] }) =>
     ipcRenderer.invoke('update-server-crazy-crates', serverId, payload),
+  listMilestoneRewardsLibrary: () => ipcRenderer.invoke('list-milestone-rewards-library'),
+  listCeRewardCatalog: () => ipcRenderer.invoke('list-ce-reward-catalog'),
+  createMilestoneRewardsProfile: (input?: { name?: string }) =>
+    ipcRenderer.invoke('create-milestone-rewards-profile', input),
+  updateMilestoneRewardsProfile: (input: {
+    id: string
+    name?: string
+    categories?: Partial<Record<AAMilestoneCategoryKey, AAMilestoneCategorySlots>>
+  }) => ipcRenderer.invoke('update-milestone-rewards-profile', input),
+  deleteMilestoneRewardsProfile: (id: string) =>
+    ipcRenderer.invoke('delete-milestone-rewards-profile', id),
+  updateServerMilestoneRewards: (serverId: string, payload: { libraryProfileId: string | null }) =>
+    ipcRenderer.invoke('update-server-milestone-rewards', serverId, payload),
   buildConfigs: (
     serverId: string,
     inputs: {

@@ -22,6 +22,7 @@ import {
   IconUserCircle,
   IconListCheck,
   IconPackage,
+  IconTrophy,
 } from '@tabler/icons-react'
 import type { ServerProfile } from '../types'
 import { computeRegionDisplayStats } from '../utils/regionStats'
@@ -33,6 +34,7 @@ import { RegionsScreen } from './RegionsScreen'
 import { LoreBooksScreen } from './LoreBooksScreen'
 import { DropTablesScreen } from './DropTablesScreen'
 import { CratesScreen } from './CratesScreen'
+import { MilestoneRewardsScreen } from './MilestoneRewardsScreen'
 
 type SectionValue =
   | 'profile'
@@ -40,6 +42,7 @@ type SectionValue =
   | 'regions'
   | 'dropTables'
   | 'crates'
+  | 'milestoneRewards'
   | 'onboarding'
   | 'build'
   | 'loreBooks'
@@ -52,6 +55,7 @@ interface ServerDetailScreenProps {
   onServerProfileChange?: (server: ServerProfile) => void
   onOpenDropTableLibrary?: () => void
   onOpenCrateLibrary?: () => void
+  onOpenMilestoneRewardsLibrary?: () => void
 }
 
 export function ServerDetailScreen({
@@ -60,6 +64,7 @@ export function ServerDetailScreen({
   onServerProfileChange,
   onOpenDropTableLibrary,
   onOpenCrateLibrary,
+  onOpenMilestoneRewardsLibrary,
 }: ServerDetailScreenProps) {
   const [server, setServer] = useState<ServerProfile>(initialServer)
   const [activeSection, setActiveSection] = useState<SectionValue>('import')
@@ -202,6 +207,7 @@ export function ServerDetailScreen({
     { value: 'regions', label: 'Regions', icon: <IconMap2 size={18} /> },
     { value: 'dropTables', label: 'Drop Tables', icon: <IconListCheck size={18} /> },
     { value: 'crates', label: 'Crates', icon: <IconPackage size={18} /> },
+    { value: 'milestoneRewards', label: 'Milestone rewards', icon: <IconTrophy size={18} /> },
     { value: 'onboarding', label: 'Onboarding', icon: <IconUser size={18} /> },
     { value: 'build', label: 'Build', icon: <IconHammer size={18} /> },
     { value: 'loreBooks', label: 'Lore Books', icon: <IconBook size={18} /> },
@@ -264,6 +270,7 @@ export function ServerDetailScreen({
             {activeSection === 'regions' && 'Regions'}
             {activeSection === 'dropTables' && 'Drop Tables'}
             {activeSection === 'crates' && 'Crates'}
+            {activeSection === 'milestoneRewards' && 'Milestone rewards'}
             {activeSection === 'onboarding' && 'Onboarding Config'}
             {activeSection === 'build' && 'Build Config'}
             {activeSection === 'loreBooks' && 'Export Lore Books'}
@@ -338,6 +345,13 @@ export function ServerDetailScreen({
             server={server}
             onServerUpdate={handleServerUpdate}
             onOpenCrateLibrary={onOpenCrateLibrary}
+          />
+        )}
+        {activeSection === 'milestoneRewards' && (
+          <MilestoneRewardsScreen
+            server={server}
+            onServerUpdate={handleServerUpdate}
+            onOpenMilestoneRewardsLibrary={onOpenMilestoneRewardsLibrary}
           />
         )}
         {activeSection === 'onboarding' && (

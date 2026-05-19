@@ -57,6 +57,18 @@ function normalizeCrazyCratesOnProfile(profile: ServerProfile): void {
   profile.crazyCrates = { libraryCrateIds: [] }
 }
 
+function normalizeMilestoneRewardsOnProfile(profile: ServerProfile): void {
+  const mr = profile.milestoneRewards as unknown
+  if (!mr || typeof mr !== 'object') {
+    profile.milestoneRewards = { libraryProfileId: null }
+    return
+  }
+  const id = (mr as { libraryProfileId?: unknown }).libraryProfileId
+  profile.milestoneRewards = {
+    libraryProfileId: typeof id === 'string' && id.trim().length > 0 ? id.trim() : null,
+  }
+}
+
 function normalizeDropTablesOnProfile(profile: ServerProfile): void {
   const dt = profile.dropTables as unknown
   if (!dt || typeof dt !== 'object') {
@@ -85,6 +97,7 @@ export function loadServerProfile(serverId: string): ServerProfile | null {
     const profile = JSON.parse(content) as ServerProfile
     normalizeDropTablesOnProfile(profile)
     normalizeCrazyCratesOnProfile(profile)
+    normalizeMilestoneRewardsOnProfile(profile)
     return profile
   } catch (error) {
     console.error(`Failed to load server profile ${serverId}:`, error)

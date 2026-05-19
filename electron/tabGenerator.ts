@@ -93,6 +93,19 @@ function generateStructureNameCondition(sortedIds: string[]): Record<string, unk
   }
 }
 
+const HEART_REGION_CONDITION: Record<string, unknown> = {
+  conditions: ["%worldguard_region_name_1%|-heart"],
+  true: '-',
+  false: '%capitalize_pascal-case-forced_{worldguard_region_name_1}%',
+}
+
+/** Hide nerve POIs from the village scoreboard line (parallel to heart-region). */
+const NERVE_REGION_CONDITION: Record<string, unknown> = {
+  conditions: ["%worldguard_region_name_1%|-nerve"],
+  true: '-',
+  false: '%condition:heart-region%',
+}
+
 const VILLAGE_NAME_WITH_STRUCTURE_GUARD: Record<string, unknown> = {
   conditions: [
     '%worldguard_region_name_2%!=',
@@ -101,7 +114,7 @@ const VILLAGE_NAME_WITH_STRUCTURE_GUARD: Record<string, unknown> = {
     '%condition:structure-name%=-',
   ],
   type: 'AND',
-  true: '%condition:heart-region%',
+  true: '%condition:nerve-region%',
   false: '-',
 }
 
@@ -564,14 +577,11 @@ export function mergeTABConfig(
         '%worldguard_region_name_1%!=spawn',
       ],
       type: 'AND',
-      true: '%condition:heart-region%',
+      true: '%condition:nerve-region%',
       false: '-',
     },
-    'heart-region': {
-      conditions: ["%worldguard_region_name_1%|-heart"],
-      true: '-',
-      false: '%capitalize_pascal-case-forced_{worldguard_region_name_1}%',
-    },
+    'nerve-region': NERVE_REGION_CONDITION,
+    'heart-region': HEART_REGION_CONDITION,
   }
 
   // Add static conditions if missing
