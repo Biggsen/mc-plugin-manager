@@ -13,6 +13,7 @@ const {
 } = require('../utils/configPathResolver')
 const { ensureBuildDirectory } = require('../storage')
 const { generateAACommands, generateAACustom, mergeAAConfig } = require('../aaGenerator')
+const { resolveMilestoneRewardsForServer } = require('../milestoneRewardsResolve')
 const {
   generateOwnedCEEvents,
   buildCEConfigBundle,
@@ -137,11 +138,13 @@ export function buildPluginContent(
       const newCommands = generateAACommands(profile.regions)
       const templateContent = fs.readFileSync(configPath, 'utf-8')
       const templateConfig = yaml.parse(templateContent)
+      const milestoneResolved = resolveMilestoneRewardsForServer(profile)
       const newCustom = generateAACustom(
         profile.regions,
         templateConfig,
         profile.regionsMeta?.structureFamilies,
-        configServerName
+        configServerName,
+        milestoneResolved?.categories
       )
       const content = mergeAAConfig(configPath, newCommands, newCustom)
       return { content, configPath, isDefault }

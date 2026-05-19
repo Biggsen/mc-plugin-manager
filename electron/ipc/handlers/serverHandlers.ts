@@ -78,6 +78,7 @@ export function registerServerHandlers(): void {
         build: {},
         dropTables: { libraryTableIds: [] },
         crazyCrates: { libraryCrateIds: [] },
+        milestoneRewards: { libraryProfileId: null },
       }
 
       if (serverName != null) {
@@ -192,6 +193,24 @@ export function registerServerHandlers(): void {
       const ids = payload?.libraryCrateIds ?? []
       profile.crazyCrates = {
         libraryCrateIds: [...new Set(ids.filter((x) => typeof x === 'string'))],
+      }
+      saveServerProfile(profile)
+      return profile
+    }
+  )
+
+  ipcMain.handle(
+    'update-server-milestone-rewards',
+    async (
+      _event: unknown,
+      serverId: string,
+      payload: { libraryProfileId: string | null }
+    ): Promise<ServerProfile | null> => {
+      const profile = loadServerProfile(serverId)
+      if (!profile) return null
+      const id = payload?.libraryProfileId
+      profile.milestoneRewards = {
+        libraryProfileId: typeof id === 'string' && id.trim().length > 0 ? id.trim() : null,
       }
       saveServerProfile(profile)
       return profile

@@ -91,6 +91,8 @@ export interface ServerProfile {
   dropTables?: DropTablesServerAssignment
   /** Which global CrazyCrates library entries to emit for this server (by library entry id). Empty = all default bundled crates. */
   crazyCrates?: CrazyCratesServerAssignment
+  /** Optional global milestone rewards library preset for AA Custom named milestones. */
+  milestoneRewards?: MilestoneRewardsServerAssignment
   /** Per-plugin successful emit serial (1-based), keyed by plugin id. */
   generatorVersions?: Partial<Record<GeneratorVersionKey, number>>
   /** DiscordSRV build inputs (legacy single-target shape). */
@@ -416,6 +418,66 @@ export interface CrateLibraryDeleteResult {
   ok: boolean
   error?: string
   removedFromServers?: { id: string; name: string }[]
+}
+
+/** Reward payload for one AA milestone slot (maps to AdvancedAchievements `Reward`). */
+export interface AAMilestoneReward {
+  experience?: number
+  /** AA format: `"diamond 8"` or `["diamond 8", "emerald 16"]`. */
+  items?: string | string[]
+  command?: { execute: string[]; display?: string }
+}
+
+export type CeRewardKind = 'enchantment' | 'potion'
+
+/** One CE call reward from bundled CE Events (get_book_* / get_potion_*). */
+export interface CeRewardCatalogEntry {
+  token: string
+  kind: CeRewardKind
+  label: string
+  executeLine: string
+}
+
+export interface AAMilestoneCategorySlots {
+  first?: AAMilestoneReward
+  half?: AAMilestoneReward
+  all?: AAMilestoneReward
+  quarter?: AAMilestoneReward
+  threeQuarter?: AAMilestoneReward
+}
+
+export type AAMilestoneCategoryKey =
+  | 'villages_discovered'
+  | 'regions_discovered'
+  | 'hearts_discovered'
+  | 'nerves_discovered'
+  | 'nether_regions_discovered'
+  | 'nether_hearts_discovered'
+  | 'structures_found'
+
+/** Per-server: one global milestone rewards library preset (or bundled-only when null). */
+export interface MilestoneRewardsServerAssignment {
+  libraryProfileId: string | null
+}
+
+export interface MilestoneRewardsLibraryEntry {
+  id: string
+  name: string
+  categories: Partial<Record<AAMilestoneCategoryKey, AAMilestoneCategorySlots>>
+  createdAt: string
+  updatedAt: string
+}
+
+export interface MilestoneRewardsLibraryDeleteResult {
+  ok: boolean
+  error?: string
+  removedFromServers?: { id: string; name: string }[]
+}
+
+/** Resolved milestone reward slots for AA build overlay. */
+export interface ResolvedMilestoneRewards {
+  profileId: string
+  categories: Partial<Record<AAMilestoneCategoryKey, AAMilestoneCategorySlots>>
 }
 
 /** Resolved crate row for build emit (main process). */

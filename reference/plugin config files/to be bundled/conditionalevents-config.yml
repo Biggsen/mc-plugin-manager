@@ -1805,11 +1805,11 @@ Events:
     actions:
       default:
         - "console_command: minecraft:give %player% enchanted_book[stored_enchantments={mending:1}]"
-  get_book_protection_5:
+  get_book_protection_4:
     type: call
     actions:
       default:
-        - "console_command: minecraft:give %player% enchanted_book[stored_enchantments={protection:5}]"
+        - "console_command: minecraft:give %player% enchanted_book[stored_enchantments={protection:4}]"
   get_book_respiration_3:
     type: call
     actions:
@@ -1840,5 +1840,20 @@ Events:
     actions:
       default:
         - "console_command: minecraft:give %player% potion[potion_contents={potion:\"minecraft:long_fire_resistance\"}]"
+  get_potion_night_vision:
+    type: call
+    actions:
+      default:
+        - "console_command: minecraft:give %player% potion[potion_contents={potion:\"minecraft:night_vision\"}]"
+  get_potion_night_vision_2:
+    type: call
+    actions:
+      default:
+        - "console_command: minecraft:give %player% potion[potion_contents={potion:\"minecraft:night_vision\"}] 2"
+  get_potion_night_vision_long:
+    type: call
+    actions:
+      default:
+        - "console_command: minecraft:give %player% potion[potion_contents={potion:\"minecraft:long_night_vision\"}]"
 
 

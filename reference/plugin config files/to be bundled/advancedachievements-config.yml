@@ -1922,7 +1922,7 @@ Custom:
           - emerald 16
         Command:
           Execute:
-            - ce call get_book_protection_5 player:PLAYER
+            - ce call get_book_protection_4 player:PLAYER
     20:
       Message: You discovered 20 villages!
       Name: villages_discovered_20

@@ -1,7 +1,13 @@
 const yaml = require('yaml')
 
-import type { RegionRecord } from './types'
+import type {
+  AAMilestoneCategoryKey,
+  AAMilestoneCategorySlots,
+  AAMilestoneReward,
+  RegionRecord,
+} from './types'
 import { snakeToTitleCase, splitRegionIdWords } from './shared/stringFormatters'
+import { extractCeCallToken, rewardDisplayFromCeExecuteLine, toRomanLevel } from './shared/ceRewardTokens'
 import { computeRegionCounts } from './utils/regionStats'
 
 interface AACommand {
@@ -143,18 +149,6 @@ function calculateStructureSetClaimBlocks(structureType: string, quantity: numbe
 const HALF_COLLISION_THRESHOLD = 5
 const ALL_COLLISION_THRESHOLD = 4
 
-/** Roman numerals I–X for enchant / potion stack labels */
-function toRomanLevel(n: number): string {
-  const r = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X']
-  if (n >= 1 && n <= 10) return r[n]
-  return String(n)
-}
-
-function extractCeCallToken(line: string): string | null {
-  const m = String(line).match(/ce\s+call\s+(\S+)/i)
-  return m ? m[1] : null
-}
-
 function normalizeExecuteToLines(execute: unknown): string[] {
   if (Array.isArray(execute)) return execute.map(String)
   if (typeof execute === 'string') return [execute]
@@ -204,51 +198,38 @@ function appendLegendAlertsInCustom(customSection: any): void {
   }
 }
 
-function displayFromBookToken(token: string): string | null {
-  if (!token.startsWith('get_book_')) return null
-  let rest = token.slice('get_book_'.length)
-  const levelMatch = rest.match(/_(\d+)$/)
-  let level: number | null = null
-  if (levelMatch) {
-    level = parseInt(levelMatch[1], 10)
-    rest = rest.slice(0, -(levelMatch[0].length))
-  }
-  const title = snakeToTitleCase(rest)
-  if (level !== null) {
-    return `${title} ${toRomanLevel(level)}`
-  }
-  return title
-}
-
-function displayFromPotionToken(token: string): string | null {
-  if (!token.startsWith('get_potion_')) return null
-  let rest = token.slice('get_potion_'.length)
-  const stackMatch = rest.match(/^(.+)_(\d+)$/)
-  if (stackMatch && !rest.endsWith('_long')) {
-    const base = stackMatch[1]
-    const count = parseInt(stackMatch[2], 10)
-    const baseTitle = snakeToTitleCase(base)
-    return `${count} Potions of ${baseTitle}`
-  }
-  rest = rest.replace(/_long$/, '')
-  const baseTitle = snakeToTitleCase(rest)
-  return `Potion of ${baseTitle}`
-}
-
-/**
- * Human-readable Reward.Command.Display for one `ce call ...` line (get_book_* / get_potion_*).
- * Exported for tests.
- */
-export function rewardDisplayFromCeExecuteLine(line: string): string | null {
-  const token = extractCeCallToken(line)
-  if (!token) return null
-  return displayFromBookToken(token) ?? displayFromPotionToken(token)
-}
-
 /**
  * When template Reward.Command has Execute but no Display, derive Display from CE call lines.
  * Skips if Display is already set, or if any Execute line is not a recognized ce call pattern.
  */
+export function aaRewardFromSlot(slot: AAMilestoneReward): Record<string, unknown> {
+  const reward: Record<string, unknown> = {}
+  if (slot.experience !== undefined) reward.Experience = slot.experience
+  if (slot.items !== undefined) reward.Item = slot.items
+  if (slot.command?.execute?.length) {
+    const cmd: Record<string, unknown> = { Execute: slot.command.execute }
+    if (slot.command.display?.trim()) cmd.Display = slot.command.display.trim()
+    reward.Command = cmd
+  }
+  return reward
+}
+
+export function applyMilestoneRewardToEntry(entry: Record<string, unknown>, slot: AAMilestoneReward): void {
+  entry.Reward = aaRewardFromSlot(slot)
+  ensureRewardCommandDisplayFromCeCalls(entry)
+  appendLegendAlertExecute(entry)
+}
+
+function overlayNamedMilestoneReward(
+  entry: Record<string, unknown>,
+  slots: AAMilestoneCategorySlots | undefined,
+  role: keyof AAMilestoneCategorySlots
+): void {
+  const slot = slots?.[role]
+  if (!slot) return
+  applyMilestoneRewardToEntry(entry, slot)
+}
+
 function ensureRewardCommandDisplayFromCeCalls(entry: any): void {
   const cmd = entry?.Reward?.Command
   if (!cmd?.Execute) return
@@ -549,7 +530,8 @@ function generateCustomCategory(
   template: TierTemplate,
   total: number,
   categoryName: string,
-  options: TierCalculationOptions = {}
+  options: TierCalculationOptions = {},
+  milestoneSlots?: AAMilestoneCategorySlots
 ): { [tier: number]: any } {
   const result: { [tier: number]: any } = {}
   const half = (options.halfRounding ?? 'floor') === 'ceil'
@@ -567,10 +549,13 @@ function generateCustomCategory(
   const middleIndex = Math.floor(numericKeys.length / 2)
   const fallbackHalfKey = numericKeys[middleIndex] ?? numericKeys[0]
 
+  const firstTierValue = calculatedTiers.length > 0 ? calculatedTiers[0] : null
+
   for (let i = 0; i < calculatedTiers.length; i++) {
     const tierValue = calculatedTiers[i]
     const isAllTier = tierValue === total && i === calculatedTiers.length - 1
     const isHalfTier = tierValue === half && !isAllTier
+    const isFirstTier = tierValue === firstTierValue
 
     let templateEntry: any
     if (isAllTier && hasAllTemplate) {
@@ -643,8 +628,19 @@ function generateCustomCategory(
     }
 
     ensureRewardCommandDisplayFromCeCalls(entry)
-    appendLegendAlertExecute(entry)
-    
+    if (isAllTier) {
+      if (milestoneSlots?.all) overlayNamedMilestoneReward(entry, milestoneSlots, 'all')
+      else appendLegendAlertExecute(entry)
+    } else if (isHalfTier) {
+      if (milestoneSlots?.half) overlayNamedMilestoneReward(entry, milestoneSlots, 'half')
+      else appendLegendAlertExecute(entry)
+    } else if (isFirstTier) {
+      if (milestoneSlots?.first) overlayNamedMilestoneReward(entry, milestoneSlots, 'first')
+      else appendLegendAlertExecute(entry)
+    } else {
+      appendLegendAlertExecute(entry)
+    }
+
     result[tierValue] = entry
   }
   
@@ -845,7 +841,8 @@ function pickStructuresFoundTemplateEntry(
 
 function generateStructuresFoundCustom(
   templateCategory: Record<string, any>,
-  total: number
+  total: number,
+  milestoneSlots?: AAMilestoneCategorySlots
 ): { [tier: number]: any } | null {
   if (total <= 0 || !templateCategory || typeof templateCategory !== 'object') return null
 
@@ -864,13 +861,37 @@ function generateStructuresFoundCustom(
     const entry = JSON.parse(JSON.stringify(templateEntry))
     entry.Name = `${categoryName}_${value}`
 
-    const claim =
-      source === 'ten' ? 100 : source === 'all' ? 500 : 200
-    entry.Reward = {
-      Command: {
-        Execute: [`acb PLAYER +${claim}`],
-        Display: `${claim} claimblocks`,
-      },
+    if (source === 'ten') {
+      const claim = 100
+      entry.Reward = {
+        Command: {
+          Execute: [`acb PLAYER +${claim}`],
+          Display: `${claim} claimblocks`,
+        },
+      }
+    } else {
+      const role =
+        source === 'quarter'
+          ? 'quarter'
+          : source === 'half'
+            ? 'half'
+            : source === 'threeQuarter'
+              ? 'threeQuarter'
+              : 'all'
+      const librarySlot = milestoneSlots?.[role]
+      if (librarySlot) {
+        applyMilestoneRewardToEntry(entry, librarySlot)
+      } else {
+        const claim = source === 'all' ? 500 : 200
+        entry.Reward = {
+          Command: {
+            Execute: [`acb PLAYER +${claim}`],
+            Display: `${claim} claimblocks`,
+          },
+        }
+        ensureRewardCommandDisplayFromCeCalls(entry)
+        appendLegendAlertExecute(entry)
+      }
     }
 
     if (source === 'ten') {
@@ -896,8 +917,10 @@ function generateStructuresFoundCustom(
       entry.Type = 'rare'
     }
 
-    ensureRewardCommandDisplayFromCeCalls(entry)
-    appendLegendAlertExecute(entry)
+    if (source === 'ten') {
+      ensureRewardCommandDisplayFromCeCalls(entry)
+      appendLegendAlertExecute(entry)
+    }
     result[value] = entry
   }
 
@@ -948,7 +971,8 @@ export function generateAACustom(
   regions: RegionRecord[],
   templateConfig: any,
   structureFamilies?: StructureFamiliesMap,
-  serverName: string = '{SERVER_NAME}'
+  serverName: string = '{SERVER_NAME}',
+  milestoneRewardOverrides?: Partial<Record<AAMilestoneCategoryKey, AAMilestoneCategorySlots>>
 ): { [category: string]: { [tier: number]: any } } {
   warnStructureFamiliesMismatch(regions, structureFamilies)
 
@@ -967,7 +991,9 @@ export function generateAACustom(
         tiers,
         VILLAGES_TEMPLATE,
         counts.villages,
-        'villages_discovered'
+        'villages_discovered',
+        {},
+        milestoneRewardOverrides?.villages_discovered
       )
     }
   }
@@ -981,7 +1007,9 @@ export function generateAACustom(
         tiers,
         REGIONS_TEMPLATE,
         counts.regions,
-        'regions_discovered'
+        'regions_discovered',
+        {},
+        milestoneRewardOverrides?.regions_discovered
       )
     }
   }
@@ -995,7 +1023,9 @@ export function generateAACustom(
         tiers,
         HEARTS_TEMPLATE,
         counts.hearts,
-        'hearts_discovered'
+        'hearts_discovered',
+        {},
+        milestoneRewardOverrides?.hearts_discovered
       )
     }
   }
@@ -1008,7 +1038,9 @@ export function generateAACustom(
         tiers,
         NERVES_TEMPLATE,
         counts.nerves,
-        'nerves_discovered'
+        'nerves_discovered',
+        {},
+        milestoneRewardOverrides?.nerves_discovered
       )
     }
   }
@@ -1026,7 +1058,8 @@ export function generateAACustom(
         NETHER_REGIONS_TEMPLATE,
         counts.netherRegions,
         'nether_regions_discovered',
-        { halfRounding: 'ceil' }
+        { halfRounding: 'ceil' },
+        milestoneRewardOverrides?.nether_regions_discovered
       )
     }
   }
@@ -1044,7 +1077,8 @@ export function generateAACustom(
         NETHER_HEARTS_TEMPLATE,
         counts.netherHearts,
         'nether_hearts_discovered',
-        { halfRounding: 'ceil' }
+        { halfRounding: 'ceil' },
+        milestoneRewardOverrides?.nether_hearts_discovered
       )
     }
   }
@@ -1058,7 +1092,11 @@ export function generateAACustom(
 
   const structureSitesTotal = countStructureSites(regions)
   if (structureSitesTotal > 0 && templateCustom.structures_found) {
-    const sf = generateStructuresFoundCustom(templateCustom.structures_found, structureSitesTotal)
+    const sf = generateStructuresFoundCustom(
+      templateCustom.structures_found,
+      structureSitesTotal,
+      milestoneRewardOverrides?.structures_found
+    )
     if (sf) {
       result.structures_found = sf
     }
@@ -1154,4 +1192,6 @@ module.exports = {
   NETHER_HEARTS_TEMPLATE,
   structureTypeToSingularTitle,
   rewardDisplayFromCeExecuteLine,
+  aaRewardFromSlot,
+  applyMilestoneRewardToEntry,
 }

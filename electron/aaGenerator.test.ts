@@ -9,11 +9,13 @@ import {
   generateAACommands,
   generateAACustom,
   generateTotalDiscoveredCustom,
-  rewardDisplayFromCeExecuteLine,
   structuresFoundTierSpecs,
   structuresFoundTenDisplayNames,
   generateCommandId,
+  aaRewardFromSlot,
+  applyMilestoneRewardToEntry,
 } from './aaGenerator'
+import { rewardDisplayFromCeExecuteLine } from './shared/ceRewardTokens'
 
 import type { RegionRecord } from './types'
 
@@ -130,7 +132,7 @@ describe('rewardDisplayFromCeExecuteLine', () => {
   it('maps get_book_* to enchant labels with Roman levels', () => {
     expect(rewardDisplayFromCeExecuteLine('ce call get_book_respiration_3 player:PLAYER')).toBe('Respiration III')
     expect(rewardDisplayFromCeExecuteLine('ce call get_book_blast_protection_4 player:PLAYER')).toBe('Blast Protection IV')
-    expect(rewardDisplayFromCeExecuteLine('ce call get_book_protection_5 player:PLAYER')).toBe('Protection V')
+    expect(rewardDisplayFromCeExecuteLine('ce call get_book_protection_4 player:PLAYER')).toBe('Protection IV')
   })
 
   it('maps get_book_* without a numeric level', () => {
@@ -139,7 +141,7 @@ describe('rewardDisplayFromCeExecuteLine', () => {
 
   it('maps get_potion_*', () => {
     expect(rewardDisplayFromCeExecuteLine('ce call get_potion_fire_resistance_long player:PLAYER')).toBe(
-      'Potion of Fire Resistance'
+      'Potion of Fire Resistance Long'
     )
     expect(rewardDisplayFromCeExecuteLine('ce call get_potion_fire_resistance player:PLAYER')).toBe(
       'Potion of Fire Resistance'
@@ -504,6 +506,101 @@ describe('generateAACustom structures_found', () => {
     expect(custom.structures_found?.[4].Reward.Command.Execute[0]).toBe('acb PLAYER +500')
     const allExecute = custom.structures_found?.[4].Reward.Command.Execute as string[]
     expect(allExecute.some((l) => l.includes('LEGEND'))).toBe(true)
+  })
+
+  it('uses library quarter reward instead of default claimblocks when provided', () => {
+    const regions: RegionRecord[] = Array.from({ length: 4 }, (_, i) => ({
+      world: 'overworld' as const,
+      id: `st_${i}`,
+      kind: 'structure' as const,
+      structureType: 'ancient_city',
+      discover: { method: 'on_enter' as const, recipeId: 'none' as const },
+    }))
+    const custom = generateAACustom(
+      regions,
+      { Custom: { structures_found: sfTemplate } },
+      { ancient_city: { label: 'Ancient Cities', counter: 'ancient_cities_found' } },
+      'Test',
+      {
+        structures_found: {
+          quarter: { command: { execute: ['give PLAYER diamond 1'] } },
+        },
+      }
+    )
+    expect(custom.structures_found?.[1].Reward.Command.Execute[0]).toBe('give PLAYER diamond 1')
+    expect(custom.structures_found?.[2].Reward.Command.Execute[0]).toBe('acb PLAYER +200')
+  })
+})
+
+describe('milestone reward overlay', () => {
+  it('aaRewardFromSlot maps to AA Reward shape', () => {
+    const reward = aaRewardFromSlot({
+      experience: 50,
+      items: ['diamond 8'],
+      command: { execute: ['ce call get_book_mending player:PLAYER'], display: 'Mending' },
+    })
+    expect(reward.Experience).toBe(50)
+    expect(reward.Item).toEqual(['diamond 8'])
+    expect(reward.Command).toEqual({
+      Execute: ['ce call get_book_mending player:PLAYER'],
+      Display: 'Mending',
+    })
+  })
+
+  it('overlays first/half/all on villages_discovered while keeping dynamic Name', () => {
+    const template = {
+      Custom: {
+        villages_discovered: {
+          1: {
+            Message: 'You discovered a village!',
+            Name: 'villages_discovered_1',
+            DisplayName: 'Village Wanderer',
+            Type: 'normal',
+            Reward: { Experience: 50 },
+          },
+          _half: {
+            Message: 'half',
+            Name: 'villages_discovered_half',
+            DisplayName: 'Village Trailblazer',
+            Type: 'normal',
+            Reward: { Experience: 200 },
+          },
+          _all: {
+            Message: 'all',
+            Name: 'villages_discovered_all',
+            DisplayName: 'Village Legend',
+            Type: 'rare',
+            Reward: { Experience: 300 },
+          },
+        },
+      },
+    }
+    const regions: RegionRecord[] = Array.from({ length: 20 }, (_, i) => ({
+      world: 'overworld' as const,
+      id: `v_${i}`,
+      kind: 'village' as const,
+      discover: { method: 'on_enter' as const, recipeId: 'none' as const },
+    }))
+    const custom = generateAACustom(regions, template, undefined, 'Test', {
+      villages_discovered: {
+        first: { experience: 111 },
+        half: { experience: 222 },
+        all: { experience: 333 },
+      },
+    })
+    expect(custom.villages_discovered[1].Name).toBe('villages_discovered_1')
+    expect(custom.villages_discovered[1].Reward.Experience).toBe(111)
+    expect(custom.villages_discovered[10].Reward.Experience).toBe(222)
+    expect(custom.villages_discovered[20].Reward.Experience).toBe(333)
+  })
+
+  it('applyMilestoneRewardToEntry replaces Reward on entry', () => {
+    const entry: Record<string, unknown> = {
+      DisplayName: 'Scout',
+      Reward: { Experience: 1 },
+    }
+    applyMilestoneRewardToEntry(entry, { experience: 999 })
+    expect((entry.Reward as { Experience: number }).Experience).toBe(999)
   })
 })
 
